@@ -44,12 +44,12 @@ pub struct NoteTime {
     pub key_column: KeyColumn,
 }
 impl NoteTime {
-    pub fn new(arrow: &NoteTimeToml, speed_coeff: f32) -> Self {
+    pub fn new(note: &NoteTimeToml, speed_coeff: f32) -> Self {
         // 座標の移動速度. BASE_SPEED * 倍率.
         let speed = speed_coeff * NOTE_BASE_SPEED;
         Self {
-            spawn_time: arrow.click_time - (DISTANCE / speed) as f64,
-            key_column: arrow.key_column,
+            spawn_time: note.click_time - (DISTANCE / speed) as f64,
+            key_column: note.key_column,
         }
     }
 }
