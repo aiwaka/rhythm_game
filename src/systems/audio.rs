@@ -1,21 +1,35 @@
 use bevy::prelude::*;
 
-use crate::{resources::handles::GameAssetsHandles, AppState};
+use crate::{components::audio::AudioStartTimer, resources::handles::GameAssetsHandles, AppState};
 
-// TODO: use timer resource for get time
-fn start_song(audio: Res<Audio>, time: Res<Time>, handles: Res<GameAssetsHandles>) {
-    // 実時間でゲーム起動から3秒後にスタート
-    let sec = time.seconds_since_startup();
-    let sec_last = sec - time.delta_seconds_f64();
+fn setup_start_song(mut commands: Commands) {
+    commands
+        .spawn()
+        .insert(AudioStartTimer(Timer::from_seconds(3.0, false)));
+}
 
-    if sec_last <= 3.0 && 3.0 <= sec {
-        audio.play(handles.music.clone());
+fn start_song(
+    mut commands: Commands,
+    audio: Res<Audio>,
+    mut timer_query: Query<(&mut AudioStartTimer, Entity)>,
+    time: Res<Time>,
+    handles: Res<GameAssetsHandles>,
+) {
+    if let Ok((mut timer, ent)) = timer_query.get_single_mut() {
+        timer.0.tick(time.delta());
+        // ゲーム開始から3秒後にスタート
+        if timer.0.finished() {
+            info!("music start");
+            audio.play(handles.music.clone());
+            commands.entity(ent).despawn();
+        }
     }
 }
 
 pub struct GameAudioPlugin;
 impl Plugin for GameAudioPlugin {
     fn build(&self, app: &mut App) {
+        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_start_song));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(start_song));
     }
 }
