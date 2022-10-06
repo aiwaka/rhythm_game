@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
 
-use crate::components::note::{SongConfig, Speed};
-use crate::game_constants::{SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
+use crate::components::note::SongConfig;
+use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
+use crate::resources::note::Speed;
 use crate::resources::score::ScoreResource;
 use crate::AppState;
 use crate::{components::note::Note, resources::note::SpawnTimer};
@@ -24,13 +25,8 @@ fn spawn_notes(
             remove_counter += 1;
 
             let note_mesh = textures.note.clone();
-            let color = match note.speed {
-                Speed::Slow => textures.color_material_red.clone(),
-                Speed::Medium => textures.color_material_blue.clone(),
-                Speed::Fast => textures.color_material_green.clone(),
-            };
+            let color = textures.color_material_blue.clone();
 
-            info!("spawn at {}", note.key_column.0);
             let transform = Transform {
                 translation: Vec3::new(note.key_column.x_coord(), SPAWN_POSITION, 1.0),
                 ..Default::default()
@@ -43,7 +39,6 @@ fn spawn_notes(
                     ..Default::default()
                 })
                 .insert(Note {
-                    speed: note.speed,
                     key_column: note.key_column,
                 });
         } else {
@@ -55,9 +50,9 @@ fn spawn_notes(
     }
 }
 
-fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>) {
-    for (mut transform, note) in query.iter_mut() {
-        transform.translation.y -= time.delta_seconds() * note.speed.value();
+fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<Speed>) {
+    for (mut transform, _) in query.iter_mut() {
+        transform.translation.y -= time.delta_seconds() * speed.0 * NOTE_BASE_SPEED;
         // info!("y: {}", transform.translation.y);
         let distance_after_target = transform.translation.y - (TARGET_POSITION - THRESHOLD);
         if distance_after_target < -0.02 {

@@ -4,7 +4,7 @@ mod resources;
 mod systems;
 
 use bevy::prelude::*;
-use resources::game_scene::NextAppState;
+use resources::{game_scene::NextAppState, note::Speed};
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, target_note::TargetNotePlugin,
     ui::GameUiPlugin,
@@ -44,6 +44,7 @@ fn main() {
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
     app.insert_resource(NextAppState(AppState::Game));
+    app.insert_resource(Speed(1.0));
     app.add_state(AppState::Loading);
 
     app.add_startup_system(global_setup);

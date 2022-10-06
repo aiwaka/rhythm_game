@@ -8,6 +8,7 @@ use crate::{
     resources::{
         game_scene::NextAppState,
         handles::{AssetsLoading, GameAssetsHandles},
+        note::Speed,
         score::ScoreResource,
     },
     AppState,
@@ -15,7 +16,7 @@ use crate::{
 use std::fs::File;
 use std::io::prelude::*;
 
-fn load_config(path: &str) -> (SongConfig, String) {
+fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     let mut file = File::open(format!("assets/songs/{}", path)).expect("Couldn't open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
@@ -29,21 +30,28 @@ fn load_config(path: &str) -> (SongConfig, String) {
     let mut notes = parsed
         .notes
         .iter()
-        .map(NoteTime::new)
+        .map(|note| NoteTime::new(note, speed_coeff))
         .collect::<Vec<NoteTime>>();
     // 出現順にソート
     notes.sort_by(|a, b| a.spawn_time.partial_cmp(&b.spawn_time).unwrap());
 
-    (
-        SongConfig {
-            name: parsed.name,
-            notes,
-        },
-        parsed.filename,
-    )
+    SongConfig {
+        name: parsed.name,
+        music_filename: parsed.filename,
+        notes,
+    }
 }
 
-fn preload_stage_assets(
+fn load_song_config(mut commands: Commands, speed: Res<Speed>) -> String {
+    // 曲データをロード
+    let config = load_config_from_toml("test.toml", speed.0);
+    let music_filename = config.music_filename.clone();
+    commands.insert_resource(config);
+    music_filename
+}
+
+fn preload_assets(
+    In(music_filename): In<String>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas: ResMut<Assets<TextureAtlas>>,
@@ -51,10 +59,6 @@ fn preload_stage_assets(
     mut color_material: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    // 曲データをロード
-    let (config, music_filename) = load_config("test.toml");
-    commands.insert_resource(config);
-
     // 型なしのアセット列を用意
     let mut assets_loading_vec = Vec::<HandleUntyped>::new();
 
@@ -142,7 +146,8 @@ impl Plugin for LoadPlugin {
         app.init_resource::<ScoreResource>();
         // アセットロード関連システム
         app.add_system_set(
-            SystemSet::on_enter(AppState::Loading).with_system(preload_stage_assets),
+            SystemSet::on_enter(AppState::Loading)
+                .with_system(load_song_config.chain(preload_assets)),
         );
         app.add_system_set(SystemSet::on_update(AppState::Loading).with_system(check_assets_ready));
         app.add_system_set(SystemSet::on_exit(AppState::Loading).with_system(exit_loading));

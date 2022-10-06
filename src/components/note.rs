@@ -6,7 +6,6 @@ use serde_derive::{Deserialize, Serialize};
 
 #[derive(Component)]
 pub struct Note {
-    pub speed: Speed,
     pub key_column: KeyColumn,
 }
 
@@ -39,39 +38,17 @@ impl KeyColumn {
     }
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
-pub enum Speed {
-    Slow,
-    Medium,
-    Fast,
-}
-impl Speed {
-    /// Returns actual speed at which the arrow should move
-    pub fn value(&self) -> f32 {
-        NOTE_BASE_SPEED * self.multiplier()
-    }
-    /// Speed multiplier
-    pub fn multiplier(&self) -> f32 {
-        match self {
-            Speed::Slow => 1.,
-            Speed::Medium => 1.2,
-            Speed::Fast => 1.5,
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct NoteTime {
     pub spawn_time: f64,
-    pub speed: Speed,
     pub key_column: KeyColumn,
 }
 impl NoteTime {
-    pub fn new(arrow: &NoteTimeToml) -> Self {
-        let speed_value = arrow.speed.value();
+    pub fn new(arrow: &NoteTimeToml, speed_coeff: f32) -> Self {
+        // 座標の移動速度. BASE_SPEED * 倍率.
+        let speed = speed_coeff * NOTE_BASE_SPEED;
         Self {
-            spawn_time: arrow.click_time - (DISTANCE / speed_value) as f64,
-            speed: arrow.speed,
+            spawn_time: arrow.click_time - (DISTANCE / speed) as f64,
             key_column: arrow.key_column,
         }
     }
@@ -80,6 +57,7 @@ impl NoteTime {
 #[derive(Debug)]
 pub struct SongConfig {
     pub name: String,
+    pub music_filename: String,
     pub notes: Vec<NoteTime>,
 }
 
@@ -95,6 +73,5 @@ pub struct SongConfigToml {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct NoteTimeToml {
     pub click_time: f64,
-    pub speed: Speed,
     pub key_column: KeyColumn,
 }
