@@ -59,7 +59,7 @@ fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>) {
     for (mut transform, note) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * note.speed.value();
         // info!("y: {}", transform.translation.y);
-        let distance_after_target = transform.translation.y - (TARGET_POSITION + THRESHOLD);
+        let distance_after_target = transform.translation.y - (TARGET_POSITION - THRESHOLD);
         if distance_after_target < -0.02 {
             transform.rotate_axis(Vec3::Z, 0.1);
             transform.scale = (transform.scale
