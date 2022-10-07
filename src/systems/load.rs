@@ -1,15 +1,13 @@
 use bevy::{asset::LoadState, prelude::*};
 
 use crate::{
-    components::{
-        load::NowLoadingText,
-        note::{NoteTime, SongConfig, SongConfigToml},
-    },
+    components::{load::NowLoadingText, note::NoteTime},
     resources::{
         game_scene::NextAppState,
         handles::{AssetsLoading, GameAssetsHandles},
         note::Speed,
         score::ScoreResource,
+        song::{SongConfig, SongConfigToml},
     },
     AppState,
 };

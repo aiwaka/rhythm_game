@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
 
-use crate::components::note::SongConfig;
 use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::note::{AudioStartTime, Speed};
 use crate::resources::score::ScoreResource;
+use crate::resources::song::SongConfig;
 use crate::AppState;
 use crate::{components::note::Note, resources::note::SpawnTimer};
 
