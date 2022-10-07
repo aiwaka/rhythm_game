@@ -2,10 +2,9 @@ use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
 
 use crate::components::note::SongConfig;
-use crate::events::AudioStartEvent;
 use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
-use crate::resources::note::Speed;
+use crate::resources::note::{AudioStartTime, Speed};
 use crate::resources::score::ScoreResource;
 use crate::AppState;
 use crate::{components::note::Note, resources::note::SpawnTimer};
@@ -16,25 +15,16 @@ fn spawn_notes(
     mut commands: Commands,
     textures: Res<GameAssetsHandles>,
     mut song_config: ResMut<SongConfig>,
+    start_time: Res<AudioStartTime>,
     time: Res<Time>,
-    ev_reader: EventReader<AudioStartEvent>,
-    mut audio_start_time: Local<f64>,
 ) {
-    // 曲が再生された瞬間に記録
-    if !ev_reader.is_empty() {
-        *audio_start_time = time.seconds_since_startup();
-    }
-    if !(*audio_start_time).is_normal() {
-        return;
-    }
-
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
-    let secs = time.seconds_since_startup() - *audio_start_time;
-    let secs_last = secs - time.delta_seconds_f64();
+    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_last = time_after_start - time.delta_seconds_f64();
 
     while {
         if let Some(note) = song_config.notes.front() {
-            secs_last < note.spawn_time && note.spawn_time < secs
+            time_last < note.spawn_time && note.spawn_time < time_after_start
         } else {
             false
         }

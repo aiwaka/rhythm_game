@@ -1,35 +1,31 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::audio::AudioStartTimer, events::AudioStartEvent,
-    resources::handles::GameAssetsHandles, AppState,
+    game_constants::MUSIC_PLAY_PRECOUNT,
+    resources::{handles::GameAssetsHandles, note::AudioStartTime},
+    AppState,
 };
 
 use super::system_labels::TimerSystemLabel;
 
-fn setup_start_song(mut commands: Commands) {
-    commands
-        .spawn()
-        .insert(AudioStartTimer(Timer::from_seconds(3.0, false)));
+fn setup_start_song(mut commands: Commands, time: Res<Time>) {
+    commands.insert_resource(AudioStartTime(
+        time.seconds_since_startup() + MUSIC_PLAY_PRECOUNT,
+    ));
 }
 
 fn start_song(
-    mut commands: Commands,
     audio: Res<Audio>,
-    mut timer_query: Query<(&mut AudioStartTimer, Entity)>,
+    start_time: Res<AudioStartTime>,
     time: Res<Time>,
     handles: Res<GameAssetsHandles>,
-    mut ev_writer: EventWriter<AudioStartEvent>,
 ) {
-    if let Ok((mut timer, ent)) = timer_query.get_single_mut() {
-        timer.0.tick(time.delta());
-        // ゲーム開始から3秒後にスタート
-        if timer.0.finished() {
-            info!("music start");
-            audio.play(handles.music.clone());
-            ev_writer.send(AudioStartEvent);
-            commands.entity(ent).despawn();
-        }
+    // 曲開始時刻から現在時刻までの差
+    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_last = time_after_start - time.delta_seconds_f64();
+    if time_last < 0.0 && 0.0 < time_after_start {
+        info!("music start");
+        audio.play(handles.music.clone());
     }
 }
 

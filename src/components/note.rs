@@ -50,7 +50,7 @@ impl NoteTime {
         // 座標の移動速度. BASE_SPEED * 倍率.
         let speed = speed_coeff * NOTE_BASE_SPEED;
         Self {
-            spawn_time: note.click_time - (DISTANCE / speed) as f64,
+            spawn_time: note.click_time - ((DISTANCE / speed) as f64).abs(),
             key_column: note.key_column,
         }
     }

@@ -2,8 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::ui::{ScoreText, TimeText},
-    events::AudioStartEvent,
-    resources::score::ScoreResource,
+    resources::{note::AudioStartTime, score::ScoreResource},
     AppState,
 };
 
@@ -83,25 +82,20 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_time_text(
-    time: Res<Time>,
     mut query: Query<(&mut Text, &TimeText)>,
-    ev_reader: EventReader<AudioStartEvent>,
-    mut audio_start_time: Local<f64>,
+    start_time: Res<AudioStartTime>,
+    time: Res<Time>,
 ) {
-    // 曲が再生された瞬間に記録
-    if !ev_reader.is_empty() {
-        *audio_start_time = time.seconds_since_startup();
-    }
     // Song starts 3 seconds after real time
-    let secs = time.seconds_since_startup() - *audio_start_time;
+    let time_after_start = time.seconds_since_startup() - start_time.0;
 
     // Don't do anything before the song starts
-    if !audio_start_time.is_normal() || secs < 0. {
+    if time_after_start < 0.0 {
         return;
     }
 
     for (mut text, _marker) in query.iter_mut() {
-        text.sections[0].value = format!("Time: {:.2}", secs);
+        text.sections[0].value = format!("Time: {:.2}", time_after_start);
     }
 }
 

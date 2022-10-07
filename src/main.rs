@@ -46,7 +46,7 @@ fn main() {
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
     app.insert_resource(NextAppState(AppState::Game));
-    app.insert_resource(Speed(1.0));
+    app.insert_resource(Speed(1.5));
     app.add_state(AppState::Loading);
 
     add_events_to_game(&mut app);
