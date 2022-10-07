@@ -4,6 +4,7 @@ use bevy::prelude::SystemLabel;
 #[derive(SystemLabel)]
 pub(super) enum TimerSystemLabel {
     /// タイマーが終了したことを用いるシステムは.after()でこれをつけなければうまくいかない.
+    StartAudio,
     TimerUpdate,
     FrameCounterUpdate,
     UpdateGameCount,

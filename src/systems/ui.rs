@@ -2,9 +2,12 @@ use bevy::prelude::*;
 
 use crate::{
     components::ui::{ScoreText, TimeText},
+    events::AudioStartEvent,
     resources::score::ScoreResource,
     AppState,
 };
+
+use super::system_labels::TimerSystemLabel;
 
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font: Handle<Font> = asset_server.load("fonts//FiraSans-Bold.ttf");
@@ -22,7 +25,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..Default::default()
             },
-            color: UiColor(Color::NONE),
+            color: UiColor(Color::YELLOW_GREEN),
             ..Default::default()
         })
         .with_children(|parent| {
@@ -79,12 +82,21 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn update_time_text(time: Res<Time>, mut query: Query<(&mut Text, &TimeText)>) {
+fn update_time_text(
+    time: Res<Time>,
+    mut query: Query<(&mut Text, &TimeText)>,
+    ev_reader: EventReader<AudioStartEvent>,
+    mut audio_start_time: Local<f64>,
+) {
+    // 曲が再生された瞬間に記録
+    if !ev_reader.is_empty() {
+        *audio_start_time = time.seconds_since_startup();
+    }
     // Song starts 3 seconds after real time
-    let secs = time.seconds_since_startup() - 3.;
+    let secs = time.seconds_since_startup() - *audio_start_time;
 
     // Don't do anything before the song starts
-    if secs < 0. {
+    if !audio_start_time.is_normal() || secs < 0. {
         return;
     }
 
@@ -110,7 +122,10 @@ pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_ui));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_time_text));
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
+        );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_score_text));
     }
 }

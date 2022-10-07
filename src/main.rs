@@ -1,9 +1,11 @@
 mod components;
+mod events;
 mod game_constants;
 mod resources;
 mod systems;
 
 use bevy::prelude::*;
+use events::add_events_to_game;
 use resources::{game_scene::NextAppState, note::Speed};
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, target_note::TargetNotePlugin,
@@ -46,6 +48,8 @@ fn main() {
     app.insert_resource(NextAppState(AppState::Game));
     app.insert_resource(Speed(1.0));
     app.add_state(AppState::Loading);
+
+    add_events_to_game(&mut app);
 
     app.add_startup_system(global_setup);
     app.add_plugin(LoadPlugin);

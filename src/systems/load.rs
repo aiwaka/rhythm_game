@@ -16,6 +16,7 @@ use crate::{
 use std::fs::File;
 use std::io::prelude::*;
 
+/// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
 fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     let mut file = File::open(format!("assets/songs/{}", path)).expect("Couldn't open file");
     let mut contents = String::new();
@@ -38,6 +39,7 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     SongConfig {
         name: parsed.name,
         music_filename: parsed.filename,
+        bpm: parsed.bpm,
         notes,
     }
 }

@@ -58,6 +58,7 @@ impl NoteTime {
 pub struct SongConfig {
     pub name: String,
     pub music_filename: String,
+    pub bpm: f32,
     pub notes: Vec<NoteTime>,
 }
 
@@ -66,6 +67,7 @@ pub struct SongConfig {
 pub struct SongConfigToml {
     pub name: String,
     pub filename: String,
+    pub bpm: f32,
     pub notes: Vec<NoteTimeToml>,
 }
 

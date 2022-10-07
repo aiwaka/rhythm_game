@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
 
 use crate::components::note::SongConfig;
+use crate::events::AudioStartEvent;
 use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::note::Speed;
@@ -9,14 +10,23 @@ use crate::resources::score::ScoreResource;
 use crate::AppState;
 use crate::{components::note::Note, resources::note::SpawnTimer};
 
+use super::system_labels::TimerSystemLabel;
+
 fn spawn_notes(
     mut commands: Commands,
     textures: Res<GameAssetsHandles>,
     mut song_config: ResMut<SongConfig>,
     time: Res<Time>,
+    ev_reader: EventReader<AudioStartEvent>,
+    mut audio_start_time: Local<f64>,
 ) {
-    // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する. 3秒遅らせることで開始準備カウントとなる.
-    let secs = time.seconds_since_startup() - 3.0;
+    // 曲が再生された瞬間に記録
+    if !ev_reader.is_empty() {
+        *audio_start_time = time.seconds_since_startup();
+    }
+
+    // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
+    let secs = time.seconds_since_startup() - *audio_start_time;
     let secs_last = secs - time.delta_seconds_f64();
 
     let mut remove_counter = 0;
@@ -91,7 +101,10 @@ pub struct NotePlugin;
 impl Plugin for NotePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(spawn_notes));
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
+        );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(move_notes));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(despawn_notes));
     }

@@ -10,3 +10,5 @@ impl Default for Speed {
         Speed(1.0)
     }
 }
+
+pub struct Bpm(pub f32);
