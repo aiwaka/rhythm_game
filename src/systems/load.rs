@@ -13,8 +13,8 @@ use crate::{
     },
     AppState,
 };
-use std::fs::File;
 use std::io::prelude::*;
+use std::{collections::VecDeque, fs::File};
 
 /// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
 fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
@@ -40,7 +40,7 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
         name: parsed.name,
         music_filename: parsed.filename,
         bpm: parsed.bpm,
-        notes,
+        notes: VecDeque::from_iter(notes),
     }
 }
 

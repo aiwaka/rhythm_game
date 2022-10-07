@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bevy::prelude::*;
 
 use crate::game_constants::{DISTANCE, NOTE_BASE_SPEED};
@@ -59,7 +61,7 @@ pub struct SongConfig {
     pub name: String,
     pub music_filename: String,
     pub bpm: f32,
-    pub notes: Vec<NoteTime>,
+    pub notes: VecDeque<NoteTime>,
 }
 
 /// use for toml

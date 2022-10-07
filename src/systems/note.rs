@@ -24,39 +24,39 @@ fn spawn_notes(
     if !ev_reader.is_empty() {
         *audio_start_time = time.seconds_since_startup();
     }
+    if !(*audio_start_time).is_normal() {
+        return;
+    }
 
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
     let secs = time.seconds_since_startup() - *audio_start_time;
     let secs_last = secs - time.delta_seconds_f64();
 
-    let mut remove_counter = 0;
-    for note in song_config.notes.iter() {
-        if secs_last < note.spawn_time && note.spawn_time < secs {
-            remove_counter += 1;
-
-            let note_mesh = textures.note.clone();
-            let color = textures.color_material_blue.clone();
-
-            let transform = Transform {
-                translation: Vec3::new(note.key_column.x_coord(), SPAWN_POSITION, 1.0),
-                ..Default::default()
-            };
-            commands
-                .spawn_bundle(ColorMesh2dBundle {
-                    mesh: Mesh2dHandle::from(note_mesh),
-                    material: color,
-                    transform,
-                    ..Default::default()
-                })
-                .insert(Note {
-                    key_column: note.key_column,
-                });
+    while {
+        if let Some(note) = song_config.notes.front() {
+            secs_last < note.spawn_time && note.spawn_time < secs
         } else {
-            break;
+            false
         }
-    }
-    for _ in 0..remove_counter {
-        song_config.notes.remove(0);
+    } {
+        let note = song_config.notes.pop_front().unwrap();
+        let note_mesh = textures.note.clone();
+        let color = textures.color_material_blue.clone();
+
+        let transform = Transform {
+            translation: Vec3::new(note.key_column.x_coord(), SPAWN_POSITION, 1.0),
+            ..Default::default()
+        };
+        commands
+            .spawn_bundle(ColorMesh2dBundle {
+                mesh: Mesh2dHandle::from(note_mesh),
+                material: color,
+                transform,
+                ..Default::default()
+            })
+            .insert(Note {
+                key_column: note.key_column,
+            });
     }
 }
 
