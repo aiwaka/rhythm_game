@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 pub struct AssetsLoading(pub Vec<HandleUntyped>);

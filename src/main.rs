@@ -5,6 +5,7 @@ mod resources;
 mod systems;
 
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 use events::add_events_to_game;
 use resources::{game_scene::NextAppState, note::Speed};
 use systems::{
@@ -43,6 +44,7 @@ fn main() {
     app.insert_resource(Msaa { samples: 4 });
     app.add_system(bevy::window::close_on_esc);
     app.add_plugins(DefaultPlugins);
+    app.add_plugin(AudioPlugin);
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
     app.insert_resource(NextAppState(AppState::Game));

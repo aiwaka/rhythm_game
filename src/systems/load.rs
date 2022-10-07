@@ -29,7 +29,7 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     let mut notes = parsed
         .notes
         .iter()
-        .map(|note| NoteTime::new(note, speed_coeff))
+        .map(|note| NoteTime::new(note, parsed.beat_par_bar, parsed.bpm, speed_coeff))
         .collect::<Vec<NoteTime>>();
     // 出現順にソート
     notes.sort_by(|a, b| a.spawn_time.partial_cmp(&b.spawn_time).unwrap());
@@ -37,6 +37,7 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     SongConfig {
         name: parsed.name,
         music_filename: parsed.filename,
+        beat_par_bar: parsed.beat_par_bar,
         bpm: parsed.bpm,
         notes: VecDeque::from_iter(notes),
     }

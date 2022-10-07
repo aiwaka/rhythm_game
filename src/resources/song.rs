@@ -8,7 +8,9 @@ use crate::components::note::{KeyColumn, NoteTime};
 pub struct SongConfig {
     pub name: String,
     pub music_filename: String,
-    pub bpm: f32,
+    pub bpm: f64,
+    /// 一小節あたりの拍数
+    pub beat_par_bar: u32,
     pub notes: VecDeque<NoteTime>,
 }
 
@@ -17,13 +19,19 @@ pub struct SongConfig {
 pub struct SongConfigToml {
     pub name: String,
     pub filename: String,
-    pub bpm: f32,
+    /// 一小節に何拍あるか
+    pub beat_par_bar: u32,
+    pub bpm: f64,
     pub notes: Vec<NoteTimeToml>,
 }
 
-/// use for toml
+/// TOMLファイルのノーツ情報パース用構造体
 #[derive(Deserialize, Serialize, Debug)]
 pub struct NoteTimeToml {
-    pub click_time: f64,
+    /// 小節番号（0始まり）
+    pub bar: u32,
+    /// 小節内の拍番号（0始まり）.
+    pub beat: u32,
+    /// 鍵盤の番号
     pub key_column: KeyColumn,
 }

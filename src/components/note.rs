@@ -43,15 +43,19 @@ impl KeyColumn {
 
 #[derive(Clone, Copy, Debug)]
 pub struct NoteTime {
+    /// 出現時間. 決められた拍に判定線に来るように設定される.
     pub spawn_time: f64,
     pub key_column: KeyColumn,
 }
 impl NoteTime {
-    pub fn new(note: &NoteTimeToml, speed_coeff: f32) -> Self {
+    pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f64, speed_coeff: f32) -> Self {
         // 座標の移動速度. BASE_SPEED * 倍率.
         let speed = speed_coeff * NOTE_BASE_SPEED;
+        let second_par_beat = bpm.recip() * 60.0;
+        // 判定線に到達する時間を曲開始時刻から測ったもの.
+        let click_time = (beat_par_bar * note.bar + note.beat) as f64 * second_par_beat;
         Self {
-            spawn_time: note.click_time - ((DISTANCE / speed) as f64).abs(),
+            spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
             key_column: note.key_column,
         }
     }
