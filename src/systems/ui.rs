@@ -1,7 +1,8 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Mesh2dHandle};
 
 use crate::{
-    components::ui::{ScoreText, TimeText},
+    components::ui::{ScoreText, TargetLine, TimeText},
+    game_constants::TARGET_POSITION,
     resources::{handles::GameAssetsHandles, note::AudioStartTime, score::ScoreResource},
     AppState,
 };
@@ -78,6 +79,19 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 })
                 .insert(ScoreText);
         });
+    // 判定線
+    let transform = Transform {
+        translation: Vec3::new(0.0, TARGET_POSITION, 2.0),
+        ..Default::default()
+    };
+    commands
+        .spawn_bundle(ColorMesh2dBundle {
+            mesh: Mesh2dHandle::from(handles.judge_line.clone()),
+            material: handles.color_material_white_trans.clone(),
+            transform,
+            ..Default::default()
+        })
+        .insert(TargetLine);
 }
 
 fn update_time_text(

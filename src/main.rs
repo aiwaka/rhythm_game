@@ -8,10 +8,7 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use events::add_events_to_game;
 use resources::{game_scene::NextAppState, note::Speed};
-use systems::{
-    audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, target_note::TargetNotePlugin,
-    ui::GameUiPlugin,
-};
+use systems::{audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, ui::GameUiPlugin};
 
 const SCREEN_WIDTH: f32 = 800.0;
 const SCREEN_HEIGHT: f32 = 600.0;
@@ -56,7 +53,6 @@ fn main() {
     app.add_startup_system(global_setup);
     app.add_plugin(LoadPlugin);
     app.add_plugin(NotePlugin);
-    app.add_plugin(TargetNotePlugin);
     app.add_plugin(GameUiPlugin);
     app.add_plugin(GameAudioPlugin);
     // app.add_plugin(ShadersPlugin);
