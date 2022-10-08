@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_constants::{DISTANCE, NOTE_BASE_SPEED},
+    game_constants::{DISTANCE, LANE_WIDTH, NOTE_BASE_SPEED},
     resources::song::NoteTimeToml,
 };
 
@@ -17,6 +17,9 @@ pub struct Note {
 pub struct KeyColumn(pub i32);
 
 impl KeyColumn {
+    /// 鍵盤の数
+    pub const KEY_NUM: u8 = 4;
+
     /// 番号とキーを結びつけ押されたかどうかを取得
     pub fn key_just_pressed(&self, input: &Input<KeyCode>) -> bool {
         let keys = match self.0 {
@@ -29,15 +32,16 @@ impl KeyColumn {
         input.any_just_pressed(keys)
     }
 
+    /// x_coordをi32から取得
+    pub fn x_coord_from_num(num: i32) -> f32 {
+        let half_width = LANE_WIDTH / 2.0;
+        0.0 - (Self::KEY_NUM - 1) as f32 * half_width + LANE_WIDTH * num as f32
+    }
+
     /// 鍵盤番号に対応させたx座標を計算
     pub fn x_coord(&self) -> f32 {
-        match self.0 {
-            0 => -150.0,
-            1 => -50.0,
-            2 => 50.0,
-            3 => 150.0,
-            _ => 0.0,
-        }
+        let half_width = LANE_WIDTH / 2.0;
+        0.0 - (Self::KEY_NUM - 1) as f32 * half_width + LANE_WIDTH * self.0 as f32
     }
 }
 

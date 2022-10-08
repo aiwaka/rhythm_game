@@ -15,3 +15,6 @@ pub const DISTANCE: f32 = TARGET_POSITION - SPAWN_POSITION;
 
 /// ゲームステートに移行してから曲が再生されるまでの時間（秒）
 pub const MUSIC_PLAY_PRECOUNT: f64 = 3.0;
+
+/// 鍵盤レーンの幅
+pub const LANE_WIDTH: f32 = 100.0;

@@ -1,23 +1,37 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
+use crate::game_constants::LANE_WIDTH;
+
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 pub struct AssetsLoading(pub Vec<HandleUntyped>);
 
 /// ゲームシーンのアセットハンドルを持っておく構造体.
 #[derive(Debug)]
 pub struct GameAssetsHandles {
+    // フォント
     pub main_font: Handle<Font>,
 
+    // 曲
     pub music: Handle<AudioSource>,
 
+    // 色
     pub color_material_red: Handle<ColorMaterial>,
     pub color_material_blue: Handle<ColorMaterial>,
     pub color_material_green: Handle<ColorMaterial>,
     pub color_material_white_trans: Handle<ColorMaterial>,
+    pub color_material_lane_background: Handle<ColorMaterial>,
+
+    // メッシュ
     pub note: Handle<Mesh>,
     pub judge_line: Handle<Mesh>,
+    pub lane_line: Handle<Mesh>,
+    pub lane_background: Handle<Mesh>,
+
+    // atlas
     pub atlas_numbers: Handle<TextureAtlas>,
+
+    // 一枚絵
     pub background: Handle<Image>,
 
     // 以下は分割画像アセットのもととなる画像アセットのハンドル. 公開はしない.
@@ -35,18 +49,27 @@ impl GameAssetsHandles {
     ) -> Self {
         let numbers = server.load("images/numbers.png");
         let note_shape = shape::Quad::new(Vec2::new(100.0, 8.0));
-        let judge_line_shape = shape::Quad::new(Vec2::new(400.0, 8.0));
+        let judge_line_shape = shape::Quad::new(Vec2::new(700.0, 8.0));
+        let lane_line_shape = shape::Quad::new(Vec2::new(8.0, 500.0));
+        let lane_background_shape = shape::Quad::new(Vec2::new(LANE_WIDTH, 500.0));
+
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
             music: server.load(&*format!("songs/{}", music_filename)),
-            note: meshes.add(Mesh::from(note_shape)),
-            judge_line: meshes.add(Mesh::from(judge_line_shape)),
+
             color_material_red: color_material.add(ColorMaterial::from(Color::RED)),
             color_material_blue: color_material.add(ColorMaterial::from(Color::BLUE)),
             color_material_green: color_material.add(ColorMaterial::from(Color::GREEN)),
             color_material_white_trans: color_material
                 .add(ColorMaterial::from(Color::rgba(1.0, 1.0, 1.0, 0.5))),
+            color_material_lane_background: color_material.add(ColorMaterial::from(Color::CRIMSON)),
+
+            note: meshes.add(Mesh::from(note_shape)),
+            judge_line: meshes.add(Mesh::from(judge_line_shape)),
+            lane_line: meshes.add(Mesh::from(lane_line_shape)),
+            lane_background: meshes.add(Mesh::from(lane_background_shape)),
+
             atlas_numbers: texture_atlas.add(TextureAtlas::from_grid(
                 numbers.clone(),
                 Vec2::new(30.0, 55.0),

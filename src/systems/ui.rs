@@ -1,8 +1,11 @@
 use bevy::{prelude::*, sprite::Mesh2dHandle};
 
 use crate::{
-    components::ui::{ScoreText, TargetLine, TimeText},
-    game_constants::TARGET_POSITION,
+    components::{
+        note::KeyColumn,
+        ui::{LaneBackground, LaneLine, ScoreText, TargetLine, TimeText},
+    },
+    game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{handles::GameAssetsHandles, note::AudioStartTime, score::ScoreResource},
     AppState,
 };
@@ -12,8 +15,8 @@ use super::system_labels::TimerSystemLabel;
 fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     let font = handles.main_font.clone();
 
+    // 時間を表示するテキストノード
     commands
-        // Time text node
         .spawn_bundle(NodeBundle {
             style: Style {
                 position_type: PositionType::Absolute,
@@ -46,7 +49,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 .insert(TimeText);
         });
 
-    // score text
+    // スコア表示テキストノード
     commands
         .spawn_bundle(NodeBundle {
             style: Style {
@@ -92,6 +95,40 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             ..Default::default()
         })
         .insert(TargetLine);
+
+    // 鍵盤線
+    for i in 0..5 {
+        let x = KeyColumn::x_coord_from_num(i);
+        let transform = Transform {
+            translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_POSITION + 250.0, 2.0),
+            ..Default::default()
+        };
+        commands
+            .spawn_bundle(ColorMesh2dBundle {
+                mesh: Mesh2dHandle::from(handles.lane_line.clone()),
+                material: handles.color_material_white_trans.clone(),
+                transform,
+                ..Default::default()
+            })
+            .insert(LaneLine);
+    }
+
+    // 鍵盤背景
+    for i in 0..4 {
+        let x = KeyColumn::x_coord_from_num(i);
+        let transform = Transform {
+            translation: Vec3::new(x, TARGET_POSITION + 250.0, 0.1),
+            ..Default::default()
+        };
+        commands
+            .spawn_bundle(ColorMesh2dBundle {
+                mesh: Mesh2dHandle::from(handles.lane_background.clone()),
+                material: handles.color_material_lane_background.clone(),
+                transform,
+                ..Default::default()
+            })
+            .insert(LaneBackground(i));
+    }
 }
 
 fn update_time_text(
@@ -123,6 +160,14 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
             );
         }
     }
+}
+
+fn update_lane_background(
+    mut commands: Commands,
+    query: Query<&LaneBackground>,
+    key_input: Res<Input<KeyCode>>,
+) {
+    for lane in query.iter() {}
 }
 
 pub struct GameUiPlugin;

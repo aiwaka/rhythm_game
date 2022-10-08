@@ -22,6 +22,7 @@ fn spawn_notes(
     let time_after_start = time.seconds_since_startup() - start_time.0;
     let time_last = time_after_start - time.delta_seconds_f64();
 
+    // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
     while {
         if let Some(note) = song_config.notes.front() {
             time_last < note.spawn_time && note.spawn_time < time_after_start
