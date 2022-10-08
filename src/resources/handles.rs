@@ -62,15 +62,15 @@ impl GameAssetsHandles {
     /// これについてイテレートしてすべてのアセットがロード済みかどうかを確認できる.
     /// あたらしくアセットを追加した場合, 直接ファイルを読みに行くものについてのみここに追加する.
     pub fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
-        let mut assets_loading_vec = vec![
-            // フォントをロード
+        // let assets_loading_vec = vec![];
+        vec![
+            // フォント
             self.main_font.clone_untyped(),
             // 曲
             self.music.clone_untyped(),
             // 画像類
             self.numbers.clone_untyped(),
             self.background.clone_untyped(),
-        ];
-        assets_loading_vec
+        ]
     }
 }

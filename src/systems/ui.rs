@@ -2,15 +2,14 @@ use bevy::prelude::*;
 
 use crate::{
     components::ui::{ScoreText, TimeText},
-    resources::{note::AudioStartTime, score::ScoreResource},
+    resources::{handles::GameAssetsHandles, note::AudioStartTime, score::ScoreResource},
     AppState,
 };
 
 use super::system_labels::TimerSystemLabel;
 
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font: Handle<Font> = asset_server.load("fonts//FiraSans-Bold.ttf");
-    // let material = color_materials.add(Color::NONE.into());
+fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
+    let font = handles.main_font.clone();
 
     commands
         // Time text node
