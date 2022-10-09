@@ -1,5 +1,3 @@
-use crate::game_constants::THRESHOLD;
-
 #[derive(Default, Debug)]
 pub struct ScoreResource {
     corrects: usize,
@@ -8,12 +6,12 @@ pub struct ScoreResource {
     score: usize,
 }
 impl ScoreResource {
-    /// 取得数を増やし, スコアを増加させ, スコアの増分を返す
-    pub fn increase_correct(&mut self, distance: f32) -> usize {
+    /// 取得数を増やし, スコアを増加させ, スコアの増分を返す. allow_distanceはミスにならない距離
+    pub fn increase_correct(&mut self, distance: f32, allow_distance: f32) -> usize {
         self.corrects += 1;
 
         // ボタン押下の近さに応じて[0, 1]の値をとる.
-        let score_multiplier = (THRESHOLD - distance.abs()) / THRESHOLD;
+        let score_multiplier = (allow_distance - distance.abs()) / allow_distance;
         // [10, 100]点を与える
         let points = (score_multiplier * 100.0).clamp(10.0, 100.0) as usize;
         self.score += points;

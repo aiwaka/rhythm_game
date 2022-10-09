@@ -5,7 +5,7 @@ use crate::components::note::KeyLane;
 use crate::components::note::Note;
 use crate::components::timer::FrameCounter;
 use crate::events::CatchNoteEvent;
-use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
+use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::score::ScoreResource;
 use crate::resources::song::{AudioStartTime, SongConfig, Speed};
@@ -77,8 +77,8 @@ fn spawn_notes(
 fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<Speed>) {
     for (mut transform, _) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * speed.0 * NOTE_BASE_SPEED;
-        // info!("y: {}", transform.translation.y);
-        let distance_after_target = transform.translation.y - (TARGET_POSITION - THRESHOLD);
+        let allow_distance = ERROR_THRESHOLD * NOTE_BASE_SPEED * speed.0;
+        let distance_after_target = transform.translation.y - (TARGET_POSITION - allow_distance);
         if distance_after_target < -0.02 {
             transform.rotate_axis(Vec3::Z, 0.1);
             transform.scale = (transform.scale
@@ -99,20 +99,23 @@ fn catch_notes(
     start_time: Res<AudioStartTime>,
     time: Res<Time>,
     song_info: Res<SongConfig>,
+    speed: Res<Speed>,
 ) {
     let time_after_start = time.seconds_since_startup() - start_time.0;
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
         for (trans, note, ent) in query.iter() {
             let pos_y = trans.translation.y;
-            if (TARGET_POSITION - THRESHOLD..=TARGET_POSITION + THRESHOLD).contains(&pos_y)
+            let allow_distance = ERROR_THRESHOLD * NOTE_BASE_SPEED * speed.0;
+            if (TARGET_POSITION - allow_distance..=TARGET_POSITION + allow_distance)
+                .contains(&pos_y)
                 && note.key_column == lane.0
                 && lane.key_just_pressed(&key_input)
                 && !removed_ent.contains(&ent)
             {
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
-                score.increase_correct(TARGET_POSITION - pos_y);
+                score.increase_correct(TARGET_POSITION - pos_y, allow_distance);
                 ev_writer.send(CatchNoteEvent::new(
                     note,
                     time_after_start,
