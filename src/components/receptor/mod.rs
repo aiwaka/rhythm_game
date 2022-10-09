@@ -1,8 +1,12 @@
 mod all_sync;
+mod step_left;
+mod step_right;
 
 /// レセプタ構造体を全部読み込むための公開モジュール
 pub mod prelude {
-    pub use super::all_sync::AllSyncReceptor;
+    pub use super::{
+        all_sync::AllSyncReceptor, step_left::StepLeftReceptor, step_right::StepRightReceptor,
+    };
 }
 
 use bevy::prelude::*;

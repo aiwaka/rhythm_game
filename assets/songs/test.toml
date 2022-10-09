@@ -19,7 +19,7 @@ notes = [
     { bar = 2, beat = 0, key_column = 0 },
     { bar = 2, beat = 2, key_column = 2 },
     { bar = 3, beat = 0, key_column = 3 },
-    { bar = 3, beat = 1, key_column = 3 },
-    { bar = 3, beat = 2, key_column = 0 },
+    { bar = 3, beat = 1, key_column = 2 },
     { bar = 3, beat = 2, key_column = 1 },
+    { bar = 3, beat = 2, key_column = 0 },
 ]

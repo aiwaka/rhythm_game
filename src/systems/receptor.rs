@@ -15,6 +15,8 @@ fn setup_receptor(mut commands: Commands) {
         };
     }
     spawn_receptor!(AllSyncReceptor::default());
+    spawn_receptor!(StepRightReceptor::default());
+    spawn_receptor!(StepLeftReceptor::default());
 }
 
 /// レセプタにノーツを入力して更新する
@@ -65,6 +67,8 @@ impl Plugin for PatternReceptorPlugin {
         //     SystemSet::on_update(AppState::Game).with_system(receptor_pipeline::<AllSyncReceptor>),
         // );
         add_receptor_to_system!(AllSyncReceptor);
+        add_receptor_to_system!(StepRightReceptor);
+        add_receptor_to_system!(StepLeftReceptor);
 
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(achieve_pattern));
     }
