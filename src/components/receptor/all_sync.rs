@@ -36,7 +36,7 @@ impl PatternReceptor for AllSyncReceptor {
     }
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
-        info!("note: {:?}", note_ev);
+        // info!("note: {:?}", note_ev);
         let column = note_ev.column;
         let real_sec = note_ev.real_sec;
         if self.is_initialized {
@@ -44,11 +44,6 @@ impl PatternReceptor for AllSyncReceptor {
             self.lane[column as usize] = true;
             self.is_initialized = false;
         } else {
-            // 初期状態で追加された瞬間から0.1秒経過したらリセット
-            if real_sec - self.first_time > 0.1 {
-                self.init();
-                return;
-            }
             self.lane[column as usize] = true;
         }
     }
