@@ -2,8 +2,9 @@ use bevy::{prelude::*, sprite::Mesh2dHandle};
 
 use crate::{
     components::{
-        note::KeyColumn,
-        ui::{LaneBackground, LaneLine, ScoreText, TargetLine, TimeText},
+        note::KeyLane,
+        timer::FrameCounter,
+        ui::{LaneLine, ScoreText, TargetLine, TimeText},
     },
     game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{handles::GameAssetsHandles, note::AudioStartTime, score::ScoreResource},
@@ -98,7 +99,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
 
     // 鍵盤線
     for i in 0..5 {
-        let x = KeyColumn::x_coord_from_num(i);
+        let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {
             translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_POSITION + 250.0, 2.0),
             ..Default::default()
@@ -111,23 +112,6 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 ..Default::default()
             })
             .insert(LaneLine);
-    }
-
-    // 鍵盤背景
-    for i in 0..4 {
-        let x = KeyColumn::x_coord_from_num(i);
-        let transform = Transform {
-            translation: Vec3::new(x, TARGET_POSITION + 250.0, 0.1),
-            ..Default::default()
-        };
-        commands
-            .spawn_bundle(ColorMesh2dBundle {
-                mesh: Mesh2dHandle::from(handles.lane_background.clone()),
-                material: handles.color_material_lane_background.clone(),
-                transform,
-                ..Default::default()
-            })
-            .insert(LaneBackground(i));
     }
 }
 
@@ -163,11 +147,18 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
 }
 
 fn update_lane_background(
-    mut commands: Commands,
-    query: Query<&LaneBackground>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut query: Query<(&Handle<ColorMaterial>, &KeyLane, &mut FrameCounter)>,
     key_input: Res<Input<KeyCode>>,
 ) {
-    for lane in query.iter() {}
+    for (color, lane, mut counter) in query.iter_mut() {
+        if lane.key_just_pressed(&key_input) {
+            counter.reset();
+        }
+        let opacity = 1.0 - counter.count().clamp(0, 10) as f32 / 10.0;
+        let new_color = &mut materials.get_mut(color).unwrap().color;
+        new_color.set_a(opacity);
+    }
 }
 
 pub struct GameUiPlugin;
@@ -179,5 +170,9 @@ impl Plugin for GameUiPlugin {
                 .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
         );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_score_text));
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
+        );
     }
 }

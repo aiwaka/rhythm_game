@@ -63,8 +63,11 @@ pub struct FrameCounter {
 }
 impl FrameCounter {
     pub fn new() -> Self {
+        Self::new_default(0)
+    }
+    pub fn new_default(count: u32) -> Self {
         Self {
-            count: 0,
+            count,
             pause: false,
         }
     }
@@ -98,31 +101,31 @@ impl Deref for FrameCounter {
     }
 }
 
-#[derive(Component)]
-pub struct PlayerShotTimer(pub Timer);
+// #[derive(Component)]
+// pub struct PlayerShotTimer(pub Timer);
 
-impl PlayerShotTimer {
-    pub fn new() -> Self {
-        PlayerShotTimer(Timer::from_seconds(0.1, true))
-    }
-    pub fn reset(&mut self) {
-        self.0 = Timer::from_seconds(0.1, true);
-    }
-}
+// impl PlayerShotTimer {
+//     pub fn new() -> Self {
+//         PlayerShotTimer(Timer::from_seconds(0.1, true))
+//     }
+//     pub fn reset(&mut self) {
+//         self.0 = Timer::from_seconds(0.1, true);
+//     }
+// }
 
-#[derive(Component)]
-pub struct PlayerAnimationTimer(pub Timer);
-impl PlayerAnimationTimer {
-    pub fn new() -> Self {
-        PlayerAnimationTimer(Timer::from_seconds(0.3, true))
-    }
-}
+// #[derive(Component)]
+// pub struct PlayerAnimationTimer(pub Timer);
+// impl PlayerAnimationTimer {
+//     pub fn new() -> Self {
+//         PlayerAnimationTimer(Timer::from_seconds(0.3, true))
+//     }
+// }
 
-// 持続的にダメージを与える場合毎フレーム処理すると大変なことになるのでそのためのタイマーをつくる
-#[derive(Component)]
-pub struct ContinuousDamageTimer(pub Timer);
-impl ContinuousDamageTimer {
-    pub fn new() -> Self {
-        ContinuousDamageTimer(Timer::from_seconds(0.2, true))
-    }
-}
+// // 持続的にダメージを与える場合毎フレーム処理すると大変なことになるのでそのためのタイマーをつくる
+// #[derive(Component)]
+// pub struct ContinuousDamageTimer(pub Timer);
+// impl ContinuousDamageTimer {
+//     pub fn new() -> Self {
+//         ContinuousDamageTimer(Timer::from_seconds(0.2, true))
+//     }
+// }

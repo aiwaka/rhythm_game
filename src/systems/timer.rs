@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::timer::{CountDownTimer, FrameCounter, PlayerAnimationTimer, PlayerShotTimer},
+    components::timer::{CountDownTimer, FrameCounter},
     resources::game_scene::GameCount,
     AppState,
 };
@@ -34,17 +34,17 @@ fn frame_counter_update(mut query: Query<&mut FrameCounter>) {
     }
 }
 
-fn player_shot_timer(time: Res<Time>, mut timer_query: Query<&mut PlayerShotTimer>) {
-    for mut timer in timer_query.iter_mut() {
-        timer.0.tick(time.delta());
-    }
-}
+// fn player_shot_timer(time: Res<Time>, mut timer_query: Query<&mut PlayerShotTimer>) {
+//     for mut timer in timer_query.iter_mut() {
+//         timer.0.tick(time.delta());
+//     }
+// }
 
-fn player_animation_timer(time: Res<Time>, mut timer_query: Query<&mut PlayerAnimationTimer>) {
-    for mut timer in timer_query.iter_mut() {
-        timer.0.tick(time.delta());
-    }
-}
+// fn player_animation_timer(time: Res<Time>, mut timer_query: Query<&mut PlayerAnimationTimer>) {
+//     for mut timer in timer_query.iter_mut() {
+//         timer.0.tick(time.delta());
+//     }
+// }
 
 /// ゲームカウントを増やす
 fn update_game_count(mut game: ResMut<GameCount>) {
@@ -54,8 +54,8 @@ fn update_game_count(mut game: ResMut<GameCount>) {
 /// 常駐するタイマー類を初期化する
 fn init_resident_timers(mut commands: Commands) {
     commands.insert_resource(GameCount(0));
-    commands.spawn().insert(PlayerShotTimer::new());
-    commands.spawn().insert(PlayerAnimationTimer::new());
+    // commands.spawn().insert(PlayerShotTimer::new());
+    // commands.spawn().insert(PlayerAnimationTimer::new());
 }
 
 pub struct TimersPlugin;
@@ -73,10 +73,6 @@ impl Plugin for TimersPlugin {
                     .after(TimerSystemLabel::TimerUpdate)
                     .after(TimerSystemLabel::FrameCounterUpdate),
             ),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(player_shot_timer));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game).with_system(player_animation_timer),
         );
     }
 }

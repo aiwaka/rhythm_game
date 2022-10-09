@@ -20,7 +20,8 @@ pub struct GameAssetsHandles {
     pub color_material_blue: Handle<ColorMaterial>,
     pub color_material_green: Handle<ColorMaterial>,
     pub color_material_white_trans: Handle<ColorMaterial>,
-    pub color_material_lane_background: Handle<ColorMaterial>,
+    // 4鍵それぞれで色を用意するとエフェクトとして使える
+    pub color_material_lane_background: Vec<Handle<ColorMaterial>>,
 
     // メッシュ
     pub note: Handle<Mesh>,
@@ -53,6 +54,12 @@ impl GameAssetsHandles {
         let lane_line_shape = shape::Quad::new(Vec2::new(8.0, 500.0));
         let lane_background_shape = shape::Quad::new(Vec2::new(LANE_WIDTH, 500.0));
 
+        let color_material_lane_background = vec![
+            color_material.add(ColorMaterial::from(Color::CRIMSON)),
+            color_material.add(ColorMaterial::from(Color::CRIMSON)),
+            color_material.add(ColorMaterial::from(Color::CRIMSON)),
+            color_material.add(ColorMaterial::from(Color::CRIMSON)),
+        ];
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
@@ -63,7 +70,7 @@ impl GameAssetsHandles {
             color_material_green: color_material.add(ColorMaterial::from(Color::GREEN)),
             color_material_white_trans: color_material
                 .add(ColorMaterial::from(Color::rgba(1.0, 1.0, 1.0, 0.5))),
-            color_material_lane_background: color_material.add(ColorMaterial::from(Color::CRIMSON)),
+            color_material_lane_background,
 
             note: meshes.add(Mesh::from(note_shape)),
             judge_line: meshes.add(Mesh::from(judge_line_shape)),
