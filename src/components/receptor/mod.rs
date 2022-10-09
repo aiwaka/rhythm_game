@@ -1,4 +1,9 @@
-pub mod all_sync;
+mod all_sync;
+
+/// レセプタ構造体を全部読み込むための公開モジュール
+pub mod prelude {
+    pub use super::all_sync::AllSyncReceptor;
+}
 
 use bevy::prelude::*;
 

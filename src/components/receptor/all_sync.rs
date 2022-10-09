@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::{NotesPattern, PatternReceptor};
 use crate::events::CatchNoteEvent;
 
+/// 4点同時押し
 #[derive(Component)]
 pub struct AllSyncReceptor {
     is_initialized: bool,

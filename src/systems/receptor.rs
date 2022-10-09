@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::receptor::{all_sync::AllSyncReceptor, PatternReceptor},
+    components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
     resources::note::AudioStartTime,
     AppState,
