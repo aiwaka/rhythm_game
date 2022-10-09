@@ -1,7 +1,8 @@
 use bevy::{asset::LoadState, prelude::*};
+use itertools::Itertools;
 
 use crate::{
-    components::{load::NowLoadingText, note::NoteTime},
+    components::{load::NowLoadingText, note::Note},
     resources::{
         game_scene::NextAppState,
         handles::{AssetsLoading, GameAssetsHandles},
@@ -29,8 +30,8 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     let mut notes = parsed
         .notes
         .iter()
-        .map(|note| NoteTime::new(note, parsed.beat_par_bar, parsed.bpm, speed_coeff))
-        .collect::<Vec<NoteTime>>();
+        .map(|note| Note::new(note, parsed.beat_par_bar, parsed.bpm, speed_coeff))
+        .collect_vec();
     // 出現順にソート
     notes.sort_by(|a, b| a.spawn_time.partial_cmp(&b.spawn_time).unwrap());
 

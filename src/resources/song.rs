@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::components::note::NoteTime;
+use crate::components::note::Note;
 
 #[derive(Debug)]
 pub struct SongConfig {
@@ -11,7 +11,7 @@ pub struct SongConfig {
     pub bpm: f64,
     /// 一小節あたりの拍数
     pub beat_par_bar: u32,
-    pub notes: VecDeque<NoteTime>,
+    pub notes: VecDeque<Note>,
 }
 
 /// use for toml

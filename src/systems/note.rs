@@ -3,6 +3,7 @@ use bevy::sprite::Mesh2dHandle;
 
 use crate::components::note::KeyLane;
 use crate::components::timer::FrameCounter;
+use crate::events::CatchNoteEvent;
 use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::note::{AudioStartTime, Speed};
@@ -70,9 +71,7 @@ fn spawn_notes(
                 transform,
                 ..Default::default()
             })
-            .insert(Note {
-                key_column: note.key_column,
-            });
+            .insert(note);
     }
 }
 
@@ -90,13 +89,18 @@ fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed:
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn catch_notes(
     mut commands: Commands,
     query: Query<(&Transform, &Note, Entity)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
     mut score: ResMut<ScoreResource>,
+    mut ev_writer: EventWriter<CatchNoteEvent>,
+    start_time: Res<AudioStartTime>,
+    time: Res<Time>,
 ) {
+    let time_after_start = time.seconds_since_startup() - start_time.0;
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
         for (trans, note, ent) in query.iter() {
@@ -109,6 +113,7 @@ fn catch_notes(
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
                 score.increase_correct(TARGET_POSITION - pos_y);
+                ev_writer.send(CatchNoteEvent::from_note(note, time_after_start));
             }
         }
     }

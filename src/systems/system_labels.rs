@@ -22,3 +22,8 @@ pub(super) enum BoardInfoSystemLabel {
 /// 描画用のTransformにPositionを反映するシステムのラベル
 #[derive(SystemLabel)]
 pub(super) struct ReflectTransform;
+
+#[derive(SystemLabel)]
+pub(super) enum PatternReceptorSystemLabel {
+    Pipeline,
+}

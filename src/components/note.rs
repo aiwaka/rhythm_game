@@ -5,11 +5,6 @@ use crate::{
     resources::song::NoteTimeToml,
 };
 
-#[derive(Component)]
-pub struct Note {
-    pub key_column: i32,
-}
-
 /// 鍵盤レーン
 #[derive(Component, Clone, Copy, Debug)]
 pub struct KeyLane(pub i32);
@@ -36,13 +31,16 @@ impl KeyLane {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct NoteTime {
+#[derive(Component, Clone, Copy, Debug)]
+pub struct Note {
     /// 出現時間. 決められた拍に判定線に来るように設定される.
     pub spawn_time: f64,
+    pub target_time: f64,
+    pub bar: u32,
+    pub beat: f64,
     pub key_column: i32,
 }
-impl NoteTime {
+impl Note {
     pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f64, speed_coeff: f32) -> Self {
         // 座標の移動速度. BASE_SPEED * 倍率.
         let speed = speed_coeff * NOTE_BASE_SPEED;
@@ -51,6 +49,9 @@ impl NoteTime {
         let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat;
         Self {
             spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
+            target_time: click_time,
+            bar: note.bar,
+            beat: note.beat,
             key_column: note.key_column,
         }
     }
