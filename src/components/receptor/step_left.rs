@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{NotesPattern, PatternReceptor};
-use crate::events::CatchNoteEvent;
+use crate::{events::CatchNoteEvent, game_constants::ERROR_THRESHOLD};
 
 /// 3列の右向き階段.
 #[derive(Component)]
@@ -32,7 +32,9 @@ impl PatternReceptor for StepLeftReceptor {
     }
 
     fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
-        if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + 0.1 {
+        if (current_time - self.last_time).abs()
+            > bpm.recip() as f64 * 60.0 + ERROR_THRESHOLD as f64
+        {
             self.init();
         }
     }
