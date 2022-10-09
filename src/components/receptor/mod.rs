@@ -30,11 +30,11 @@ pub trait PatternReceptor: Default + Component {
     /// 初期化を行う. 何をもって初期化とするかはそれぞれに任せる.
     fn init(&mut self);
 
-    /// 初期化されているかどうか（NOTE: 同期的でもないし使えない, 使っていない）
-    fn is_initialized(&self) -> bool;
+    /// 初期化されているかどうかを表す.
+    fn is_init(&self) -> bool;
 
     /// 毎フレーム呼ばれる. 経過時刻等でリセットを行うか決める
-    fn init_or_defer(&mut self, current_time: f64);
+    fn init_or_defer(&mut self, current_time: f64, bpm: f32);
 
     /// ノーツを入力し状態を更新する. 適宜リセット等も行える.
     fn input(&mut self, note_ev: &CatchNoteEvent);

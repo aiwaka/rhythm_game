@@ -2,15 +2,14 @@ use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
 
 use crate::components::note::KeyLane;
+use crate::components::note::Note;
 use crate::components::timer::FrameCounter;
 use crate::events::CatchNoteEvent;
 use crate::game_constants::{NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION, THRESHOLD};
 use crate::resources::handles::GameAssetsHandles;
-use crate::resources::note::{AudioStartTime, Speed};
 use crate::resources::score::ScoreResource;
-use crate::resources::song::SongConfig;
+use crate::resources::song::{AudioStartTime, SongConfig, Speed};
 use crate::AppState;
-use crate::{components::note::Note, resources::note::SpawnTimer};
 
 use super::system_labels::TimerSystemLabel;
 
@@ -99,6 +98,7 @@ fn catch_notes(
     mut ev_writer: EventWriter<CatchNoteEvent>,
     start_time: Res<AudioStartTime>,
     time: Res<Time>,
+    song_info: Res<SongConfig>,
 ) {
     let time_after_start = time.seconds_since_startup() - start_time.0;
     let mut removed_ent = vec![];
@@ -113,7 +113,12 @@ fn catch_notes(
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
                 score.increase_correct(TARGET_POSITION - pos_y);
-                ev_writer.send(CatchNoteEvent::from_note(note, time_after_start));
+                ev_writer.send(CatchNoteEvent::new(
+                    note,
+                    time_after_start,
+                    song_info.bpm,
+                    song_info.beat_par_bar,
+                ));
             }
         }
     }
@@ -136,7 +141,6 @@ fn despawn_notes(
 pub struct NotePlugin;
 impl Plugin for NotePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer(Timer::from_seconds(1.0, true)));
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(set_lane));
         app.add_system_set(
             SystemSet::on_update(AppState::Game)

@@ -41,12 +41,12 @@ pub struct Note {
     pub key_column: i32,
 }
 impl Note {
-    pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f64, speed_coeff: f32) -> Self {
+    pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f32, speed_coeff: f32) -> Self {
         // 座標の移動速度. BASE_SPEED * 倍率.
         let speed = speed_coeff * NOTE_BASE_SPEED;
         let second_par_beat = bpm.recip() * 60.0;
         // 判定線に到達する時間を曲開始時刻から測ったもの.
-        let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat;
+        let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat as f64;
         Self {
             spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
             target_time: click_time,

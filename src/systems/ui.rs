@@ -7,7 +7,7 @@ use crate::{
         ui::{LaneLine, ScoreText, TargetLine, TimeText},
     },
     game_constants::{LANE_WIDTH, TARGET_POSITION},
-    resources::{handles::GameAssetsHandles, note::AudioStartTime, score::ScoreResource},
+    resources::{handles::GameAssetsHandles, score::ScoreResource, song::AudioStartTime},
     AppState,
 };
 

@@ -6,8 +6,8 @@ use crate::{
     resources::{
         game_scene::NextAppState,
         handles::{AssetsLoading, GameAssetsHandles},
-        note::Speed,
         score::ScoreResource,
+        song::Speed,
         song::{SongConfig, SongConfigToml},
     },
     AppState,

@@ -16,15 +16,21 @@ pub struct CatchNoteEvent {
     pub exact_sec: f64,
     /// 実際に取得された時間
     pub real_sec: f64,
+    /// bpm
+    pub bpm: f32,
+    /// 一小節の拍数
+    pub beat_par_bar: u32,
 }
 impl CatchNoteEvent {
-    pub fn from_note(note: &Note, real_sec: f64) -> Self {
+    pub fn new(note: &Note, real_sec: f64, bpm: f32, beat_par_bar: u32) -> Self {
         Self {
             column: note.key_column,
             bar: note.bar,
             beat: note.beat,
             exact_sec: note.target_time,
             real_sec,
+            bpm,
+            beat_par_bar,
         }
     }
 }

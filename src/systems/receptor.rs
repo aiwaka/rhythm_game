@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::note::AudioStartTime,
+    resources::song::{AudioStartTime, SongConfig},
     AppState,
 };
 
@@ -26,14 +26,20 @@ fn receptor_pipeline<T: PatternReceptor>(
     mut achieve_ev_writer: EventWriter<AchievePatternEvent>,
     start_time: Res<AudioStartTime>,
     time: Res<Time>,
+    song_info: Res<SongConfig>,
 ) {
     if let Ok(mut receptor) = q.get_single_mut() {
         let time_after_start = time.seconds_since_startup() - start_time.0;
         if receptor.is_available() {
-            receptor.init_or_defer(time_after_start);
+            // 初期化状態でないなら初期化するかどうか尋ねる
+            if !receptor.is_init() {
+                receptor.init_or_defer(time_after_start, song_info.bpm);
+            }
+            // ノーツを入力
             for note_ev in note_ev_reader.iter() {
                 receptor.input(note_ev)
             }
+            // 条件を満たしていたらイベントを送信して初期化
             if let Some(pattern) = receptor.achieved() {
                 achieve_ev_writer.send(AchievePatternEvent(pattern));
                 // 達成イベントを送ったら重複しないように必ず初期化

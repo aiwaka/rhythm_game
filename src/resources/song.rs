@@ -4,11 +4,23 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::components::note::Note;
 
+/// 曲再生を開始するゲーム開始からの時間（秒）
+pub struct AudioStartTime(pub f64);
+
+/// いわゆるハイスピ. BASE_SPEED定数があるので倍率で指定.
+pub struct Speed(pub f32);
+
+impl Default for Speed {
+    fn default() -> Self {
+        Speed(1.0)
+    }
+}
+
 #[derive(Debug)]
 pub struct SongConfig {
     pub name: String,
     pub music_filename: String,
-    pub bpm: f64,
+    pub bpm: f32,
     /// 一小節あたりの拍数
     pub beat_par_bar: u32,
     pub notes: VecDeque<Note>,
@@ -21,7 +33,7 @@ pub struct SongConfigToml {
     pub filename: String,
     /// 一小節に何拍あるか
     pub beat_par_bar: u32,
-    pub bpm: f64,
+    pub bpm: f32,
     pub notes: Vec<NoteTimeToml>,
 }
 
