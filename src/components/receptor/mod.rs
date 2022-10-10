@@ -1,4 +1,5 @@
 mod denim;
+mod double_tap;
 mod full_sync;
 mod step_left;
 mod step_right;
@@ -6,7 +7,8 @@ mod step_right;
 /// レセプタ構造体を全部読み込むための公開モジュール
 pub mod prelude {
     pub use super::{
-        full_sync::FullSyncReceptor, step_left::StepLeftReceptor, step_right::StepRightReceptor,
+        double_tap::DoubleTapReceptor, full_sync::FullSyncReceptor, step_left::StepLeftReceptor,
+        step_right::StepRightReceptor,
     };
 }
 
@@ -23,6 +25,8 @@ pub enum NotesPattern {
     /// 左上がり階段
     StepLeft,
     StepRight,
+    /// 縦連2
+    DoubleTap,
 }
 impl std::fmt::Display for NotesPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,7 +57,8 @@ pub trait PatternReceptor: Default + Component {
     /// 毎フレーム呼ばれる. 経過時刻等でリセットを行うか決める
     fn init_or_defer(&mut self, current_time: f64, bpm: f32);
 
-    /// ノーツを入力し状態を更新する. 適宜リセット等も行える.
+    /// ノーツを入力し状態を更新する.
+    /// 適宜リセット等も行えるが, init_or_deferのあとに呼ばれるためにあまり考えなくて大丈夫.
     fn input(&mut self, note_ev: &CatchNoteEvent);
 
     /// 加点パターンの条件を満たしたかどうかを調べ, 満たしていたら対応するパターン列挙子を返す.
