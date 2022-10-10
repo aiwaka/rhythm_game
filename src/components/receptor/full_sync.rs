@@ -27,7 +27,7 @@ impl PatternReceptor for FullSyncReceptor {
         self.lane.iter().all(|&e| !e)
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn init_or_defer(&mut self, current_time: f64, _: f32) {
         if (current_time - self.first_time).abs() > 0.1 {
             self.init();
         }
