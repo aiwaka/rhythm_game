@@ -4,12 +4,16 @@ use crate::{
     components::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
-        ui::{LaneLine, PatternPopupText, ScoreText, TargetLine, TimeText},
+        ui::{CatchEvalPopupText, LaneLine, PatternPopupText, ScoreText, TargetLine, TimeText},
     },
-    events::AchievePatternEvent,
+    events::{AchievePatternEvent, CatchNoteEvent},
     game_constants::{LANE_WIDTH, TARGET_POSITION},
-    resources::{handles::GameAssetsHandles, score::ScoreResource, song::AudioStartTime},
-    AppState,
+    resources::{
+        handles::GameAssetsHandles,
+        score::{CatchEval, ScoreResource},
+        song::AudioStartTime,
+    },
+    AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
 use super::system_labels::TimerSystemLabel;
@@ -223,6 +227,92 @@ fn update_pattern_text(
     }
 }
 
+fn spawn_catch_eval_text(
+    mut commands: Commands,
+    mut ev_reader: EventReader<CatchNoteEvent>,
+    handles: Res<GameAssetsHandles>,
+) {
+    let font = handles.main_font.clone();
+    let pos_bottom = SCREEN_HEIGHT / 2.0 + TARGET_POSITION;
+    for ev in ev_reader.iter() {
+        let catch_eval = CatchEval::new(ev.exact_sec, ev.real_sec);
+        let pos_left = SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(ev.column) - LANE_WIDTH / 2.0;
+        commands
+            .spawn_bundle(NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    position_type: PositionType::Absolute,
+                    size: Size::new(Val::Px(LANE_WIDTH), Val::Px(50.0)),
+                    position: UiRect {
+                        left: Val::Px(pos_left),
+                        bottom: Val::Px(pos_bottom),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                color: UiColor(Color::NONE),
+                ..Default::default()
+            })
+            .insert(CountDownTimer::new(15))
+            .insert(CatchEvalPopupText)
+            .with_children(|parent| {
+                if let Some(timing) = catch_eval.get_timing() {
+                    parent.spawn_bundle(TextBundle {
+                        text: Text {
+                            sections: vec![TextSection {
+                                value: format!("{}", timing),
+                                style: TextStyle {
+                                    font: font.clone(),
+                                    font_size: 15.0,
+                                    color: timing.get_color(),
+                                },
+                            }],
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    });
+                }
+                parent.spawn_bundle(TextBundle {
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: format!("{}", catch_eval),
+                            style: TextStyle {
+                                font: font.clone(),
+                                font_size: 30.0,
+                                color: catch_eval.get_color(),
+                            },
+                        }],
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
+            });
+    }
+}
+
+fn update_catch_eval_text(
+    mut node_q: Query<(&mut Style, &CountDownTimer, &Children), With<CatchEvalPopupText>>,
+    mut text_q: Query<&mut Text>,
+) {
+    for (mut style, timer, children) in node_q.iter_mut() {
+        if !timer.is_finished() {
+            for &child in children.iter() {
+                if let Ok(mut text) = text_q.get_mut(child) {
+                    let opacity = timer.count().clamp(0, 10) as f32 / 10.0;
+                    let color_ref = &mut text.sections[0].style.color;
+                    color_ref.set_a(opacity);
+                    // text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, opacity);
+                    if let Val::Px(ref mut prev_pos) = style.position.top {
+                        *prev_pos -= 3.0;
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
@@ -243,6 +333,14 @@ impl Plugin for GameUiPlugin {
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
                 .with_system(update_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(spawn_catch_eval_text.after(TimerSystemLabel::TimerUpdate)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(update_catch_eval_text.after(TimerSystemLabel::TimerUpdate)),
         );
     }
 }

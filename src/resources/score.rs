@@ -1,18 +1,55 @@
+use bevy::prelude::*;
+
 use crate::{components::receptor::NotesPattern, game_constants::ERROR_THRESHOLD};
 
 /// Perfect以外は遅いか早いかをもたせる
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TimingEval {
     Slow,
     Fast,
 }
+impl std::fmt::Display for TimingEval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TimingEval::Slow => {
+                write!(f, "slow")
+            }
+            TimingEval::Fast => {
+                write!(f, "fast")
+            }
+        }
+    }
+}
+impl TimingEval {
+    pub fn get_color(&self) -> Color {
+        match self {
+            TimingEval::Slow => Color::BLUE,
+            TimingEval::Fast => Color::ORANGE,
+        }
+    }
+}
 
 /// ノーツ取得の評価
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum CatchEval {
     Perfect,
     Ok(TimingEval),
     Miss(TimingEval),
+}
+impl std::fmt::Display for CatchEval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CatchEval::Perfect => {
+                write!(f, "perfect")
+            }
+            CatchEval::Ok(_) => {
+                write!(f, "ok")
+            }
+            CatchEval::Miss(_) => {
+                write!(f, "miss")
+            }
+        }
+    }
 }
 impl CatchEval {
     pub fn new(target_time: f64, real_time: f64) -> Self {
@@ -29,12 +66,28 @@ impl CatchEval {
         }
     }
 
-    pub fn to_score(&self) -> u32 {
+    pub fn get_score(&self) -> u32 {
         match self {
             CatchEval::Perfect => 2,
             CatchEval::Ok(_timing) => 1,
             CatchEval::Miss(_timing) => 0,
         }
+    }
+
+    pub fn get_color(&self) -> Color {
+        match self {
+            CatchEval::Perfect => Color::GOLD,
+            CatchEval::Ok(_timing) => Color::GREEN,
+            CatchEval::Miss(_timing) => Color::GRAY,
+        }
+    }
+    pub fn get_timing(&self) -> Option<TimingEval> {
+        match self {
+            CatchEval::Ok(timing) => Some(timing),
+            CatchEval::Miss(timing) => Some(timing),
+            _ => None,
+        }
+        .cloned()
     }
 }
 
@@ -52,7 +105,7 @@ impl ScoreResource {
     pub fn increase_correct(&mut self, catch_eval: &CatchEval) {
         self.corrects += 1;
 
-        self.score += catch_eval.to_score() as usize;
+        self.score += catch_eval.get_score() as usize;
     }
 
     pub fn increase_fails(&mut self) {

@@ -18,3 +18,6 @@ pub struct LaneBackground(pub i32);
 
 #[derive(Component)]
 pub struct PatternPopupText;
+
+#[derive(Component)]
+pub struct CatchEvalPopupText;
