@@ -33,6 +33,7 @@ impl TimingEval {
 #[derive(Debug, Clone, Copy)]
 pub enum CatchEval {
     Perfect,
+    NearPerfect(TimingEval),
     Ok(TimingEval),
     Miss(TimingEval),
 }
@@ -40,6 +41,9 @@ impl std::fmt::Display for CatchEval {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CatchEval::Perfect => {
+                write!(f, "perfect")
+            }
+            CatchEval::NearPerfect(_) => {
                 write!(f, "perfect")
             }
             CatchEval::Ok(_) => {
@@ -58,6 +62,12 @@ impl CatchEval {
             diff if (-ERROR_THRESHOLD..=-ERROR_THRESHOLD / 3.0).contains(&diff) => {
                 Self::Ok(TimingEval::Slow)
             }
+            diff if (-ERROR_THRESHOLD / 3.0..=-ERROR_THRESHOLD / 6.0).contains(&diff) => {
+                Self::NearPerfect(TimingEval::Slow)
+            }
+            diff if (ERROR_THRESHOLD / 6.0..=ERROR_THRESHOLD / 3.0).contains(&diff) => {
+                Self::NearPerfect(TimingEval::Fast)
+            }
             diff if (ERROR_THRESHOLD / 3.0..=ERROR_THRESHOLD).contains(&diff) => {
                 Self::Ok(TimingEval::Fast)
             }
@@ -69,23 +79,26 @@ impl CatchEval {
     pub fn get_score(&self) -> u32 {
         match self {
             CatchEval::Perfect => 2,
-            CatchEval::Ok(_timing) => 1,
-            CatchEval::Miss(_timing) => 0,
+            CatchEval::NearPerfect(_) => 2,
+            CatchEval::Ok(_) => 1,
+            CatchEval::Miss(_) => 0,
         }
     }
 
     pub fn get_color(&self) -> Color {
         match self {
             CatchEval::Perfect => Color::GOLD,
-            CatchEval::Ok(_timing) => Color::GREEN,
-            CatchEval::Miss(_timing) => Color::GRAY,
+            CatchEval::NearPerfect(_) => Color::GOLD,
+            CatchEval::Ok(_) => Color::GREEN,
+            CatchEval::Miss(_) => Color::GRAY,
         }
     }
     pub fn get_timing(&self) -> Option<TimingEval> {
         match self {
+            CatchEval::Perfect => None,
+            CatchEval::NearPerfect(timing) => Some(timing),
             CatchEval::Ok(timing) => Some(timing),
             CatchEval::Miss(timing) => Some(timing),
-            _ => None,
         }
         .cloned()
     }

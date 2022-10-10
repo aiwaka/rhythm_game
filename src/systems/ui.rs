@@ -303,7 +303,6 @@ fn update_catch_eval_text(
                     let opacity = timer.count().clamp(0, 10) as f32 / 10.0;
                     let color_ref = &mut text.sections[0].style.color;
                     color_ref.set_a(opacity);
-                    // text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, opacity);
                     if let Val::Px(ref mut prev_pos) = style.position.top {
                         *prev_pos -= 3.0;
                     }
