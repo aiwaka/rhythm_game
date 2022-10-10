@@ -20,7 +20,7 @@ fn delete_timer(mut commands: Commands, query: Query<(&CountDownTimer, Entity)>)
     for (timer, ent) in query.iter() {
         if timer.is_finished() {
             if timer.auto_despawn() {
-                commands.entity(ent).despawn();
+                commands.entity(ent).despawn_recursive();
             } else {
                 commands.entity(ent).remove::<CountDownTimer>();
             }

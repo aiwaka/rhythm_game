@@ -3,9 +3,10 @@ use bevy::{prelude::*, sprite::Mesh2dHandle};
 use crate::{
     components::{
         note::KeyLane,
-        timer::FrameCounter,
-        ui::{LaneLine, ScoreText, TargetLine, TimeText},
+        timer::{CountDownTimer, FrameCounter},
+        ui::{LaneLine, PatternPopupText, ScoreText, TargetLine, TimeText},
     },
+    events::AchievePatternEvent,
     game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{handles::GameAssetsHandles, score::ScoreResource, song::AudioStartTime},
     AppState,
@@ -161,6 +162,67 @@ fn update_lane_background(
     }
 }
 
+fn spawn_pattern_text(
+    mut commands: Commands,
+    mut ev_reader: EventReader<AchievePatternEvent>,
+    handles: Res<GameAssetsHandles>,
+) {
+    let font = handles.main_font.clone();
+    for ev in ev_reader.iter() {
+        commands
+            .spawn_bundle(NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    position: UiRect {
+                        left: Val::Px(40.0),
+                        top: Val::Px(250.0),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                color: UiColor(Color::NONE),
+                ..Default::default()
+            })
+            .insert(CountDownTimer::new(30))
+            .insert(PatternPopupText)
+            .with_children(|parent| {
+                parent.spawn_bundle(TextBundle {
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: format!("{}", ev.0),
+                            style: TextStyle {
+                                font: font.clone(),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                        }],
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
+            });
+    }
+}
+
+fn update_pattern_text(
+    mut node_q: Query<(&mut Style, &CountDownTimer, &Children), With<PatternPopupText>>,
+    mut text_q: Query<&mut Text>,
+) {
+    for (mut style, timer, children) in node_q.iter_mut() {
+        if !timer.is_finished() {
+            for &child in children.iter() {
+                if let Ok(mut text) = text_q.get_mut(child) {
+                    let opacity = timer.count().clamp(0, 20) as f32 / 20.0;
+                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, opacity);
+                    if let Val::Px(ref mut prev_pos) = style.position.top {
+                        *prev_pos -= 3.0;
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
@@ -173,6 +235,14 @@ impl Plugin for GameUiPlugin {
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
                 .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(spawn_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(update_pattern_text.after(TimerSystemLabel::TimerUpdate)),
         );
     }
 }
