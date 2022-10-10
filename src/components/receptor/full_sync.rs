@@ -5,11 +5,11 @@ use crate::events::CatchNoteEvent;
 
 /// 4点同時押し
 #[derive(Component)]
-pub struct AllSyncReceptor {
+pub struct FullSyncReceptor {
     first_time: f64,
     lane: [bool; 4],
 }
-impl Default for AllSyncReceptor {
+impl Default for FullSyncReceptor {
     fn default() -> Self {
         Self {
             first_time: 0.0,
@@ -18,7 +18,7 @@ impl Default for AllSyncReceptor {
     }
 }
 
-impl PatternReceptor for AllSyncReceptor {
+impl PatternReceptor for FullSyncReceptor {
     fn init(&mut self) {
         self.lane = [false; 4];
     }
@@ -49,7 +49,7 @@ impl PatternReceptor for AllSyncReceptor {
         self.lane
             .iter()
             .all(|e| *e)
-            .then_some(NotesPattern::AllSync)
+            .then_some(NotesPattern::FullSync)
     }
 
     fn is_available(&self) -> bool {

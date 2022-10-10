@@ -14,7 +14,7 @@ fn setup_receptor(mut commands: Commands) {
             commands.spawn().insert($x);
         };
     }
-    spawn_receptor!(AllSyncReceptor::default());
+    spawn_receptor!(FullSyncReceptor::default());
     spawn_receptor!(StepRightReceptor::default());
     spawn_receptor!(StepLeftReceptor::default());
 }
@@ -72,7 +72,7 @@ impl Plugin for PatternReceptorPlugin {
         // app.add_system_set(
         //     SystemSet::on_update(AppState::Game).with_system(receptor_pipeline::<AllSyncReceptor>),
         // );
-        add_receptor_to_system!(AllSyncReceptor);
+        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
 

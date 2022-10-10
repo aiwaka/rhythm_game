@@ -1,11 +1,12 @@
-mod all_sync;
+mod denim;
+mod full_sync;
 mod step_left;
 mod step_right;
 
 /// レセプタ構造体を全部読み込むための公開モジュール
 pub mod prelude {
     pub use super::{
-        all_sync::AllSyncReceptor, step_left::StepLeftReceptor, step_right::StepRightReceptor,
+        full_sync::FullSyncReceptor, step_left::StepLeftReceptor, step_right::StepRightReceptor,
     };
 }
 
@@ -18,10 +19,18 @@ use crate::events::CatchNoteEvent;
 pub enum NotesPattern {
     Denim,
     /// 同時押し
-    AllSync,
+    FullSync,
     /// 左上がり階段
     StepLeft,
     StepRight,
+}
+impl std::fmt::Display for NotesPattern {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // match *self {
+        //     _ => {}
+        // }
+        write!(f, "{:?}", self)
+    }
 }
 
 /// パターン受容体の機能を与えるトレイト.
