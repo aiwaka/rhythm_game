@@ -8,7 +8,7 @@ pub const SPAWN_POSITION: f32 = 400.0;
 pub const TARGET_POSITION: f32 = -200.0;
 
 /// ノーツをとるときにミスになるまでの時刻誤差（秒）
-pub const ERROR_THRESHOLD: f32 = 0.1;
+pub const ERROR_THRESHOLD: f64 = 0.1;
 
 /// 出現位置から判定線までの距離
 pub const DISTANCE: f32 = TARGET_POSITION - SPAWN_POSITION;

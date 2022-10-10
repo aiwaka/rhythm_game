@@ -7,6 +7,7 @@ use crate::components::timer::FrameCounter;
 use crate::events::CatchNoteEvent;
 use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
 use crate::resources::handles::GameAssetsHandles;
+use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
 use crate::resources::song::{AudioStartTime, SongConfig, Speed};
 use crate::AppState;
@@ -77,7 +78,7 @@ fn spawn_notes(
 fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<Speed>) {
     for (mut transform, _) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * speed.0 * NOTE_BASE_SPEED;
-        let allow_distance = ERROR_THRESHOLD * NOTE_BASE_SPEED * speed.0;
+        let allow_distance = ERROR_THRESHOLD as f32 * NOTE_BASE_SPEED * speed.0;
         let distance_after_target = transform.translation.y - (TARGET_POSITION - allow_distance);
         if distance_after_target < -0.02 {
             transform.rotate_axis(Vec3::Z, 0.1);
@@ -91,7 +92,7 @@ fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed:
 #[allow(clippy::too_many_arguments)]
 fn catch_notes(
     mut commands: Commands,
-    query: Query<(&Transform, &Note, Entity)>,
+    query: Query<(&Note, Entity)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
     mut score: ResMut<ScoreResource>,
@@ -99,23 +100,22 @@ fn catch_notes(
     start_time: Res<AudioStartTime>,
     time: Res<Time>,
     song_info: Res<SongConfig>,
-    speed: Res<Speed>,
 ) {
     let time_after_start = time.seconds_since_startup() - start_time.0;
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
-        for (trans, note, ent) in query.iter() {
-            let pos_y = trans.translation.y;
-            let allow_distance = ERROR_THRESHOLD * NOTE_BASE_SPEED * speed.0;
-            if (TARGET_POSITION - allow_distance..=TARGET_POSITION + allow_distance)
-                .contains(&pos_y)
+        for (note, ent) in query.iter() {
+            // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押された・まだ消去されていないノートを取得処理
+            if (note.target_time - ERROR_THRESHOLD..=note.target_time + ERROR_THRESHOLD)
+                .contains(&time_after_start)
                 && note.key_column == lane.0
                 && lane.key_just_pressed(&key_input)
                 && !removed_ent.contains(&ent)
             {
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
-                score.increase_correct(TARGET_POSITION - pos_y, allow_distance);
+                let score_eval = CatchEval::new(note.target_time, time_after_start);
+                score.increase_correct(&score_eval);
                 ev_writer.send(CatchNoteEvent::new(
                     note,
                     time_after_start,

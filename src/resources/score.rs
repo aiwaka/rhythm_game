@@ -1,3 +1,43 @@
+use crate::game_constants::ERROR_THRESHOLD;
+
+/// Perfect以外は遅いか早いかをもたせる
+#[derive(Debug)]
+pub enum TimingEval {
+    Slow,
+    Fast,
+}
+
+/// ノーツ取得の評価
+#[derive(Debug)]
+pub enum CatchEval {
+    Perfect,
+    Ok(TimingEval),
+    Miss(TimingEval),
+}
+impl CatchEval {
+    pub fn new(target_time: f64, real_time: f64) -> Self {
+        match real_time - target_time {
+            diff if diff < -ERROR_THRESHOLD => Self::Miss(TimingEval::Slow),
+            diff if (-ERROR_THRESHOLD..=-ERROR_THRESHOLD / 3.0).contains(&diff) => {
+                Self::Ok(TimingEval::Slow)
+            }
+            diff if (ERROR_THRESHOLD / 3.0..=ERROR_THRESHOLD).contains(&diff) => {
+                Self::Ok(TimingEval::Fast)
+            }
+            diff if diff > ERROR_THRESHOLD => Self::Miss(TimingEval::Fast),
+            _ => Self::Perfect,
+        }
+    }
+
+    pub fn to_score(&self) -> u32 {
+        match self {
+            CatchEval::Perfect => 2,
+            CatchEval::Ok(_timing) => 1,
+            CatchEval::Miss(_timing) => 0,
+        }
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ScoreResource {
     corrects: usize,
@@ -6,17 +46,11 @@ pub struct ScoreResource {
     score: usize,
 }
 impl ScoreResource {
-    /// 取得数を増やし, スコアを増加させ, スコアの増分を返す. allow_distanceはミスにならない距離
-    pub fn increase_correct(&mut self, distance: f32, allow_distance: f32) -> usize {
+    /// 取得数を増やし, スコアを増加させ, スコアの増分を返す.
+    pub fn increase_correct(&mut self, catch_eval: &CatchEval) {
         self.corrects += 1;
 
-        // ボタン押下の近さに応じて[0, 1]の値をとる.
-        let score_multiplier = (allow_distance - distance.abs()) / allow_distance;
-        // [10, 100]点を与える
-        let points = (score_multiplier * 100.0).clamp(10.0, 100.0) as usize;
-        self.score += points;
-
-        points
+        self.score += catch_eval.to_score() as usize;
     }
 
     pub fn increase_fails(&mut self) {
