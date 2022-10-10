@@ -58,20 +58,20 @@ impl std::fmt::Display for CatchEval {
 impl CatchEval {
     pub fn new(target_time: f64, real_time: f64) -> Self {
         match real_time - target_time {
-            diff if diff < -ERROR_THRESHOLD => Self::Miss(TimingEval::Slow),
+            diff if diff < -ERROR_THRESHOLD => Self::Miss(TimingEval::Fast),
             diff if (-ERROR_THRESHOLD..=-ERROR_THRESHOLD / 3.0).contains(&diff) => {
-                Self::Ok(TimingEval::Slow)
-            }
-            diff if (-ERROR_THRESHOLD / 3.0..=-ERROR_THRESHOLD / 6.0).contains(&diff) => {
-                Self::NearPerfect(TimingEval::Slow)
-            }
-            diff if (ERROR_THRESHOLD / 6.0..=ERROR_THRESHOLD / 3.0).contains(&diff) => {
-                Self::NearPerfect(TimingEval::Fast)
-            }
-            diff if (ERROR_THRESHOLD / 3.0..=ERROR_THRESHOLD).contains(&diff) => {
                 Self::Ok(TimingEval::Fast)
             }
-            diff if diff > ERROR_THRESHOLD => Self::Miss(TimingEval::Fast),
+            diff if (-ERROR_THRESHOLD / 3.0..=-ERROR_THRESHOLD / 6.0).contains(&diff) => {
+                Self::NearPerfect(TimingEval::Fast)
+            }
+            diff if (ERROR_THRESHOLD / 6.0..=ERROR_THRESHOLD / 3.0).contains(&diff) => {
+                Self::NearPerfect(TimingEval::Slow)
+            }
+            diff if (ERROR_THRESHOLD / 3.0..=ERROR_THRESHOLD).contains(&diff) => {
+                Self::Ok(TimingEval::Slow)
+            }
+            diff if diff > ERROR_THRESHOLD => Self::Miss(TimingEval::Slow),
             _ => Self::Perfect,
         }
     }
