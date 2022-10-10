@@ -1,4 +1,5 @@
 use bevy::{prelude::*, sprite::Mesh2dHandle};
+use rand::Rng;
 
 use crate::{
     components::{
@@ -171,6 +172,16 @@ fn spawn_pattern_text(
     mut ev_reader: EventReader<AchievePatternEvent>,
     handles: Res<GameAssetsHandles>,
 ) {
+    // 出現位置をある程度ランダムに
+    let mut rng = rand::thread_rng();
+    #[allow(clippy::if_same_then_else)]
+    let pos_x: f32 = if rng.gen_bool(0.5) {
+        rng.gen_range(10.0..=40.0)
+    } else {
+        rng.gen_range(580.0..=620.0)
+    };
+    let pos_y: f32 = rng.gen_range(200.0..=300.0);
+
     let font = handles.main_font.clone();
     for ev in ev_reader.iter() {
         commands
@@ -178,8 +189,8 @@ fn spawn_pattern_text(
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
-                        left: Val::Px(40.0),
-                        top: Val::Px(250.0),
+                        left: Val::Px(pos_x),
+                        top: Val::Px(pos_y),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -227,6 +238,7 @@ fn update_pattern_text(
     }
 }
 
+/// ノーツ取得評価テキストを出現させる
 fn spawn_catch_eval_text(
     mut commands: Commands,
     mut ev_reader: EventReader<CatchNoteEvent>,
