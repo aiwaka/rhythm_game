@@ -30,7 +30,7 @@ impl PatternReceptor for DoubleTapReceptor {
 
     fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
         // 16分を少し超えたらリセット
-        if current_time - self.first_time > (bpm as f64).recip() * 15.0 + ERROR_THRESHOLD / 5.0 {
+        if current_time - self.first_time > (bpm as f64).recip() * 15.0 + ERROR_THRESHOLD / 10.0 {
             self.init();
         }
     }
