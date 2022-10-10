@@ -32,6 +32,14 @@ impl std::fmt::Display for NotesPattern {
         write!(f, "{:?}", self)
     }
 }
+impl NotesPattern {
+    pub fn to_score(&self) -> u32 {
+        match *self {
+            NotesPattern::Denim => 2,
+            _ => 1,
+        }
+    }
+}
 
 /// パターン受容体の機能を与えるトレイト.
 /// 様々なノーツの配置パターンをキャッチできるようにするために機能を一般化する.

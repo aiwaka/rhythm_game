@@ -1,4 +1,4 @@
-use crate::game_constants::ERROR_THRESHOLD;
+use crate::{components::receptor::NotesPattern, game_constants::ERROR_THRESHOLD};
 
 /// Perfect以外は遅いか早いかをもたせる
 #[derive(Debug)]
@@ -44,6 +44,8 @@ pub struct ScoreResource {
     fails: usize,
 
     score: usize,
+
+    pattern_vec: Vec<NotesPattern>,
 }
 impl ScoreResource {
     /// 取得数を増やし, スコアを増加させ, スコアの増分を返す.
@@ -57,6 +59,10 @@ impl ScoreResource {
         self.fails += 1;
     }
 
+    pub fn add_score(&mut self, score: u32) {
+        self.score += score as usize;
+    }
+
     pub fn score(&self) -> usize {
         self.score
     }
@@ -65,5 +71,10 @@ impl ScoreResource {
     }
     pub fn fails(&self) -> usize {
         self.fails
+    }
+
+    pub fn push_pattern(&mut self, pattern: NotesPattern) {
+        self.pattern_vec.push(pattern);
+        self.add_score(pattern.to_score());
     }
 }

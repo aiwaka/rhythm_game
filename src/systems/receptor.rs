@@ -3,7 +3,10 @@ use bevy::prelude::*;
 use crate::{
     components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::song::{AudioStartTime, SongConfig},
+    resources::{
+        score::ScoreResource,
+        song::{AudioStartTime, SongConfig},
+    },
     AppState,
 };
 
@@ -49,9 +52,13 @@ fn receptor_pipeline<T: PatternReceptor>(
     }
 }
 
-fn achieve_pattern(mut ev_reader: EventReader<AchievePatternEvent>) {
+fn achieve_pattern(
+    mut ev_reader: EventReader<AchievePatternEvent>,
+    mut score: ResMut<ScoreResource>,
+) {
     for ev in ev_reader.iter() {
         info!("{:?}", ev.0);
+        score.push_pattern(ev.0);
     }
 }
 
