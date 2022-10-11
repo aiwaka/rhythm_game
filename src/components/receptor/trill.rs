@@ -53,6 +53,7 @@ impl PatternReceptor for TrillReceptor {
             self.last_lane = 1 - self.last_lane;
         } else {
             self.broken = true;
+            return;
         }
         self.length += 1;
     }
