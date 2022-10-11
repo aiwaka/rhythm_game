@@ -209,7 +209,7 @@ fn spawn_pattern_text(
                             style: TextStyle {
                                 font: font.clone(),
                                 font_size: 40.0,
-                                color: Color::rgb(0.9, 0.9, 0.9),
+                                color: Color::YELLOW,
                             },
                         }],
                         ..Default::default()
@@ -229,7 +229,8 @@ fn update_pattern_text(
             for &child in children.iter() {
                 if let Ok(mut text) = text_q.get_mut(child) {
                     let opacity = timer.count().clamp(0, 20) as f32 / 20.0;
-                    text.sections[0].style.color = Color::rgba(1.0, 1.0, 1.0, opacity);
+                    let color = &mut text.sections[0].style.color;
+                    color.set_a(opacity);
                     if let Val::Px(ref mut prev_pos) = style.position.top {
                         *prev_pos -= 3.0;
                     }
