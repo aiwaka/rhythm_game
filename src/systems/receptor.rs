@@ -21,6 +21,7 @@ fn setup_receptor(mut commands: Commands) {
     spawn_receptor!(StepRightReceptor::default());
     spawn_receptor!(StepLeftReceptor::default());
     spawn_receptor!(DoubleTapReceptor::default());
+    spawn_receptor!(TrillReceptor::default());
 }
 
 /// レセプタにノーツを入力して更新する
@@ -84,6 +85,7 @@ impl Plugin for PatternReceptorPlugin {
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);
+        add_receptor_to_system!(TrillReceptor);
 
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(achieve_pattern));
     }

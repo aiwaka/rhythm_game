@@ -3,12 +3,13 @@ mod double_tap;
 mod full_sync;
 mod step_left;
 mod step_right;
+mod trill;
 
 /// レセプタ構造体を全部読み込むための公開モジュール
 pub mod prelude {
     pub use super::{
         double_tap::DoubleTapReceptor, full_sync::FullSyncReceptor, step_left::StepLeftReceptor,
-        step_right::StepRightReceptor,
+        step_right::StepRightReceptor, trill::TrillReceptor,
     };
 }
 
@@ -27,6 +28,8 @@ pub enum NotesPattern {
     StepRight,
     /// 縦連2
     DoubleTap,
+    /// トリル. 続いた長さを持つ
+    Trill(u32),
 }
 impl std::fmt::Display for NotesPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -37,8 +40,8 @@ impl std::fmt::Display for NotesPattern {
     }
 }
 impl NotesPattern {
-    pub fn to_score(&self) -> u32 {
-        match *self {
+    pub fn to_score(self) -> u32 {
+        match self {
             NotesPattern::Denim => 2,
             _ => 1,
         }
@@ -48,8 +51,10 @@ impl NotesPattern {
 /// パターン受容体の機能を与えるトレイト.
 /// 様々なノーツの配置パターンをキャッチできるようにするために機能を一般化する.
 pub trait PatternReceptor: Default + Component {
-    /// 初期化を行う. 何をもって初期化とするかはそれぞれに任せる.
-    fn init(&mut self);
+    /// 初期化を行う. デフォルト状態に戻す実装がされているが, 何をもって初期化とするかそれぞれが実装することもできる.
+    fn init(&mut self) {
+        *self = Self::default();
+    }
 
     /// 初期化されているかどうかを表す.
     fn is_init(&self) -> bool;
