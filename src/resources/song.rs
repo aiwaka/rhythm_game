@@ -4,6 +4,12 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::components::note::Note;
 
+/// 選択された曲をロードする際に知るためのリソース
+pub struct SelectedSong {
+    pub name: String,
+    pub filename: String,
+}
+
 /// 曲再生を開始するゲーム開始からの時間（秒）
 pub struct AudioStartTime(pub f64);
 

@@ -8,10 +8,10 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
 use events::add_events_to_game;
-use resources::{game_scene::NextAppState, song::Speed};
+use resources::game_scene::NextAppState;
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
-    timer::TimersPlugin, ui::GameUiPlugin,
+    song_select::SongSelectStatePlugin, timer::TimersPlugin, ui::GameUiPlugin,
 };
 
 const SCREEN_WIDTH: f32 = 800.0;
@@ -20,6 +20,7 @@ const SCREEN_HEIGHT: f32 = 600.0;
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
 pub enum AppState {
     HomeMenu,
+    SongSelect,
     Loading,
     Game,
 }
@@ -48,8 +49,7 @@ fn main() {
     app.add_plugin(AudioPlugin);
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
-    app.insert_resource(NextAppState(AppState::Game));
-    app.insert_resource(Speed(1.5));
+    app.insert_resource(NextAppState(AppState::SongSelect));
     app.add_state(AppState::Loading);
 
     add_events_to_game(&mut app);
@@ -61,6 +61,8 @@ fn main() {
     app.add_plugin(GameAudioPlugin);
     app.add_plugin(TimersPlugin);
     app.add_plugin(PatternReceptorPlugin);
+
+    app.add_plugin(SongSelectStatePlugin);
     // app.add_plugin(ShadersPlugin);
     app.run();
 }
