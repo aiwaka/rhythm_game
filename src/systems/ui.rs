@@ -172,18 +172,19 @@ fn spawn_pattern_text(
     mut ev_reader: EventReader<AchievePatternEvent>,
     handles: Res<GameAssetsHandles>,
 ) {
-    // 出現位置をある程度ランダムに
+    // 乱数生成器
     let mut rng = rand::thread_rng();
-    #[allow(clippy::if_same_then_else)]
-    let pos_x: f32 = if rng.gen_bool(0.5) {
-        rng.gen_range(10.0..=40.0)
-    } else {
-        rng.gen_range(580.0..=620.0)
-    };
-    let pos_y: f32 = rng.gen_range(200.0..=300.0);
 
     let font = handles.main_font.clone();
     for ev in ev_reader.iter() {
+        // 出現位置をある程度ランダムに
+        #[allow(clippy::if_same_then_else)]
+        let pos_x: f32 = if rng.gen_bool(0.5) {
+            rng.gen_range(10.0..=40.0)
+        } else {
+            rng.gen_range(580.0..=620.0)
+        };
+        let pos_y: f32 = rng.gen_range(200.0..=300.0);
         commands
             .spawn_bundle(NodeBundle {
                 style: Style {
