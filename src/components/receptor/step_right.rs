@@ -33,9 +33,7 @@ impl PatternReceptor for StepRightReceptor {
 
     fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
         // bpmを用いて一拍の時間を計算し一拍分程度許容
-        if (current_time - self.last_time).abs()
-            > bpm.recip() as f64 * 60.0 + ERROR_THRESHOLD as f64
-        {
+        if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + ERROR_THRESHOLD {
             self.init();
         }
     }

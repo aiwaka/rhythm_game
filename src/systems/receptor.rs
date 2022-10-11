@@ -3,7 +3,10 @@ use bevy::prelude::*;
 use crate::{
     components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::song::{AudioStartTime, SongConfig},
+    resources::{
+        score::ScoreResource,
+        song::{AudioStartTime, SongConfig},
+    },
     AppState,
 };
 
@@ -14,9 +17,11 @@ fn setup_receptor(mut commands: Commands) {
             commands.spawn().insert($x);
         };
     }
-    spawn_receptor!(AllSyncReceptor::default());
+    spawn_receptor!(FullSyncReceptor::default());
     spawn_receptor!(StepRightReceptor::default());
     spawn_receptor!(StepLeftReceptor::default());
+    spawn_receptor!(DoubleTapReceptor::default());
+    spawn_receptor!(TrillReceptor::default());
 }
 
 /// レセプタにノーツを入力して更新する
@@ -49,9 +54,13 @@ fn receptor_pipeline<T: PatternReceptor>(
     }
 }
 
-fn achieve_pattern(mut ev_reader: EventReader<AchievePatternEvent>) {
+fn achieve_pattern(
+    mut ev_reader: EventReader<AchievePatternEvent>,
+    mut score: ResMut<ScoreResource>,
+) {
     for ev in ev_reader.iter() {
         info!("{:?}", ev.0);
+        score.push_pattern(ev.0);
     }
 }
 
@@ -72,9 +81,11 @@ impl Plugin for PatternReceptorPlugin {
         // app.add_system_set(
         //     SystemSet::on_update(AppState::Game).with_system(receptor_pipeline::<AllSyncReceptor>),
         // );
-        add_receptor_to_system!(AllSyncReceptor);
+        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
+        add_receptor_to_system!(DoubleTapReceptor);
+        add_receptor_to_system!(TrillReceptor);
 
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(achieve_pattern));
     }
