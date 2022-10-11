@@ -3,6 +3,7 @@ mod double_tap;
 mod full_sync;
 mod step_left;
 mod step_right;
+mod step_trill;
 mod trill;
 
 /// レセプタ構造体を全部読み込むための公開モジュール
@@ -30,6 +31,8 @@ pub enum NotesPattern {
     DoubleTap,
     /// トリル. 続いた長さを持つ
     Trill(u32),
+    /// 3列トリル.
+    StepTrill(u32),
 }
 impl std::fmt::Display for NotesPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
