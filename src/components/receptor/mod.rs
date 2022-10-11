@@ -36,10 +36,14 @@ pub enum NotesPattern {
 }
 impl std::fmt::Display for NotesPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // match *self {
-        //     _ => {}
-        // }
-        write!(f, "{:?}", self)
+        match *self {
+            Self::Trill(length) => {
+                write!(f, "Trill x {}", length)
+            }
+            _ => {
+                write!(f, "{:?}", self)
+            }
+        }
     }
 }
 impl NotesPattern {

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use super::{NotesPattern, PatternReceptor};
 
 /// 2列トリル
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct TrillReceptor {
     lane: [i32; 2],
     /// 直前の入力がスロットの0,1どちらか
@@ -20,7 +20,7 @@ impl Default for TrillReceptor {
             last_lane: 0,
             last_time: 0.0,
             length: 0,
-            broken: true,
+            broken: false,
         }
     }
 }
@@ -31,27 +31,30 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+        if self.broken {
+            self.init();
+        }
         // 8分と少しの猶予（33.0 = 60 / 2 * 1.1）
-        if current_time - self.last_time > (bpm as f64).recip() * 33.0 {
+        else if current_time - self.last_time > (bpm as f64).recip() * 33.0 {
             // 初期化は行わず, フラグを立てる
             self.broken = true;
         }
     }
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
-        let current_time = note_ev.real_sec;
         let column = note_ev.column;
-        self.last_time = current_time;
+        self.last_time = note_ev.real_sec;
         if self.is_init() {
             self.lane[0] = column;
         } else if self.length == 1 {
             self.lane[1] = column;
             self.last_lane = 1;
-            self.broken = false;
         } else if self.lane[1 - self.last_lane] == column {
-            self.length += 1;
             self.last_lane = 1 - self.last_lane;
+        } else {
+            self.broken = true;
         }
+        self.length += 1;
     }
 
     fn is_available(&self) -> bool {
