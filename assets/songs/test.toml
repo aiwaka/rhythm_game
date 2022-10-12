@@ -3,7 +3,7 @@ filename = "my_demo.wav"
 bpm = 180.0
 beat_par_bar = 4
 
-length = 3.0
+length = 63.0
 
 notes = [
     # intro
