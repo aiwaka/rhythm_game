@@ -2,14 +2,14 @@ use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
 use crate::{
-    components::{load::NowLoadingText, note::Note},
+    components::{load::NowLoadingText, note::Note, song_select::SongData},
     resources::{
         game_scene::NextAppState,
         handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
         score::ScoreResource,
         song::{SelectedSong, Speed},
         song::{SongConfig, SongConfigToml},
-        song_list::SongData,
+        song_list::{AllSongData, SongDataToml},
     },
     AppState,
 };
@@ -17,11 +17,30 @@ use std::io::prelude::*;
 use std::{collections::VecDeque, fs::File};
 
 /// 曲一覧情報を取得する.
-fn load_all_config_file_data() -> Vec<SongData> {
-    vec![SongData {
-        thumbnail: 0,
-        config_file_name: "test.toml".to_string(),
-    }]
+/// TODO: 現在ハードコーディングしているが, tomlファイルから読み込むように変更する.
+fn load_all_config_file_data() -> Vec<SongDataToml> {
+    vec![
+        SongDataToml {
+            name: "test1".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test2".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test3".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test4".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+    ]
 }
 
 /// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
@@ -53,6 +72,8 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     }
 }
 
+/// アセットのロードを開始する.
+/// また, 各シーンに移行したときに用意されているべきリソース等を準備する.
 #[allow(clippy::too_many_arguments)]
 fn load_assets(
     mut commands: Commands,
@@ -76,6 +97,10 @@ fn load_assets(
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);
+
+            // 全曲データを読み込む
+            let data = load_all_config_file_data();
+            commands.insert_resource(AllSongData(data.iter().map(SongData::new).collect_vec()));
         }
         AppState::Game => {
             // ゲームシーンに遷移する前にはこれらのリソースを用意しておかなければならない.

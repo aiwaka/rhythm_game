@@ -4,7 +4,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::components::note::Note;
 
-/// 選択された曲をロードする際に知るためのリソース
+/// 選択された曲をロードする際に知るためのリソース.
+/// SongDataと同じフィールドを持つが, 名前で使い方を決めていると考える
 pub struct SelectedSong {
     pub name: String,
     pub filename: String,
