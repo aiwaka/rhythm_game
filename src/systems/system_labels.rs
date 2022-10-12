@@ -15,8 +15,8 @@ pub(super) enum AnimeEffectSystemLabel {
 }
 
 #[derive(SystemLabel)]
-pub(super) enum BoardInfoSystemLabel {
-    Update,
+pub(super) enum UiSystemLabel {
+    SpawnPatternText,
 }
 
 /// 描画用のTransformにPositionを反映するシステムのラベル
@@ -25,5 +25,5 @@ pub(super) struct ReflectTransform;
 
 #[derive(SystemLabel)]
 pub(super) enum PatternReceptorSystemLabel {
-    Pipeline,
+    Recept,
 }

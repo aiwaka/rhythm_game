@@ -17,7 +17,7 @@ use crate::{
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
-use super::system_labels::TimerSystemLabel;
+use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSystemLabel};
 
 fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     let font = handles.main_font.clone();
@@ -340,12 +340,19 @@ impl Plugin for GameUiPlugin {
                 .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
         );
         app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(spawn_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+            SystemSet::on_update(AppState::Game).with_system(
+                spawn_pattern_text
+                    .label(UiSystemLabel::SpawnPatternText)
+                    .after(TimerSystemLabel::TimerUpdate)
+                    .after(PatternReceptorSystemLabel::Recept),
+            ),
         );
         app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(update_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+            SystemSet::on_update(AppState::Game).with_system(
+                update_pattern_text
+                    .after(TimerSystemLabel::TimerUpdate)
+                    .after(UiSystemLabel::SpawnPatternText),
+            ),
         );
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
