@@ -179,6 +179,8 @@ fn despawn_song_select_scene(
         }
     }
     commands.remove_resource::<AlreadyExistEntities>();
+    // 最後にアセットを破棄
+    commands.remove_resource::<SongSelectAssetHandles>();
 }
 
 pub struct SongSelectStatePlugin;

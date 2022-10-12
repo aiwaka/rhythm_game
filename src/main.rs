@@ -11,7 +11,8 @@ use events::add_events_to_game;
 use resources::game_scene::NextAppState;
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
-    song_select::SongSelectStatePlugin, timer::TimersPlugin, ui::GameUiPlugin,
+    result_screen::ResultScreenPlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin,
+    ui::GameUiPlugin,
 };
 
 const SCREEN_WIDTH: f32 = 800.0;
@@ -63,6 +64,7 @@ fn main() {
     app.add_plugin(PatternReceptorPlugin);
 
     app.add_plugin(SongSelectStatePlugin);
+    app.add_plugin(ResultScreenPlugin);
     // app.add_plugin(ShadersPlugin);
     app.run();
 }

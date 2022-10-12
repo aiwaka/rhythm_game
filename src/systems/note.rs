@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
+use itertools::Itertools;
 
 use crate::components::note::KeyLane;
 use crate::components::note::Note;
@@ -7,6 +8,7 @@ use crate::components::timer::FrameCounter;
 use crate::components::ui::GameSceneObject;
 use crate::events::CatchNoteEvent;
 use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
+use crate::resources::game_scene::AlreadyExistEntities;
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
@@ -16,7 +18,13 @@ use crate::AppState;
 
 use super::system_labels::TimerSystemLabel;
 
-fn set_lane(mut commands: Commands, handles: Res<GameAssetsHandles>) {
+fn set_lane(
+    mut commands: Commands,
+    handles: Res<GameAssetsHandles>,
+    already_exist_q: Query<Entity>,
+) {
+    // シーン遷移時点で存在しているエンティティをすべて保存
+    commands.insert_resource(AlreadyExistEntities(already_exist_q.iter().collect_vec()));
     for i in 0..4 {
         let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {

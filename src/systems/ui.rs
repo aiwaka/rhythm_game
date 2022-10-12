@@ -40,6 +40,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             color: UiColor(Color::YELLOW_GREEN),
             ..Default::default()
         })
+        .insert(GameSceneObject)
         .with_children(|parent| {
             parent
                 .spawn_bundle(TextBundle {
