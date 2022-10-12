@@ -232,8 +232,6 @@ notes = [
     { bar = 28, beat = 3.75, key_column = 1 },
 
     # c part 2
-    { bar = 29, beat = 0, key_column = 0 },
-    { bar = 29, beat = 0, key_column = 1 },
     { bar = 29, beat = 0, key_column = 2 },
     { bar = 29, beat = 0, key_column = 3 },
     { bar = 29, beat = 1, key_column = 0 },
