@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+/// ゲームの中で使われるエンティティに付与
+#[derive(Component)]
+pub struct GameSceneObject;
+
 #[derive(Component)]
 pub struct TimeText;
 

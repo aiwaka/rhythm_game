@@ -3,6 +3,8 @@ filename = "my_demo.wav"
 bpm = 180.0
 beat_par_bar = 4
 
+length = 3.0
+
 notes = [
     # intro
     { bar = 0, beat = 0, key_column = 0 },
@@ -232,8 +234,6 @@ notes = [
     { bar = 28, beat = 3.75, key_column = 1 },
 
     # c part 2
-    { bar = 29, beat = 0, key_column = 0 },
-    { bar = 29, beat = 0, key_column = 1 },
     { bar = 29, beat = 0, key_column = 2 },
     { bar = 29, beat = 0, key_column = 3 },
     { bar = 29, beat = 1, key_column = 0 },

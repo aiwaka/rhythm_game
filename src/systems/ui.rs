@@ -5,19 +5,22 @@ use crate::{
     components::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
-        ui::{CatchEvalPopupText, LaneLine, PatternPopupText, ScoreText, TargetLine, TimeText},
+        ui::{
+            CatchEvalPopupText, GameSceneObject, LaneLine, PatternPopupText, ScoreText, TargetLine,
+            TimeText,
+        },
     },
     events::{AchievePatternEvent, CatchNoteEvent},
     game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{
         handles::GameAssetsHandles,
-        score::{CatchEval, ScoreResource},
+        score::{CatchEval, ScoreResource, TimingEval},
         song::AudioStartTime,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
-use super::system_labels::TimerSystemLabel;
+use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSystemLabel};
 
 fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     let font = handles.main_font.clone();
@@ -37,6 +40,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             color: UiColor(Color::YELLOW_GREEN),
             ..Default::default()
         })
+        .insert(GameSceneObject)
         .with_children(|parent| {
             parent
                 .spawn_bundle(TextBundle {
@@ -71,6 +75,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             color: UiColor(Color::NONE),
             ..Default::default()
         })
+        .insert(GameSceneObject)
         .with_children(|parent| {
             parent
                 .spawn_bundle(TextBundle {
@@ -101,7 +106,8 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             transform,
             ..Default::default()
         })
-        .insert(TargetLine);
+        .insert(TargetLine)
+        .insert(GameSceneObject);
 
     // 鍵盤線
     for i in 0..5 {
@@ -117,7 +123,8 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 transform,
                 ..Default::default()
             })
-            .insert(LaneLine);
+            .insert(LaneLine)
+            .insert(GameSceneObject);
     }
 }
 
@@ -143,10 +150,15 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
     if score.is_changed() {
         for (mut text, _marker) in query.iter_mut() {
             text.sections[0].value = format!(
-                "Score: {}. Corrects: {}. Fails: {}",
+                "Score: {}. Perfect: {}. Ok: {}. Miss: {}.",
                 score.score(),
-                score.corrects(),
-                score.fails()
+                score.get_eval_num(&CatchEval::Perfect)
+                    + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
             );
         }
     }
@@ -340,12 +352,19 @@ impl Plugin for GameUiPlugin {
                 .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
         );
         app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(spawn_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+            SystemSet::on_update(AppState::Game).with_system(
+                spawn_pattern_text
+                    .label(UiSystemLabel::SpawnPatternText)
+                    .after(TimerSystemLabel::TimerUpdate)
+                    .after(PatternReceptorSystemLabel::Recept),
+            ),
         );
         app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(update_pattern_text.after(TimerSystemLabel::TimerUpdate)),
+            SystemSet::on_update(AppState::Game).with_system(
+                update_pattern_text
+                    .after(TimerSystemLabel::TimerUpdate)
+                    .after(UiSystemLabel::SpawnPatternText),
+            ),
         );
         app.add_system_set(
             SystemSet::on_update(AppState::Game)

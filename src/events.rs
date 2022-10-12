@@ -3,6 +3,10 @@ use bevy::prelude::*;
 
 use crate::components::{note::Note, receptor::NotesPattern};
 
+/// ノーツを取り逃したときのイベント
+#[derive(Clone, Copy, Debug)]
+pub struct MissNoteEvent;
+
 /// ノーツをキャッチできたときに発されるイベント
 #[derive(Clone, Debug)]
 pub struct CatchNoteEvent {
@@ -39,8 +43,13 @@ impl CatchNoteEvent {
 #[derive(Clone, Debug)]
 pub struct AchievePatternEvent(pub NotesPattern);
 
+/// すべての音を止めるイベント
+pub struct PanicAudio;
+
 /// 追加したイベントをappに追加する処理をここでまとめて行う.
 pub(super) fn add_events_to_game(app: &mut App) {
     app.add_event::<CatchNoteEvent>();
+    app.add_event::<MissNoteEvent>();
     app.add_event::<AchievePatternEvent>();
+    app.add_event::<PanicAudio>();
 }

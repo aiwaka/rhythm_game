@@ -7,6 +7,7 @@ use crate::{
         score::ScoreResource,
         song::{AudioStartTime, SongConfig},
     },
+    systems::system_labels::PatternReceptorSystemLabel,
     AppState,
 };
 
@@ -24,7 +25,8 @@ fn setup_receptor(mut commands: Commands) {
     spawn_receptor!(TrillReceptor::default());
 }
 
-/// レセプタにノーツを入力して更新する
+/// レセプタにノーツを入力して更新する.
+/// PatternReceptorで実装を要求する初期状態・入力更新パターン・終了条件を使って一般的な動作を記述する.
 fn receptor_pipeline<T: PatternReceptor>(
     mut q: Query<&mut T>,
     mut note_ev_reader: EventReader<CatchNoteEvent>,
@@ -72,7 +74,8 @@ impl Plugin for PatternReceptorPlugin {
             ($receptor:ty) => {
                 app.add_system_set(
                     SystemSet::on_update(AppState::Game)
-                        .with_system(receptor_pipeline::<$receptor>),
+                        .with_system(receptor_pipeline::<$receptor>)
+                        .label(PatternReceptorSystemLabel::Recept),
                 );
             };
         }
@@ -87,6 +90,10 @@ impl Plugin for PatternReceptorPlugin {
         add_receptor_to_system!(DoubleTapReceptor);
         add_receptor_to_system!(TrillReceptor);
 
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(achieve_pattern));
+        app.add_system_set(
+            SystemSet::on_update(AppState::Game)
+                .with_system(achieve_pattern)
+                .after(PatternReceptorSystemLabel::Recept),
+        );
     }
 }

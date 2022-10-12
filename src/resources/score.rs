@@ -1,9 +1,9 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use crate::{components::receptor::NotesPattern, game_constants::ERROR_THRESHOLD};
 
 /// Perfect以外は遅いか早いかをもたせる
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum TimingEval {
     Slow,
     Fast,
@@ -30,7 +30,7 @@ impl TimingEval {
 }
 
 /// ノーツ取得の評価
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum CatchEval {
     Perfect,
     NearPerfect(TimingEval),
@@ -106,23 +106,21 @@ impl CatchEval {
 
 #[derive(Default, Debug)]
 pub struct ScoreResource {
-    corrects: usize,
-    fails: usize,
-
     score: usize,
 
     pattern_vec: Vec<NotesPattern>,
+    eval_storage: HashMap<CatchEval, u32>,
 }
 impl ScoreResource {
-    /// 取得数を増やし, スコアを増加させ, スコアの増分を返す.
-    pub fn increase_correct(&mut self, catch_eval: &CatchEval) {
-        self.corrects += 1;
+    /// 取得数を増やし, スコアを増加させる.
+    pub fn update_score(&mut self, catch_eval: &CatchEval) {
+        if let Some(prev_val) = self.eval_storage.get_mut(catch_eval) {
+            *prev_val += 1;
+        } else {
+            self.eval_storage.insert(*catch_eval, 1);
+        }
 
         self.score += catch_eval.get_score() as usize;
-    }
-
-    pub fn increase_fails(&mut self) {
-        self.fails += 1;
     }
 
     pub fn add_score(&mut self, score: u32) {
@@ -132,11 +130,12 @@ impl ScoreResource {
     pub fn score(&self) -> usize {
         self.score
     }
-    pub fn corrects(&self) -> usize {
-        self.corrects
-    }
-    pub fn fails(&self) -> usize {
-        self.fails
+    pub fn get_eval_num(&self, key: &CatchEval) -> u32 {
+        if let Some(res) = self.eval_storage.get(key) {
+            *res
+        } else {
+            0
+        }
     }
 
     pub fn push_pattern(&mut self, pattern: NotesPattern) {

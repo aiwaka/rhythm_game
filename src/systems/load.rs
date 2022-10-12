@@ -2,18 +2,46 @@ use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
 use crate::{
-    components::{load::NowLoadingText, note::Note},
+    components::{load::NowLoadingText, note::Note, song_select::SongData},
     resources::{
         game_scene::NextAppState,
-        handles::{AssetsLoading, GameAssetsHandles},
+        handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
         score::ScoreResource,
-        song::Speed,
+        song::{SelectedSong, Speed},
         song::{SongConfig, SongConfigToml},
+        song_list::{AllSongData, SongDataToml},
     },
     AppState,
 };
 use std::io::prelude::*;
 use std::{collections::VecDeque, fs::File};
+
+/// 曲一覧情報を取得する.
+/// TODO: 現在ハードコーディングしているが, tomlファイルから読み込むように変更する.
+fn load_all_config_file_data() -> Vec<SongDataToml> {
+    vec![
+        SongDataToml {
+            name: "test1".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test2".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test3".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+        SongDataToml {
+            name: "test4".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.toml".to_string(),
+        },
+    ]
+}
 
 /// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
 fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
@@ -38,28 +66,25 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     SongConfig {
         name: parsed.name,
         music_filename: parsed.filename,
+        length: parsed.length,
         beat_par_bar: parsed.beat_par_bar,
         bpm: parsed.bpm,
         notes: VecDeque::from_iter(notes),
     }
 }
 
-fn load_song_config(mut commands: Commands, speed: Res<Speed>) -> String {
-    // 曲データをロード
-    let config = load_config_from_toml("test.toml", speed.0);
-    let music_filename = config.music_filename.clone();
-    commands.insert_resource(config);
-    music_filename
-}
-
-fn preload_assets(
-    In(music_filename): In<String>,
+/// アセットのロードを開始する.
+/// また, 各シーンに移行したときに用意されているべきリソース等を準備する.
+#[allow(clippy::too_many_arguments)]
+fn load_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas: ResMut<Assets<TextureAtlas>>,
     next_scene: Res<NextAppState>,
     mut color_material: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    selected_song: Option<Res<SelectedSong>>,
+    speed: Option<Res<Speed>>,
 ) {
     // 型なしのアセット列を用意
     let mut assets_loading_vec = Vec::<HandleUntyped>::new();
@@ -67,8 +92,26 @@ fn preload_assets(
     // 次がどのシーンに行くかによって分岐.
     match next_scene.0 {
         AppState::HomeMenu => {}
+        AppState::SongSelect => {
+            let assets =
+                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes);
+            // 読み込んだハンドルを型を外してクローンした配列をもらう.
+            assets_loading_vec.extend(assets.to_untyped_vec());
+            commands.insert_resource(assets);
+
+            // 全曲データを読み込む
+            let data = load_all_config_file_data();
+            commands.insert_resource(AllSongData(data.iter().map(SongData::new).collect_vec()));
+        }
         AppState::Game => {
-            info!("arrange handles");
+            // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
+            let selected_song = selected_song.unwrap();
+            let speed = speed.unwrap();
+
+            // 曲データをロード
+            let config = load_config_from_toml(&selected_song.filename, speed.0);
+            let music_filename = config.music_filename.clone();
+            commands.insert_resource(config);
             let assets = GameAssetsHandles::new(
                 music_filename,
                 &asset_server,
@@ -147,10 +190,7 @@ impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ScoreResource>();
         // アセットロード関連システム
-        app.add_system_set(
-            SystemSet::on_enter(AppState::Loading)
-                .with_system(load_song_config.chain(preload_assets)),
-        );
+        app.add_system_set(SystemSet::on_enter(AppState::Loading).with_system(load_assets));
         app.add_system_set(SystemSet::on_update(AppState::Loading).with_system(check_assets_ready));
         app.add_system_set(SystemSet::on_exit(AppState::Loading).with_system(exit_loading));
     }

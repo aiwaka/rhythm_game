@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
 use crate::{
+    events::PanicAudio,
     game_constants::MUSIC_PLAY_PRECOUNT,
     resources::{handles::GameAssetsHandles, song::AudioStartTime},
     AppState,
@@ -30,6 +31,12 @@ fn start_song(
     }
 }
 
+fn panic_audio(audio: Res<Audio>, ev_reader: EventReader<PanicAudio>) {
+    if !ev_reader.is_empty() {
+        audio.stop();
+    }
+}
+
 pub struct GameAudioPlugin;
 impl Plugin for GameAudioPlugin {
     fn build(&self, app: &mut App) {
@@ -38,5 +45,6 @@ impl Plugin for GameAudioPlugin {
             SystemSet::on_update(AppState::Game)
                 .with_system(start_song.label(TimerSystemLabel::StartAudio)),
         );
+        app.add_system(panic_audio);
     }
 }

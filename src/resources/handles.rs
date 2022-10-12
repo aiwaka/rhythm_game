@@ -6,6 +6,47 @@ use crate::game_constants::LANE_WIDTH;
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 pub struct AssetsLoading(pub Vec<HandleUntyped>);
 
+pub trait AssetHandles {
+    /// 型付けされていないハンドルの列に変換する.
+    /// これについてイテレートしてすべてのアセットがロード済みかどうかを確認できる.
+    /// あたらしくアセットを追加した場合, 直接ファイルを読みに行くものについてのみを追加する.
+    fn to_untyped_vec(&self) -> Vec<HandleUntyped>;
+}
+
+/// 曲セレクトシーンにおけるアセットハンドル
+#[derive(Debug)]
+pub struct SongSelectAssetHandles {
+    // フォント
+    pub main_font: Handle<Font>,
+
+    // 画像
+    pub background: Handle<Image>,
+}
+
+impl SongSelectAssetHandles {
+    pub fn new(
+        server: &Res<AssetServer>,
+        _texture_atlas: &mut ResMut<Assets<TextureAtlas>>,
+        _meshes: &mut ResMut<Assets<Mesh>>,
+    ) -> Self {
+        // let numbers = server.load("images/numbers.png");
+
+        Self {
+            main_font: server.load("fonts/FiraSans-Bold.ttf"),
+
+            background: server.load("images/backg_2.png"),
+        }
+    }
+}
+impl AssetHandles for SongSelectAssetHandles {
+    fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
+        vec![
+            self.main_font.clone_untyped(),
+            self.background.clone_untyped(),
+        ]
+    }
+}
+
 /// ゲームシーンのアセットハンドルを持っておく構造体.
 #[derive(Debug)]
 pub struct GameAssetsHandles {
@@ -87,11 +128,9 @@ impl GameAssetsHandles {
             background: server.load("images/backg_2.png"),
         }
     }
-
-    /// 型付けされていないハンドルの列に変換する.
-    /// これについてイテレートしてすべてのアセットがロード済みかどうかを確認できる.
-    /// あたらしくアセットを追加した場合, 直接ファイルを読みに行くものについてのみここに追加する.
-    pub fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
+}
+impl AssetHandles for GameAssetsHandles {
+    fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
         // let assets_loading_vec = vec![];
         vec![
             // フォント
