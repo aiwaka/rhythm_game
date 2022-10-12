@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongSelectCard},
+        song_select::{ActiveSongCard, SongData, SongSelectCard},
         timer::FrameCounter,
     },
     resources::{
@@ -75,6 +75,8 @@ fn setup_song_select_scene(
                     })
                     .insert(FrameCounter::new())
                     .insert(SongSelectCard(idx))
+                    // 曲データをくっつけておく
+                    .insert(song_data.clone())
                     .with_children(|parent| {
                         parent.spawn_bundle(TextBundle::from_section(
                             song_data.name.clone(),
@@ -141,19 +143,27 @@ fn move_cursor(
     }
 }
 
-fn test_to_nextsong(
+/// 決定キーで曲を選択
+fn determine_song(
     mut commands: Commands,
+    list_q: Query<&ActiveSongCard>,
+    card_q: Query<(&SongSelectCard, &SongData)>,
     key_input: Res<Input<KeyCode>>,
     mut state: ResMut<State<AppState>>,
 ) {
     if key_input.just_pressed(KeyCode::Z) {
-        commands.insert_resource(SelectedSong {
-            name: "test".to_string(),
-            filename: "test.toml".to_string(),
-        });
-        commands.insert_resource(Speed(1.5));
-        commands.insert_resource(NextAppState(AppState::Game));
-        state.set(AppState::Loading).unwrap();
+        if let Ok(active) = list_q.get_single() {
+            if let Some((_, song_data)) = card_q.iter().find(|(card, _)| card.0 == active.0) {
+                info!("select song {:?}", song_data);
+                // 必要な情報をセットしてからステート移行
+                commands.insert_resource(SelectedSong::from_song_card(song_data));
+                commands.insert_resource(Speed(1.5));
+                commands.insert_resource(NextAppState(AppState::Game));
+                state.set(AppState::Loading).unwrap();
+            } else {
+                panic!("cannot specify the selected song.");
+            }
+        }
     }
 }
 
@@ -179,9 +189,7 @@ impl Plugin for SongSelectStatePlugin {
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
-        // app.add_system_set(
-        //     SystemSet::on_update(AppState::SongSelect).with_system(test_to_nextsong),
-        // );
+        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
         app.add_system_set(
             SystemSet::on_exit(AppState::SongSelect).with_system(despawn_song_select_scene),
         );

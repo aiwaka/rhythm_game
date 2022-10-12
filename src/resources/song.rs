@@ -2,13 +2,21 @@ use std::collections::VecDeque;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::components::note::Note;
+use crate::components::{note::Note, song_select::SongData};
 
 /// 選択された曲をロードする際に知るためのリソース.
 /// SongDataと同じフィールドを持つが, 名前で使い方を決めていると考える
 pub struct SelectedSong {
     pub name: String,
     pub filename: String,
+}
+impl SelectedSong {
+    pub fn from_song_card(data: &SongData) -> Self {
+        Self {
+            name: data.name.clone(),
+            filename: data.config_file_name.clone(),
+        }
+    }
 }
 
 /// 曲再生を開始するゲーム開始からの時間（秒）

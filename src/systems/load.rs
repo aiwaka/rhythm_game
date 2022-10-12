@@ -103,7 +103,7 @@ fn load_assets(
             commands.insert_resource(AllSongData(data.iter().map(SongData::new).collect_vec()));
         }
         AppState::Game => {
-            // ゲームシーンに遷移する前にはこれらのリソースを用意しておかなければならない.
+            // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
             let selected_song = selected_song.unwrap();
             let speed = speed.unwrap();
 

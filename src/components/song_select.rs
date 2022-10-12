@@ -13,7 +13,7 @@ pub struct ActiveSongCard(pub usize);
 #[derive(Component)]
 pub struct SongSelectCard(pub usize);
 
-#[derive(Component, Debug)]
+#[derive(Component, Clone, Debug)]
 pub struct SongData {
     pub name: String,
     pub thumbnail: i32,
