@@ -4,11 +4,13 @@ use bevy::sprite::Mesh2dHandle;
 use crate::components::note::KeyLane;
 use crate::components::note::Note;
 use crate::components::timer::FrameCounter;
+use crate::components::ui::GameSceneObject;
 use crate::events::CatchNoteEvent;
 use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
+use crate::resources::score::TimingEval;
 use crate::resources::song::{AudioStartTime, SongConfig, Speed};
 use crate::AppState;
 
@@ -29,7 +31,8 @@ fn set_lane(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 ..Default::default()
             })
             .insert(KeyLane(i))
-            .insert(FrameCounter::new_default(60));
+            .insert(FrameCounter::new_default(60))
+            .insert(GameSceneObject);
     }
 }
 
@@ -115,7 +118,7 @@ fn catch_notes(
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
                 let score_eval = CatchEval::new(note.target_time, time_after_start);
-                score.increase_correct(&score_eval);
+                score.update_score(&score_eval);
                 ev_writer.send(CatchNoteEvent::new(
                     note,
                     time_after_start,
@@ -136,7 +139,7 @@ fn despawn_notes(
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_POSITION {
             commands.entity(ent).despawn();
-            score.increase_fails();
+            score.update_score(&CatchEval::Miss(TimingEval::Slow));
         }
     }
 }

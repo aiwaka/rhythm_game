@@ -36,6 +36,8 @@ pub struct SongConfig {
     pub name: String,
     pub music_filename: String,
     pub bpm: f32,
+    /// 曲尺（秒）
+    pub length: f64,
     /// 一小節あたりの拍数
     pub beat_par_bar: u32,
     pub notes: VecDeque<Note>,
@@ -46,6 +48,7 @@ pub struct SongConfig {
 pub struct SongConfigToml {
     pub name: String,
     pub filename: String,
+    pub length: f64,
     /// 一小節に何拍あるか
     pub beat_par_bar: u32,
     pub bpm: f32,

@@ -5,13 +5,16 @@ use crate::{
     components::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
-        ui::{CatchEvalPopupText, LaneLine, PatternPopupText, ScoreText, TargetLine, TimeText},
+        ui::{
+            CatchEvalPopupText, GameSceneObject, LaneLine, PatternPopupText, ScoreText, TargetLine,
+            TimeText,
+        },
     },
     events::{AchievePatternEvent, CatchNoteEvent},
     game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{
         handles::GameAssetsHandles,
-        score::{CatchEval, ScoreResource},
+        score::{CatchEval, ScoreResource, TimingEval},
         song::AudioStartTime,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
@@ -71,6 +74,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             color: UiColor(Color::NONE),
             ..Default::default()
         })
+        .insert(GameSceneObject)
         .with_children(|parent| {
             parent
                 .spawn_bundle(TextBundle {
@@ -101,7 +105,8 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             transform,
             ..Default::default()
         })
-        .insert(TargetLine);
+        .insert(TargetLine)
+        .insert(GameSceneObject);
 
     // 鍵盤線
     for i in 0..5 {
@@ -117,7 +122,8 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 transform,
                 ..Default::default()
             })
-            .insert(LaneLine);
+            .insert(LaneLine)
+            .insert(GameSceneObject);
     }
 }
 
@@ -143,10 +149,15 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
     if score.is_changed() {
         for (mut text, _marker) in query.iter_mut() {
             text.sections[0].value = format!(
-                "Score: {}. Corrects: {}. Fails: {}",
+                "Score: {}. Perfect: {}. Ok: {}. Miss: {}.",
                 score.score(),
-                score.corrects(),
-                score.fails()
+                score.get_eval_num(&CatchEval::Perfect)
+                    + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
+                    + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
             );
         }
     }

@@ -66,6 +66,7 @@ fn load_config_from_toml(path: &str, speed_coeff: f32) -> SongConfig {
     SongConfig {
         name: parsed.name,
         music_filename: parsed.filename,
+        length: parsed.length,
         beat_par_bar: parsed.beat_par_bar,
         bpm: parsed.bpm,
         notes: VecDeque::from_iter(notes),
