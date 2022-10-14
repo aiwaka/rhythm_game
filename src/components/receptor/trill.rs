@@ -63,6 +63,12 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn achieved(&self) -> Option<NotesPattern> {
-        (self.broken && self.length > 4).then_some(NotesPattern::Trill(self.length))
+        (self.broken && self.length > 4).then(|| {
+            if self.lane[0] == self.lane[1] {
+                NotesPattern::MultipleTap(self.length)
+            } else {
+                NotesPattern::Trill(self.length)
+            }
+        })
     }
 }

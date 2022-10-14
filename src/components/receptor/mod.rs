@@ -31,6 +31,8 @@ pub enum NotesPattern {
     DoubleTap,
     /// トリル. 続いた長さを持つ
     Trill(u32),
+    /// 連続縦連（猶予長め）. トリルと同じところで判定
+    MultipleTap(u32),
     /// 3列トリル.
     StepTrill(u32),
 }
@@ -39,6 +41,9 @@ impl std::fmt::Display for NotesPattern {
         match *self {
             Self::Trill(length) => {
                 write!(f, "Trill x {}", length)
+            }
+            Self::MultipleTap(length) => {
+                write!(f, "MultiTap x {}", length)
             }
             _ => {
                 write!(f, "{:?}", self)
