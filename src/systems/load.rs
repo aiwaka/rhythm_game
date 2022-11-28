@@ -122,6 +122,9 @@ fn load_assets(
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);
+
+            // スコアリソースを初期化
+            commands.insert_resource(ScoreResource::default());
         }
         _ => {}
     }
@@ -188,7 +191,6 @@ fn exit_loading(mut commands: Commands, text_q: Query<Entity, With<NowLoadingTex
 pub struct LoadPlugin;
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ScoreResource>();
         // アセットロード関連システム
         app.add_system_set(SystemSet::on_enter(AppState::Loading).with_system(load_assets));
         app.add_system_set(SystemSet::on_update(AppState::Loading).with_system(check_assets_ready));
