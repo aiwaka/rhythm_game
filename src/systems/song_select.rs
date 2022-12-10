@@ -121,6 +121,8 @@ fn move_cursor(
             let delta_idx = if key_input.just_pressed(KeyCode::Right) {
                 1
             } else if key_input.just_pressed(KeyCode::Left) {
+                // usizeは負の数を取れない.
+                // あとで割った余りを結果とするので、減算は全数-1を足すことで表現する.
                 item_num - 1
             } else {
                 0

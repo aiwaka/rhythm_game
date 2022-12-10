@@ -21,25 +21,25 @@ use std::{collections::VecDeque, fs::File};
 fn load_all_config_file_data() -> Vec<SongDataToml> {
     vec![
         SongDataToml {
-            name: "test1".to_string(),
+            name: "Hot Tide".to_string(),
             thumbnail: 0,
-            config_file_name: "test.toml".to_string(),
+            config_file_name: "hot_tide.toml".to_string(),
         },
         SongDataToml {
-            name: "test2".to_string(),
+            name: "Abraxas".to_string(),
             thumbnail: 0,
-            config_file_name: "test.toml".to_string(),
+            config_file_name: "abraxas.toml".to_string(),
         },
-        SongDataToml {
-            name: "test3".to_string(),
-            thumbnail: 0,
-            config_file_name: "test.toml".to_string(),
-        },
-        SongDataToml {
-            name: "test4".to_string(),
-            thumbnail: 0,
-            config_file_name: "test.toml".to_string(),
-        },
+        // SongDataToml {
+        //     name: "Autoseeker".to_string(),
+        //     thumbnail: 0,
+        //     config_file_name: "hot_tide.toml".to_string(),
+        // },
+        // SongDataToml {
+        //     name: "hazed".to_string(),
+        //     thumbnail: 0,
+        //     config_file_name: "hot_tide.toml".to_string(),
+        // },
     ]
 }
 
@@ -122,6 +122,9 @@ fn load_assets(
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);
+
+            // スコアリソースを初期化
+            commands.insert_resource(ScoreResource::default());
         }
         _ => {}
     }
@@ -188,7 +191,6 @@ fn exit_loading(mut commands: Commands, text_q: Query<Entity, With<NowLoadingTex
 pub struct LoadPlugin;
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ScoreResource>();
         // アセットロード関連システム
         app.add_system_set(SystemSet::on_enter(AppState::Loading).with_system(load_assets));
         app.add_system_set(SystemSet::on_update(AppState::Loading).with_system(check_assets_ready));

@@ -56,3 +56,7 @@ impl Note {
         }
     }
 }
+
+/// 小節線コンポーネント
+#[derive(Component, Clone, Copy, Debug)]
+pub struct LineBar;
