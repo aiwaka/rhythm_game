@@ -4,7 +4,7 @@ use crate::{
     components::{note::Note, ui::GameSceneObject},
     events::PanicAudio,
     resources::{
-        game_scene::{ExistingEntities, NextAppState, ResultDisplayed},
+        game_state::{ExistingEntities, NextAppState, ResultDisplayed},
         handles::GameAssetsHandles,
         score::{CatchEval, ScoreResource, TimingEval},
         song::{AudioStartTime, SongConfig},

@@ -6,14 +6,15 @@ use crate::components::note::KeyLane;
 use crate::components::note::Note;
 use crate::components::timer::FrameCounter;
 use crate::components::ui::GameSceneObject;
+use crate::constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
 use crate::events::CatchNoteEvent;
-use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
-use crate::resources::game_scene::ExistingEntities;
+use crate::resources::config::NoteSpeed;
+use crate::resources::game_state::ExistingEntities;
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
 use crate::resources::score::TimingEval;
-use crate::resources::song::{AudioStartTime, SongConfig, Speed};
+use crate::resources::song::{AudioStartTime, SongConfig};
 use crate::AppState;
 
 use super::system_labels::TimerSystemLabel;
@@ -87,7 +88,7 @@ fn spawn_notes(
     }
 }
 
-fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<Speed>) {
+fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<NoteSpeed>) {
     for (mut transform, _) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * speed.0 * NOTE_BASE_SPEED;
         let allow_distance = ERROR_THRESHOLD as f32 * NOTE_BASE_SPEED * speed.0;

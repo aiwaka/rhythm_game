@@ -1,6 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::{components::receptor::NotesPattern, game_constants::ERROR_THRESHOLD};
+use crate::{components::receptor::NotesPattern, constants::ERROR_THRESHOLD};
 
 /// Perfect以外は遅いか早いかをもたせる
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]

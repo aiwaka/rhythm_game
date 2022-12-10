@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::game_constants::LANE_WIDTH;
+use crate::constants::LANE_WIDTH;
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 #[derive(Resource)]

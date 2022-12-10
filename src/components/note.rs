@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    game_constants::{DISTANCE, LANE_WIDTH, NOTE_BASE_SPEED},
+    constants::{DISTANCE, LANE_WIDTH, NOTE_BASE_SPEED},
     resources::song::NoteTimeToml,
 };
 

@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
 use crate::{
+    constants::MUSIC_PLAY_PRECOUNT,
     events::PanicAudio,
-    game_constants::MUSIC_PLAY_PRECOUNT,
     resources::{handles::GameAssetsHandles, song::AudioStartTime},
     AppState,
 };

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{NotesPattern, PatternReceptor};
-use crate::{events::CatchNoteEvent, game_constants::ERROR_THRESHOLD};
+use crate::{constants::ERROR_THRESHOLD, events::CatchNoteEvent};
 
 /// 3列の右向き階段.
 #[derive(Component)]

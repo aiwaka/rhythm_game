@@ -25,16 +25,6 @@ impl SelectedSong {
 #[derive(Resource)]
 pub struct AudioStartTime(pub f64);
 
-/// いわゆるハイスピ. BASE_SPEED定数があるので倍率で指定.
-#[derive(Resource)]
-pub struct Speed(pub f32);
-
-impl Default for Speed {
-    fn default() -> Self {
-        Speed(1.0)
-    }
-}
-
 #[derive(Debug, Resource)]
 pub struct SongConfig {
     pub name: String,

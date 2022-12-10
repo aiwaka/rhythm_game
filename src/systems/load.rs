@@ -4,10 +4,11 @@ use itertools::Itertools;
 use crate::{
     components::{load::NowLoadingText, note::Note, song_select::SongData},
     resources::{
-        game_scene::NextAppState,
+        config::NoteSpeed,
+        game_state::NextAppState,
         handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
         score::ScoreResource,
-        song::{SelectedSong, Speed},
+        song::SelectedSong,
         song::{SongConfig, SongConfigToml},
         song_list::{AllSongData, SongDataToml},
     },
@@ -84,7 +85,7 @@ fn load_assets(
     mut color_material: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     selected_song: Option<Res<SelectedSong>>,
-    speed: Option<Res<Speed>>,
+    speed: Option<Res<NoteSpeed>>,
 ) {
     // 型なしのアセット列を用意
     let mut assets_loading_vec = Vec::<HandleUntyped>::new();

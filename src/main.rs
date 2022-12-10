@@ -1,6 +1,6 @@
 mod components;
+mod constants;
 mod events;
-mod game_constants;
 mod resources;
 mod systems;
 
@@ -8,7 +8,7 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
 use events::add_events_to_game;
-use resources::game_scene::NextAppState;
+use resources::game_state::NextAppState;
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
     result_screen::ResultScreenPlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin,

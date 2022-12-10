@@ -7,9 +7,10 @@ use crate::{
         timer::FrameCounter,
     },
     resources::{
-        game_scene::{ExistingEntities, NextAppState},
+        config::NoteSpeed,
+        game_state::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
-        song::{SelectedSong, Speed},
+        song::SelectedSong,
         song_list::AllSongData,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
@@ -159,7 +160,7 @@ fn determine_song(
                 info!("select song {:?}", song_data);
                 // 必要な情報をセットしてからステート移行
                 commands.insert_resource(SelectedSong::from_song_card(song_data));
-                commands.insert_resource(Speed(1.5));
+                commands.insert_resource(NoteSpeed(1.5));
                 commands.insert_resource(NextAppState(AppState::Game));
                 state.set(AppState::Loading).unwrap();
             } else {

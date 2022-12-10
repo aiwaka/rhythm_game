@@ -10,8 +10,8 @@ use crate::{
             TimeText,
         },
     },
+    constants::{LANE_WIDTH, TARGET_POSITION},
     events::{AchievePatternEvent, CatchNoteEvent},
-    game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{
         handles::GameAssetsHandles,
         score::{CatchEval, ScoreResource, TimingEval},
