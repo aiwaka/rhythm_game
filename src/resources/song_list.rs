@@ -1,4 +1,5 @@
-use serde_derive::{Deserialize, Serialize};
+use bevy::prelude::Resource;
+use serde_derive::Deserialize;
 
 use crate::components::song_select::SongData;
 
@@ -12,4 +13,5 @@ pub struct SongDataToml {
 }
 
 /// 全曲データをロードして選曲ステートに受け渡すためのリソース.
+#[derive(Resource)]
 pub struct AllSongData(pub Vec<SongData>);

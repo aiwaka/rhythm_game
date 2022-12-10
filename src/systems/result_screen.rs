@@ -4,7 +4,7 @@ use crate::{
     components::{note::Note, ui::GameSceneObject},
     events::PanicAudio,
     resources::{
-        game_scene::{AlreadyExistEntities, NextAppState, ResultDisplayed},
+        game_scene::{ExistingEntities, NextAppState, ResultDisplayed},
         handles::GameAssetsHandles,
         score::{CatchEval, ScoreResource, TimingEval},
         song::{AudioStartTime, SongConfig},
@@ -29,7 +29,7 @@ fn spawn_result(
     if spawned.is_some() {
         return;
     }
-    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     let song_length = song_config.length;
     // ノーツが全部消えてかつ曲尺を2秒超えたらリザルト画面に移行
     if notes_q.is_empty() && song_length + 2.0 < time_after_start {
@@ -41,7 +41,7 @@ fn spawn_result(
         panic_audio_ev_writer.send(PanicAudio);
         // リザルト表示
         commands.insert_resource(ResultDisplayed);
-        commands.spawn_bundle(SpriteBundle {
+        commands.spawn(SpriteBundle {
             sprite: Sprite {
                 color: Color::AZURE,
                 custom_size: Some(Vec2::new(SCREEN_WIDTH, SCREEN_HEIGHT)),
@@ -51,13 +51,13 @@ fn spawn_result(
         });
         // スコア表示テキストノード
         commands
-            .spawn_bundle(NodeBundle {
+            .spawn(NodeBundle {
                 style: Style {
                     size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                     border: UiRect::all(Val::Px(10.0)),
                     ..Default::default()
                 },
-                color: UiColor(Color::NONE),
+                background_color: BackgroundColor(Color::NONE),
                 ..Default::default()
             })
             .with_children(|parent| {
@@ -72,7 +72,7 @@ fn spawn_result(
                     score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
                         + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
                 );
-                parent.spawn_bundle(TextBundle {
+                parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: text,
@@ -106,7 +106,7 @@ fn exit_game_state(
 
 fn despawn_game_state(
     mut commands: Commands,
-    already_exist: Res<AlreadyExistEntities>,
+    already_exist: Res<ExistingEntities>,
     entity_q: Query<Entity>,
 ) {
     for ent in entity_q.iter() {
@@ -115,7 +115,7 @@ fn despawn_game_state(
             commands.entity(ent).despawn();
         }
     }
-    commands.remove_resource::<AlreadyExistEntities>();
+    commands.remove_resource::<ExistingEntities>();
     commands.remove_resource::<GameAssetsHandles>();
 }
 

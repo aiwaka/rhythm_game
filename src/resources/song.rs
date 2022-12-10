@@ -1,11 +1,13 @@
 use std::collections::VecDeque;
 
+use bevy::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::components::{note::Note, song_select::SongData};
 
 /// 選択された曲をロードする際に知るためのリソース.
 /// SongDataと同じフィールドを持つが, 名前で使い方を決めていると考える
+#[derive(Resource)]
 pub struct SelectedSong {
     pub name: String,
     pub filename: String,
@@ -20,9 +22,11 @@ impl SelectedSong {
 }
 
 /// 曲再生を開始するゲーム開始からの時間（秒）
+#[derive(Resource)]
 pub struct AudioStartTime(pub f64);
 
 /// いわゆるハイスピ. BASE_SPEED定数があるので倍率で指定.
+#[derive(Resource)]
 pub struct Speed(pub f32);
 
 impl Default for Speed {
@@ -31,7 +35,7 @@ impl Default for Speed {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Resource)]
 pub struct SongConfig {
     pub name: String,
     pub music_filename: String,

@@ -10,10 +10,6 @@ pub(super) enum TimerSystemLabel {
     UpdateGameCount,
 }
 
-pub(super) enum AnimeEffectSystemLabel {
-    Animate,
-}
-
 #[derive(SystemLabel)]
 pub(super) enum UiSystemLabel {
     SpawnPatternText,

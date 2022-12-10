@@ -28,7 +28,7 @@ pub enum AppState {
 
 fn global_setup(mut commands: Commands) {
     // カメラのセット
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn main() {
@@ -42,11 +42,13 @@ fn main() {
 
     let mut app = App::new();
 
-    app.insert_resource(window);
     // Set antialiasing to use 4 samples
     app.insert_resource(Msaa { samples: 4 });
     app.add_system(bevy::window::close_on_esc);
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        window,
+        ..Default::default()
+    }));
     app.add_plugin(AudioPlugin);
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.

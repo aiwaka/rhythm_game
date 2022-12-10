@@ -8,7 +8,7 @@ use crate::components::timer::FrameCounter;
 use crate::components::ui::GameSceneObject;
 use crate::events::CatchNoteEvent;
 use crate::game_constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
-use crate::resources::game_scene::AlreadyExistEntities;
+use crate::resources::game_scene::ExistingEntities;
 use crate::resources::handles::GameAssetsHandles;
 use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
@@ -24,7 +24,7 @@ fn set_lane(
     already_exist_q: Query<Entity>,
 ) {
     // シーン遷移時点で存在しているエンティティをすべて保存
-    commands.insert_resource(AlreadyExistEntities(already_exist_q.iter().collect_vec()));
+    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
     for i in 0..4 {
         let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {
@@ -32,7 +32,7 @@ fn set_lane(
             ..Default::default()
         };
         commands
-            .spawn_bundle(ColorMesh2dBundle {
+            .spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle::from(handles.lane_background.clone()),
                 material: handles.color_material_lane_background[i as usize].clone(),
                 transform,
@@ -52,7 +52,7 @@ fn spawn_notes(
     time: Res<Time>,
 ) {
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
-    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     let time_last = time_after_start - time.delta_seconds_f64();
 
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
@@ -63,6 +63,7 @@ fn spawn_notes(
             false
         }
     } {
+        info!("spawn note");
         let note = song_config.notes.pop_front().unwrap();
         let note_mesh = textures.note.clone();
         let color = textures.color_material_blue.clone();
@@ -76,7 +77,7 @@ fn spawn_notes(
             ..Default::default()
         };
         commands
-            .spawn_bundle(ColorMesh2dBundle {
+            .spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle::from(note_mesh),
                 material: color,
                 transform,
@@ -112,7 +113,7 @@ fn catch_notes(
     time: Res<Time>,
     song_info: Res<SongConfig>,
 ) {
-    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
         for (note, ent) in query.iter() {

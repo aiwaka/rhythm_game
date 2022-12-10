@@ -7,7 +7,7 @@ use crate::{
         timer::FrameCounter,
     },
     resources::{
-        game_scene::{AlreadyExistEntities, NextAppState},
+        game_scene::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
         song::{SelectedSong, Speed},
         song_list::AllSongData,
@@ -24,9 +24,9 @@ fn setup_song_select_scene(
     all_song_data: Res<AllSongData>,
 ) {
     // シーン遷移時点で存在しているエンティティをすべて保存
-    commands.insert_resource(AlreadyExistEntities(already_exist_q.iter().collect_vec()));
+    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
     // 背景を出現
-    commands.spawn_bundle(SpriteBundle {
+    commands.spawn(SpriteBundle {
         sprite: Sprite {
             custom_size: Some(Vec2::new(SCREEN_WIDTH, SCREEN_HEIGHT)),
             ..Default::default()
@@ -40,7 +40,7 @@ fn setup_song_select_scene(
 
     // 曲カードを出現
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 position: UiRect {
                     left: Val::Px(0.0),
@@ -50,7 +50,7 @@ fn setup_song_select_scene(
                 // overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            color: UiColor(Color::NONE),
+            background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
         .insert(ActiveSongCard(0))
@@ -64,13 +64,13 @@ fn setup_song_select_scene(
                 //     + ((idx + song_num / 2) % song_num) as f32 * CARD_WIDTH;
                 // let pos_y = 140.0;
                 parent
-                    .spawn_bundle(NodeBundle {
+                    .spawn(NodeBundle {
                         style: Style {
                             size: Size::new(Val::Px(CARD_WIDTH), Val::Px(CARD_WIDTH * 1.618)),
                             margin: UiRect::all(Val::Px(20.0)),
                             ..Default::default()
                         },
-                        color: Color::ANTIQUE_WHITE.into(),
+                        background_color: Color::ANTIQUE_WHITE.into(),
                         ..Default::default()
                     })
                     .insert(FrameCounter::new())
@@ -78,7 +78,7 @@ fn setup_song_select_scene(
                     // 曲データをくっつけておく
                     .insert(song_data.clone())
                     .with_children(|parent| {
-                        parent.spawn_bundle(TextBundle::from_section(
+                        parent.spawn(TextBundle::from_section(
                             song_data.name.clone(),
                             TextStyle {
                                 font: handles.main_font.clone(),
@@ -94,7 +94,7 @@ fn setup_song_select_scene(
 /// 選択中のカードをふわふわさせる
 fn hover_card(
     active_q: Query<&ActiveSongCard>,
-    mut q: Query<(&SongSelectCard, &mut UiColor, &FrameCounter)>,
+    mut q: Query<(&SongSelectCard, &mut BackgroundColor, &FrameCounter)>,
 ) {
     if let Ok(active) = active_q.get_single() {
         for (card, mut color, counter) in q.iter_mut() {
@@ -131,10 +131,10 @@ fn move_cursor(
             let items_width = children
                 .iter()
                 // 幅を読み取る
-                .map(|ent| card_q.get(*ent).unwrap().1.size.x)
+                .map(|ent| card_q.get(*ent).unwrap().1.size().x)
                 .sum::<f32>();
 
-            let list_width = node.size.x;
+            let list_width = node.size().x;
             // はみ出たぶんだけスクロール可能. はみ出さないなら0になる.
             let max_scroll = (list_width - items_width).max(0.0);
 
@@ -171,7 +171,7 @@ fn determine_song(
 
 fn despawn_song_select_scene(
     mut commands: Commands,
-    already_exist: Res<AlreadyExistEntities>,
+    already_exist: Res<ExistingEntities>,
     entity_q: Query<Entity>,
 ) {
     for ent in entity_q.iter() {
@@ -180,7 +180,7 @@ fn despawn_song_select_scene(
             commands.entity(ent).despawn();
         }
     }
-    commands.remove_resource::<AlreadyExistEntities>();
+    commands.remove_resource::<ExistingEntities>();
     // 最後にアセットを破棄
     commands.remove_resource::<SongSelectAssetHandles>();
 }

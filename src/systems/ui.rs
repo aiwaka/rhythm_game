@@ -25,44 +25,9 @@ use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSyste
 fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     let font = handles.main_font.clone();
 
-    // DEBUG: 時間を表示するテキストノード
-    // commands
-    //     .spawn_bundle(NodeBundle {
-    //         style: Style {
-    //             position_type: PositionType::Absolute,
-    //             position: UiRect {
-    //                 left: Val::Px(10.),
-    //                 top: Val::Px(10.),
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         },
-    //         color: UiColor(Color::YELLOW_GREEN),
-    //         ..Default::default()
-    //     })
-    //     .insert(GameSceneObject)
-    //     .with_children(|parent| {
-    //         parent
-    //             .spawn_bundle(TextBundle {
-    //                 text: Text {
-    //                     sections: vec![TextSection {
-    //                         value: "Time: 0.0".to_string(),
-    //                         style: TextStyle {
-    //                             font: font.clone(),
-    //                             font_size: 40.0,
-    //                             color: Color::rgb(0.9, 0.9, 0.9),
-    //                         },
-    //                     }],
-    //                     ..Default::default()
-    //                 },
-    //                 ..Default::default()
-    //             })
-    //             .insert(TimeText);
-    //     });
-
     // スコア表示テキストノード
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -72,13 +37,13 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 },
                 ..Default::default()
             },
-            color: UiColor(Color::NONE),
+            background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
         .insert(GameSceneObject)
         .with_children(|parent| {
             parent
-                .spawn_bundle(TextBundle {
+                .spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: "Score: 0. Corrects: 0. Fails: 0".to_string(),
@@ -100,7 +65,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
         ..Default::default()
     };
     commands
-        .spawn_bundle(ColorMesh2dBundle {
+        .spawn(ColorMesh2dBundle {
             mesh: Mesh2dHandle::from(handles.judge_line.clone()),
             material: handles.color_material_white_trans.clone(),
             transform,
@@ -117,7 +82,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             ..Default::default()
         };
         commands
-            .spawn_bundle(ColorMesh2dBundle {
+            .spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle::from(handles.lane_line.clone()),
                 material: handles.color_material_white_trans.clone(),
                 transform,
@@ -134,7 +99,7 @@ fn update_time_text(
     time: Res<Time>,
 ) {
     // Song starts 3 seconds after real time
-    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
 
     // Don't do anything before the song starts
     if time_after_start < 0.0 {
@@ -198,7 +163,7 @@ fn spawn_pattern_text(
         };
         let pos_y: f32 = rng.gen_range(200.0..=300.0);
         commands
-            .spawn_bundle(NodeBundle {
+            .spawn(NodeBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
@@ -208,13 +173,13 @@ fn spawn_pattern_text(
                     },
                     ..Default::default()
                 },
-                color: UiColor(Color::NONE),
+                background_color: BackgroundColor(Color::NONE),
                 ..Default::default()
             })
             .insert(CountDownTimer::new(30))
             .insert(PatternPopupText)
             .with_children(|parent| {
-                parent.spawn_bundle(TextBundle {
+                parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: format!("{}", ev.0),
@@ -264,7 +229,7 @@ fn spawn_catch_eval_text(
         let catch_eval = CatchEval::new(ev.exact_sec, ev.real_sec);
         let pos_left = SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(ev.column) - LANE_WIDTH / 2.0;
         commands
-            .spawn_bundle(NodeBundle {
+            .spawn(NodeBundle {
                 style: Style {
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::Center,
@@ -278,14 +243,14 @@ fn spawn_catch_eval_text(
                     },
                     ..Default::default()
                 },
-                color: UiColor(Color::NONE),
+                background_color: BackgroundColor(Color::NONE),
                 ..Default::default()
             })
             .insert(CountDownTimer::new(15))
             .insert(CatchEvalPopupText)
             .with_children(|parent| {
                 if let Some(timing) = catch_eval.get_timing() {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         text: Text {
                             sections: vec![TextSection {
                                 value: format!("{}", timing),
@@ -300,7 +265,7 @@ fn spawn_catch_eval_text(
                         ..Default::default()
                     });
                 }
-                parent.spawn_bundle(TextBundle {
+                parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: format!("{}", catch_eval),

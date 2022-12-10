@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::game_constants::ERROR_THRESHOLD;
-
 use super::PatternReceptor;
 
 #[derive(Component)]

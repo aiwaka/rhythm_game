@@ -4,6 +4,7 @@ use bevy_kira_audio::prelude::*;
 use crate::game_constants::LANE_WIDTH;
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
+#[derive(Resource)]
 pub struct AssetsLoading(pub Vec<HandleUntyped>);
 
 pub trait AssetHandles {
@@ -14,7 +15,7 @@ pub trait AssetHandles {
 }
 
 /// 曲セレクトシーンにおけるアセットハンドル
-#[derive(Debug)]
+#[derive(Debug, Resource)]
 pub struct SongSelectAssetHandles {
     // フォント
     pub main_font: Handle<Font>,
@@ -48,7 +49,7 @@ impl AssetHandles for SongSelectAssetHandles {
 }
 
 /// ゲームシーンのアセットハンドルを持っておく構造体.
-#[derive(Debug)]
+#[derive(Debug, Resource)]
 pub struct GameAssetsHandles {
     // フォント
     pub main_font: Handle<Font>,
@@ -123,6 +124,8 @@ impl GameAssetsHandles {
                 Vec2::new(30.0, 55.0),
                 10,
                 1,
+                None,
+                None,
             )),
             numbers,
             background: server.load("images/backg_2.png"),

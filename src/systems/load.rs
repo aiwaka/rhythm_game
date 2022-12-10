@@ -132,7 +132,7 @@ fn load_assets(
     commands.insert_resource(AssetsLoading(assets_loading_vec));
     // ローディング中テキストエンティティを出現させる.
     commands
-        .spawn_bundle(TextBundle {
+        .spawn(TextBundle {
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {

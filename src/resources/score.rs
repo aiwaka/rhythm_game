@@ -104,7 +104,7 @@ impl CatchEval {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Resource)]
 pub struct ScoreResource {
     score: usize,
 

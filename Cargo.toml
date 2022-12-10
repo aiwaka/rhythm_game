@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # Bevyのbevy_audio, vorbis機能を無効化するための設定を行っている.
-bevy = { version = "0.8.1", default-features = false, features = [
+bevy = { version = "0.9.1", default-features = false, features = [
     "bevy_asset",
     "bevy_winit",
     "bevy_scene",
@@ -17,13 +17,9 @@ bevy = { version = "0.8.1", default-features = false, features = [
     "x11",
     "filesystem_watcher",
 ] }
-bevy_kira_audio = { version = "0.12", features = ["wav", "mp3"] }
-# Bevy自体の依存バージョンと一致させること, とある.
-# https://github.com/bevyengine/bevy/blob/main/crates/bevy_winit とかを見る.
-winit = { version = "0.26.0", default-features = false }
-image = { version = "0.24", default-features = false }
+bevy_kira_audio = { version = "0.13", features = ["wav", "mp3"] }
 
-rand = "*"
+rand = "0.8"
 itertools = "0.10"
 toml = "0.5"
 serde = "1.0"

@@ -15,7 +15,7 @@ use crate::{
 fn setup_receptor(mut commands: Commands) {
     macro_rules! spawn_receptor {
         ($x:expr) => {
-            commands.spawn().insert($x);
+            commands.spawn($x);
         };
     }
     spawn_receptor!(FullSyncReceptor::default());
@@ -36,7 +36,7 @@ fn receptor_pipeline<T: PatternReceptor>(
     song_info: Res<SongConfig>,
 ) {
     if let Ok(mut receptor) = q.get_single_mut() {
-        let time_after_start = time.seconds_since_startup() - start_time.0;
+        let time_after_start = time.elapsed_seconds_f64() - start_time.0;
         if receptor.is_available() {
             // 初期化状態でないなら初期化するかどうか尋ねる
             if !receptor.is_init() {
@@ -81,10 +81,6 @@ impl Plugin for PatternReceptorPlugin {
         }
 
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_receptor));
-        // app.add_system_set(
-        //     SystemSet::on_update(AppState::Game).with_system(receptor_pipeline::<AllSyncReceptor>),
-        // );
-        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);
