@@ -30,16 +30,16 @@ fn load_all_config_file_data() -> Vec<SongDataToml> {
             thumbnail: 0,
             config_file_name: "abraxas.toml".to_string(),
         },
-        SongDataToml {
-            name: "Autoseeker".to_string(),
-            thumbnail: 0,
-            config_file_name: "hot_tide.toml".to_string(),
-        },
-        SongDataToml {
-            name: "hazed".to_string(),
-            thumbnail: 0,
-            config_file_name: "hot_tide.toml".to_string(),
-        },
+        // SongDataToml {
+        //     name: "Autoseeker".to_string(),
+        //     thumbnail: 0,
+        //     config_file_name: "hot_tide.toml".to_string(),
+        // },
+        // SongDataToml {
+        //     name: "hazed".to_string(),
+        //     thumbnail: 0,
+        //     config_file_name: "hot_tide.toml".to_string(),
+        // },
     ]
 }
 

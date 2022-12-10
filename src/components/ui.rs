@@ -16,6 +16,10 @@ pub struct TargetLine;
 #[derive(Component)]
 pub struct LaneLine;
 
+/// レーンに対応するキーの名前を表示するテキスト.
+#[derive(Component)]
+pub struct LaneKeyText;
+
 /// 鍵盤レーンの背景. キー押下時に色を出したり.
 #[derive(Component)]
 pub struct LaneBackground(pub i32);
