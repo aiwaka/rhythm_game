@@ -81,13 +81,18 @@ fn load_song_config(
     let speed = speed_coeff * BASIC_NOTE_SPEED;
     let mut notes = vec![];
     let mut prev_beat = 0.0;
+
+    let mut prev_bar = 0u32;
     for note in config_notes {
         // このような仕様のため, 拍子を変更する場合は小節の最初に行い, かつbeat_diffの計算の前に行う.
         // その上で, 前の拍から変更前の小節が終わるまで何拍か記憶しておき, 次の拍に足し合わせる作業が必要.
-        let beat_diff = if note.beat - prev_beat < 0.0 {
-            note.beat + beat_par_bar as f64 - prev_beat
-        } else {
+        let beat_diff = if note.bar == prev_bar {
             note.beat - prev_beat
+        } else {
+            // 小節番号の差を追加
+            let bar_diff = note.bar - prev_bar;
+            prev_bar = note.bar;
+            note.beat + (bar_diff * beat_par_bar) as f64 - prev_beat
         };
         target_time += beat_diff * (bpm as f64).recip() * 60.0;
         let spawn_time = target_time - ((DISTANCE / speed) as f64).abs();

@@ -70,10 +70,3 @@ impl From<SongConfig> for SongConfigResource {
 /// リソースとして追加するノーツ情報
 #[derive(Resource, Deref, DerefMut, Debug)]
 pub struct SongNotes(pub VecDeque<NoteInfo>);
-
-// /// 曲を指定するためのデータ
-// #[derive(Resource, Debug, Clone)]
-// pub struct SongData {
-//     pub name: String,
-//     pub song_config_filename: String,
-// }

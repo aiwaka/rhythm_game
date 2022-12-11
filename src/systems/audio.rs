@@ -25,7 +25,7 @@ fn start_song(
     // 曲開始時刻から現在時刻までの差
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     let time_last = time_after_start - time.delta_seconds_f64();
-    if time_last < 0.0 && 0.0 < time_after_start {
+    if (time_last..time_after_start).contains(&0.0) {
         info!("music start");
         audio.play(handles.music.clone());
     }

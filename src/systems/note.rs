@@ -29,7 +29,7 @@ fn spawn_notes(
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
     while {
         if let Some(note) = notes.front() {
-            time_last < note.spawn_time && note.spawn_time < time_after_start
+            (time_last..time_after_start).contains(&note.spawn_time)
         } else {
             false
         }
