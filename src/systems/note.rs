@@ -1,55 +1,19 @@
 use bevy::prelude::*;
 use bevy::sprite::Mesh2dHandle;
-use itertools::Itertools;
 
-use crate::components::note::KeyLane;
-use crate::components::note::NoteInfo;
-use crate::components::timer::FrameCounter;
-use crate::components::ui::GameSceneObject;
-use crate::constants::BASIC_NOTE_SPEED;
-use crate::constants::MISS_THR;
-use crate::constants::NOTE_SPAWN_Y;
-use crate::constants::TARGET_Y;
+use crate::components::note::{KeyLane, NoteInfo};
+use crate::constants::{BASIC_NOTE_SPEED, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
 use crate::events::CatchNoteEvent;
-use crate::resources::config::Beat;
-use crate::resources::config::Bpm;
-use crate::resources::config::NoteSpeed;
-use crate::resources::game_state::ExistingEntities;
-use crate::resources::handles::GameAssetsHandles;
 use crate::resources::note::NoteType;
-use crate::resources::score::CatchEval;
-use crate::resources::score::ScoreResource;
-use crate::resources::song::SongNotes;
-use crate::resources::song::SongStartTime;
+use crate::resources::{
+    config::{Beat, Bpm, NoteSpeed},
+    handles::GameAssetsHandles,
+    score::{CatchEval, ScoreResource},
+    song::{SongNotes, SongStartTime},
+};
 use crate::AppState;
 
 use super::system_labels::TimerSystemLabel;
-
-fn set_lane(
-    mut commands: Commands,
-    handles: Res<GameAssetsHandles>,
-    already_exist_q: Query<Entity>,
-) {
-    // シーン遷移時点で存在しているエンティティをすべて保存
-    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
-    for i in 0..4 {
-        let x = KeyLane::x_coord_from_num(i);
-        let transform = Transform {
-            translation: Vec3::new(x, TARGET_Y + 250.0, 0.1),
-            ..Default::default()
-        };
-        commands
-            .spawn(ColorMesh2dBundle {
-                mesh: Mesh2dHandle::from(handles.lane_background.clone()),
-                material: handles.color_material_lane_background[i as usize].clone(),
-                transform,
-                ..Default::default()
-            })
-            .insert(KeyLane(i))
-            .insert(FrameCounter::new_default(60))
-            .insert(GameSceneObject);
-    }
-}
 
 fn spawn_notes(
     mut commands: Commands,
@@ -176,7 +140,6 @@ fn drop_notes(
 pub struct NotePlugin;
 impl Plugin for NotePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(set_lane));
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),

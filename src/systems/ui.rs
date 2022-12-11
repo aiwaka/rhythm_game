@@ -1,4 +1,5 @@
 use bevy::{prelude::*, sprite::Mesh2dHandle};
+use itertools::Itertools;
 use rand::Rng;
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
     constants::{LANE_WIDTH, TARGET_Y},
     events::{AchievePatternEvent, CatchNoteEvent},
     resources::{
+        game_state::ExistingEntities,
         handles::GameAssetsHandles,
         note::NoteType,
         score::{CatchEval, ScoreResource, TimingEval},
@@ -91,6 +93,31 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
             })
             .insert(LaneLine)
             .insert(GameSceneObject);
+    }
+}
+
+fn setup_lane(
+    mut commands: Commands,
+    handles: Res<GameAssetsHandles>,
+    already_exist_q: Query<Entity>,
+) {
+    // シーン遷移時点で存在しているエンティティをすべて保存
+    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
+    for i in 0..4 {
+        let x = KeyLane::x_coord_from_num(i);
+        let transform = Transform {
+            translation: Vec3::new(x, TARGET_Y + 250.0, 0.1),
+            ..Default::default()
+        };
+        commands
+            .spawn(ColorMesh2dBundle {
+                mesh: Mesh2dHandle::from(handles.lane_background.clone()),
+                material: handles.color_material_lane_background[i as usize].clone(),
+                transform,
+                ..Default::default()
+            })
+            .insert(KeyLane(i))
+            .insert(FrameCounter::new_default(60));
     }
 }
 
@@ -224,7 +251,6 @@ fn spawn_catch_eval_text(
     handles: Res<GameAssetsHandles>,
 ) {
     let font = handles.main_font.clone();
-    let pos_bottom = SCREEN_HEIGHT / 2.0 + TARGET_Y;
     for ev in ev_reader.iter() {
         let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
             NoteType::Normal { key } => {
@@ -311,6 +337,7 @@ pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_ui));
+        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_lane));
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
                 .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
