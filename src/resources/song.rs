@@ -1,61 +1,79 @@
 use std::collections::VecDeque;
 
 use bevy::prelude::*;
-use serde_derive::{Deserialize, Serialize};
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
-use crate::components::{note::Note, song_select::SongData};
+use crate::components::note::NoteInfo;
 
-/// 選択された曲をロードする際に知るためのリソース.
-/// SongDataと同じフィールドを持つが, 名前で使い方を決めていると考える
+use super::note::{NoteSpawn, NoteSpawnParser};
+
+/// 曲再生を開始するゲーム開始からの時間（秒）
 #[derive(Resource)]
-pub struct SelectedSong {
+pub struct SongStartTime(pub f64);
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct SongConfigParser {
     pub name: String,
     pub filename: String,
+    /// 曲の尺（秒）
+    pub length: f64,
+    /// 曲開始時点で一小節に何拍あるか
+    pub initial_beat: u32,
+    pub initial_bpm: f32,
+    pub notes: Vec<NoteSpawnParser>,
 }
-impl SelectedSong {
-    pub fn from_song_card(data: &SongData) -> Self {
+
+#[derive(Debug, Clone)]
+pub struct SongConfig {
+    pub name: String,
+    pub filename: String,
+    /// 曲の尺（秒）
+    pub length: f64,
+    /// 曲開始時点で一小節に何拍あるか
+    pub initial_beat: u32,
+    pub initial_bpm: f32,
+    pub notes: Vec<NoteSpawn>,
+}
+impl From<SongConfigParser> for SongConfig {
+    fn from(data: SongConfigParser) -> Self {
         Self {
-            name: data.name.clone(),
-            filename: data.config_file_name.clone(),
+            name: data.name,
+            filename: data.filename,
+            length: data.length,
+            initial_beat: data.initial_beat,
+            initial_bpm: data.initial_bpm,
+            // map(NoteSpawn::from)でも動く
+            notes: data.notes.into_iter().map(|note| note.into()).collect_vec(),
         }
     }
 }
 
-/// 曲再生を開始するゲーム開始からの時間（秒）
-#[derive(Resource)]
-pub struct AudioStartTime(pub f64);
-
-#[derive(Debug, Resource)]
-pub struct SongConfig {
+/// リソースとして追加する曲データ構造体
+#[derive(Resource, Debug, Clone)]
+pub struct SongConfigResource {
     pub name: String,
-    pub music_filename: String,
-    pub bpm: f32,
-    /// 曲尺（秒）
+    pub song_filename: String,
+    /// 曲の尺（秒）
     pub length: f64,
-    /// 一小節あたりの拍数
-    pub beat_par_bar: u32,
-    pub notes: VecDeque<Note>,
+}
+impl From<SongConfig> for SongConfigResource {
+    fn from(config: SongConfig) -> Self {
+        Self {
+            name: config.name,
+            song_filename: config.filename,
+            length: config.length,
+        }
+    }
 }
 
-/// use for toml
-#[derive(Deserialize, Debug)]
-pub struct SongConfigToml {
-    pub name: String,
-    pub filename: String,
-    pub length: f64,
-    /// 一小節に何拍あるか
-    pub beat_par_bar: u32,
-    pub bpm: f32,
-    pub notes: Vec<NoteTimeToml>,
-}
+/// リソースとして追加するノーツ情報
+#[derive(Resource, Deref, DerefMut, Debug)]
+pub struct SongNotes(pub VecDeque<NoteInfo>);
 
-/// TOMLファイルのノーツ情報パース用構造体
-#[derive(Deserialize, Serialize, Debug)]
-pub struct NoteTimeToml {
-    /// 小節番号（0始まり）
-    pub bar: u32,
-    /// 小節内の拍位置（0始まり）. 1.5なら2拍目の裏になる
-    pub beat: f64,
-    /// 鍵盤の番号
-    pub key_column: i32,
-}
+// /// 曲を指定するためのデータ
+// #[derive(Resource, Debug, Clone)]
+// pub struct SongData {
+//     pub name: String,
+//     pub song_config_filename: String,
+// }

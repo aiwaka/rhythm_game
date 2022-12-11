@@ -4,21 +4,21 @@ use bevy_kira_audio::prelude::*;
 use crate::{
     constants::MUSIC_PLAY_PRECOUNT,
     events::PanicAudio,
-    resources::{handles::GameAssetsHandles, song::AudioStartTime},
+    resources::{handles::GameAssetsHandles, song::SongStartTime},
     AppState,
 };
 
 use super::system_labels::TimerSystemLabel;
 
 fn setup_start_song(mut commands: Commands, time: Res<Time>) {
-    commands.insert_resource(AudioStartTime(
+    commands.insert_resource(SongStartTime(
         time.elapsed_seconds_f64() + MUSIC_PLAY_PRECOUNT,
     ));
 }
 
 fn start_song(
     audio: Res<Audio>,
-    start_time: Res<AudioStartTime>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
     handles: Res<GameAssetsHandles>,
 ) {

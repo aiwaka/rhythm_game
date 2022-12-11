@@ -3,15 +3,14 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongData, SongSelectCard},
+        song_select::{ActiveSongCard, SongSelectCard},
         timer::FrameCounter,
     },
     resources::{
         config::NoteSpeed,
         game_state::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
-        song::SelectedSong,
-        song_list::AllSongData,
+        song_list::{AllSongData, SongData},
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -37,9 +36,6 @@ fn setup_song_select_scene(
     });
 
     // 曲カードを出現
-    // let song_num = all_song_data.0.len();
-
-    // 曲カードを出現
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -51,7 +47,7 @@ fn setup_song_select_scene(
                 // overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            background_color: BackgroundColor(Color::NONE),
+            background_color: BackgroundColor(Color::YELLOW),
             ..Default::default()
         })
         .insert(ActiveSongCard(0))
@@ -101,7 +97,7 @@ fn hover_card(
         for (card, mut color, counter) in q.iter_mut() {
             if card.0 == active.0 {
                 let param = (counter.count() as f32 / 20.0).sin();
-                color.0 = Color::rgb(0.7, 0.8, 0.8 + 0.1 * param);
+                color.0 = Color::rgb(0.8, 0.8, 0.8 + 0.1 * param);
             } else {
                 color.0 = Color::ANTIQUE_WHITE;
             }
@@ -139,6 +135,7 @@ fn move_cursor(
             // はみ出たぶんだけスクロール可能. はみ出さないなら0になる.
             let max_scroll = (list_width - items_width).max(0.0);
 
+            // アクティブカードのインデックスを更新する
             active.0 = ((active.0 + delta_idx) % item_num).clamp(0, item_num - 1);
             style.position.left =
                 Val::Px((-(CARD_WIDTH + 20.0) * active.0 as f32).clamp(-max_scroll, 0.0));
@@ -159,7 +156,7 @@ fn determine_song(
             if let Some((_, song_data)) = card_q.iter().find(|(card, _)| card.0 == active.0) {
                 info!("select song {:?}", song_data);
                 // 必要な情報をセットしてからステート移行
-                commands.insert_resource(SelectedSong::from_song_card(song_data));
+                commands.insert_resource(song_data.clone());
                 commands.insert_resource(NoteSpeed(1.5));
                 commands.insert_resource(NextAppState(AppState::Game));
                 state.set(AppState::Loading).unwrap();

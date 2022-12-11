@@ -1,6 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 
-use crate::{components::receptor::NotesPattern, constants::ERROR_THRESHOLD};
+use crate::{components::receptor::NotesPattern, constants::MISS_THR};
 
 /// Perfect以外は遅いか早いかをもたせる
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -35,7 +35,7 @@ pub enum CatchEval {
     Perfect,
     NearPerfect(TimingEval),
     Ok(TimingEval),
-    Miss(TimingEval),
+    Miss,
 }
 impl std::fmt::Display for CatchEval {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -49,7 +49,7 @@ impl std::fmt::Display for CatchEval {
             CatchEval::Ok(_) => {
                 write!(f, "ok")
             }
-            CatchEval::Miss(_) => {
+            CatchEval::Miss => {
                 write!(f, "miss")
             }
         }
@@ -58,20 +58,17 @@ impl std::fmt::Display for CatchEval {
 impl CatchEval {
     pub fn new(target_time: f64, real_time: f64) -> Self {
         match real_time - target_time {
-            diff if diff < -ERROR_THRESHOLD => Self::Miss(TimingEval::Fast),
-            diff if (-ERROR_THRESHOLD..=-ERROR_THRESHOLD / 3.0).contains(&diff) => {
-                Self::Ok(TimingEval::Fast)
-            }
-            diff if (-ERROR_THRESHOLD / 3.0..=-ERROR_THRESHOLD / 6.0).contains(&diff) => {
+            // この分岐は起こらないはず
+            diff if diff < -MISS_THR => Self::Miss,
+            diff if (-MISS_THR..=-MISS_THR / 3.0).contains(&diff) => Self::Ok(TimingEval::Fast),
+            diff if (-MISS_THR / 3.0..=-MISS_THR / 6.0).contains(&diff) => {
                 Self::NearPerfect(TimingEval::Fast)
             }
-            diff if (ERROR_THRESHOLD / 6.0..=ERROR_THRESHOLD / 3.0).contains(&diff) => {
+            diff if (MISS_THR / 6.0..=MISS_THR / 3.0).contains(&diff) => {
                 Self::NearPerfect(TimingEval::Slow)
             }
-            diff if (ERROR_THRESHOLD / 3.0..=ERROR_THRESHOLD).contains(&diff) => {
-                Self::Ok(TimingEval::Slow)
-            }
-            diff if diff > ERROR_THRESHOLD => Self::Miss(TimingEval::Slow),
+            diff if (MISS_THR / 3.0..=MISS_THR).contains(&diff) => Self::Ok(TimingEval::Slow),
+            diff if diff > MISS_THR => Self::Miss,
             _ => Self::Perfect,
         }
     }
@@ -81,7 +78,7 @@ impl CatchEval {
             CatchEval::Perfect => 2,
             CatchEval::NearPerfect(_) => 2,
             CatchEval::Ok(_) => 1,
-            CatchEval::Miss(_) => 0,
+            CatchEval::Miss => 0,
         }
     }
 
@@ -90,7 +87,7 @@ impl CatchEval {
             CatchEval::Perfect => Color::GOLD,
             CatchEval::NearPerfect(_) => Color::GOLD,
             CatchEval::Ok(_) => Color::GREEN,
-            CatchEval::Miss(_) => Color::GRAY,
+            CatchEval::Miss => Color::GRAY,
         }
     }
     pub fn get_timing(&self) -> Option<TimingEval> {
@@ -98,7 +95,7 @@ impl CatchEval {
             CatchEval::Perfect => None,
             CatchEval::NearPerfect(timing) => Some(timing),
             CatchEval::Ok(timing) => Some(timing),
-            CatchEval::Miss(timing) => Some(timing),
+            CatchEval::Miss => None,
         }
         .cloned()
     }

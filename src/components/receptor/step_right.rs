@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{NotesPattern, PatternReceptor};
-use crate::{constants::ERROR_THRESHOLD, events::CatchNoteEvent};
+use crate::{constants::MISS_THR, events::CatchNoteEvent, resources::note::NoteType};
 
 /// 3列の右向き階段.
 #[derive(Component)]
@@ -33,24 +33,25 @@ impl PatternReceptor for StepRightReceptor {
 
     fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
         // bpmを用いて一拍の時間を計算し一拍分程度許容
-        if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + ERROR_THRESHOLD {
+        if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + MISS_THR {
             self.init();
         }
     }
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
-        let column = note_ev.column;
-        let real_sec = note_ev.real_sec;
-        // 0, 1がfalseなら受付状態で, 0, 1が来たら開始
-        if self.is_init() && (column == 0 || column == 1) {
-            self.last_time = real_sec;
-            self.last_lane = column;
-            self.lane[column as usize] = true;
-            // 時刻が近すぎてもダメ.
-        } else if column == self.last_lane + 1 && real_sec - self.last_time > 0.01 {
-            self.lane[column as usize] = true;
-            self.last_time = real_sec;
-            self.last_lane = column;
+        if let NoteType::Normal { key } = note_ev.note.note_type {
+            let real_sec = note_ev.real_sec;
+            // 0, 1がfalseなら受付状態で, 0, 1が来たら開始
+            if self.is_init() && (key == 0 || key == 1) {
+                self.last_time = real_sec;
+                self.last_lane = key;
+                self.lane[key as usize] = true;
+                // 時刻が近すぎてもダメ.
+            } else if key == self.last_lane + 1 && real_sec - self.last_time > 0.01 {
+                self.lane[key as usize] = true;
+                self.last_time = real_sec;
+                self.last_lane = key;
+            }
         }
     }
 

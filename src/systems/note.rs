@@ -3,18 +3,24 @@ use bevy::sprite::Mesh2dHandle;
 use itertools::Itertools;
 
 use crate::components::note::KeyLane;
-use crate::components::note::Note;
+use crate::components::note::NoteInfo;
 use crate::components::timer::FrameCounter;
 use crate::components::ui::GameSceneObject;
-use crate::constants::{ERROR_THRESHOLD, NOTE_BASE_SPEED, SPAWN_POSITION, TARGET_POSITION};
+use crate::constants::BASIC_NOTE_SPEED;
+use crate::constants::MISS_THR;
+use crate::constants::NOTE_SPAWN_Y;
+use crate::constants::TARGET_Y;
 use crate::events::CatchNoteEvent;
+use crate::resources::config::Beat;
+use crate::resources::config::Bpm;
 use crate::resources::config::NoteSpeed;
 use crate::resources::game_state::ExistingEntities;
 use crate::resources::handles::GameAssetsHandles;
+use crate::resources::note::NoteType;
 use crate::resources::score::CatchEval;
 use crate::resources::score::ScoreResource;
-use crate::resources::score::TimingEval;
-use crate::resources::song::{AudioStartTime, SongConfig};
+use crate::resources::song::SongNotes;
+use crate::resources::song::SongStartTime;
 use crate::AppState;
 
 use super::system_labels::TimerSystemLabel;
@@ -29,7 +35,7 @@ fn set_lane(
     for i in 0..4 {
         let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {
-            translation: Vec3::new(x, TARGET_POSITION + 250.0, 0.1),
+            translation: Vec3::new(x, TARGET_Y + 250.0, 0.1),
             ..Default::default()
         };
         commands
@@ -48,8 +54,8 @@ fn set_lane(
 fn spawn_notes(
     mut commands: Commands,
     textures: Res<GameAssetsHandles>,
-    mut song_config: ResMut<SongConfig>,
-    start_time: Res<AudioStartTime>,
+    mut notes: ResMut<SongNotes>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
 ) {
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
@@ -58,41 +64,44 @@ fn spawn_notes(
 
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
     while {
-        if let Some(note) = song_config.notes.front() {
+        if let Some(note) = notes.front() {
             time_last < note.spawn_time && note.spawn_time < time_after_start
         } else {
             false
         }
     } {
-        info!("spawn note");
-        let note = song_config.notes.pop_front().unwrap();
+        let note = notes.pop_front().unwrap();
         let note_mesh = textures.note.clone();
         let color = textures.color_material_blue.clone();
 
-        let transform = Transform {
-            translation: Vec3::new(
-                KeyLane::x_coord_from_num(note.key_column),
-                SPAWN_POSITION,
-                1.0,
-            ),
-            ..Default::default()
+        let note_bundle = match note.note_type {
+            NoteType::Normal { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(key), NOTE_SPAWN_Y, 1.0),
+                    ..Default::default()
+                };
+                let mesh = ColorMesh2dBundle {
+                    mesh: Mesh2dHandle::from(note_mesh),
+                    material: color,
+                    transform,
+                    ..Default::default()
+                };
+                (note.clone(), mesh)
+            }
         };
-        commands
-            .spawn(ColorMesh2dBundle {
-                mesh: Mesh2dHandle::from(note_mesh),
-                material: color,
-                transform,
-                ..Default::default()
-            })
-            .insert(note);
+        commands.spawn(note_bundle);
     }
 }
 
-fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed: Res<NoteSpeed>) {
+fn move_notes(
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &NoteInfo)>,
+    speed: Res<NoteSpeed>,
+) {
     for (mut transform, _) in query.iter_mut() {
-        transform.translation.y -= time.delta_seconds() * speed.0 * NOTE_BASE_SPEED;
-        let allow_distance = ERROR_THRESHOLD as f32 * NOTE_BASE_SPEED * speed.0;
-        let distance_after_target = transform.translation.y - (TARGET_POSITION - allow_distance);
+        transform.translation.y -= time.delta_seconds() * speed.0 * BASIC_NOTE_SPEED;
+        let allow_distance = MISS_THR as f32 * BASIC_NOTE_SPEED * speed.0;
+        let distance_after_target = transform.translation.y - (TARGET_Y - allow_distance);
         if distance_after_target < -0.02 {
             transform.rotate_axis(Vec3::Z, 0.1);
             transform.scale = (transform.scale
@@ -105,23 +114,28 @@ fn move_notes(time: Res<Time>, mut query: Query<(&mut Transform, &Note)>, speed:
 #[allow(clippy::too_many_arguments)]
 fn catch_notes(
     mut commands: Commands,
-    query: Query<(&Note, Entity)>,
+    note_q: Query<(&NoteInfo, Entity)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
     mut score: ResMut<ScoreResource>,
     mut ev_writer: EventWriter<CatchNoteEvent>,
-    start_time: Res<AudioStartTime>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
-    song_info: Res<SongConfig>,
+    bpm: Res<Bpm>,
+    beat: Res<Beat>,
 ) {
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
-        for (note, ent) in query.iter() {
+        for (note, ent) in note_q.iter() {
+            let note_target_time = note.target_time;
             // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押された・まだ消去されていないノートを取得処理
-            if (note.target_time - ERROR_THRESHOLD..=note.target_time + ERROR_THRESHOLD)
+            let note_caught = match note.note_type {
+                NoteType::Normal { key } => key == lane.0,
+            };
+            if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
-                && note.key_column == lane.0
+                && note_caught
                 && lane.key_just_pressed(&key_input)
                 && !removed_ent.contains(&ent)
             {
@@ -129,27 +143,32 @@ fn catch_notes(
                 removed_ent.push(ent);
                 let score_eval = CatchEval::new(note.target_time, time_after_start);
                 score.update_score(&score_eval);
-                ev_writer.send(CatchNoteEvent::new(
-                    note,
-                    time_after_start,
-                    song_info.bpm,
-                    song_info.beat_par_bar,
-                ));
+                ev_writer.send(CatchNoteEvent::new(note, time_after_start, bpm.0, beat.0));
             }
         }
     }
 }
 
-fn despawn_notes(
+/// 取れなかったときの処理
+#[allow(clippy::too_many_arguments)]
+fn drop_notes(
     mut commands: Commands,
-    query: Query<(&Transform, Entity), With<Note>>,
+    query: Query<(&Transform, &NoteInfo, Entity)>,
     mut score: ResMut<ScoreResource>,
+    mut ev_writer: EventWriter<CatchNoteEvent>,
+    start_time: Res<SongStartTime>,
+    time: Res<Time>,
+    bpm: Res<Bpm>,
+    beat: Res<Beat>,
 ) {
-    for (trans, ent) in query.iter() {
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    for (trans, note, ent) in query.iter() {
         let pos_y = trans.translation.y;
-        if pos_y < 2.0 * TARGET_POSITION {
+        if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
-            score.update_score(&CatchEval::Miss(TimingEval::Slow));
+            let eval = CatchEval::Miss;
+            score.update_score(&eval);
+            ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
         }
     }
 }
@@ -164,6 +183,6 @@ impl Plugin for NotePlugin {
         );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(move_notes));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(catch_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(despawn_notes));
+        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(drop_notes));
     }
 }

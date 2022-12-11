@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{note::Note, ui::GameSceneObject},
+    components::{note::NoteInfo, ui::GameSceneObject},
     events::PanicAudio,
     resources::{
         game_state::{ExistingEntities, NextAppState, ResultDisplayed},
         handles::GameAssetsHandles,
         score::{CatchEval, ScoreResource, TimingEval},
-        song::{AudioStartTime, SongConfig},
+        song::{SongConfigResource, SongStartTime},
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -15,9 +15,9 @@ use crate::{
 #[allow(clippy::too_many_arguments)]
 fn spawn_result(
     mut commands: Commands,
-    notes_q: Query<&Note>,
-    song_config: Res<SongConfig>,
-    start_time: Res<AudioStartTime>,
+    notes_q: Query<&NoteInfo>,
+    song_config: Res<SongConfigResource>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
     score: Res<ScoreResource>,
     handles: Res<GameAssetsHandles>,
@@ -69,8 +69,7 @@ fn spawn_result(
                         + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
                     score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
                         + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
-                    score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
-                        + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
+                    score.get_eval_num(&CatchEval::Miss) + score.get_eval_num(&CatchEval::Miss),
                 );
                 parent.spawn(TextBundle {
                     text: Text {

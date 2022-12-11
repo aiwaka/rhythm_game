@@ -10,12 +10,13 @@ use crate::{
             TimeText,
         },
     },
-    constants::{LANE_WIDTH, TARGET_POSITION},
+    constants::{LANE_WIDTH, TARGET_Y},
     events::{AchievePatternEvent, CatchNoteEvent},
     resources::{
         handles::GameAssetsHandles,
+        note::NoteType,
         score::{CatchEval, ScoreResource, TimingEval},
-        song::AudioStartTime,
+        song::SongStartTime,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -61,7 +62,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
         });
     // 判定線
     let transform = Transform {
-        translation: Vec3::new(0.0, TARGET_POSITION, 2.0),
+        translation: Vec3::new(0.0, TARGET_Y, 2.0),
         ..Default::default()
     };
     commands
@@ -78,7 +79,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     for i in 0..5 {
         let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {
-            translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_POSITION + 250.0, 2.0),
+            translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_Y + 250.0, 2.0),
             ..Default::default()
         };
         commands
@@ -95,7 +96,7 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
 
 fn update_time_text(
     mut query: Query<(&mut Text, &TimeText)>,
-    start_time: Res<AudioStartTime>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
 ) {
     // Song starts 3 seconds after real time
@@ -122,8 +123,7 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
                     + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
                 score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
                     + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
-                score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
-                    + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Miss) + score.get_eval_num(&CatchEval::Miss),
             );
         }
     }
@@ -224,10 +224,14 @@ fn spawn_catch_eval_text(
     handles: Res<GameAssetsHandles>,
 ) {
     let font = handles.main_font.clone();
-    let pos_bottom = SCREEN_HEIGHT / 2.0 + TARGET_POSITION;
+    let pos_bottom = SCREEN_HEIGHT / 2.0 + TARGET_Y;
     for ev in ev_reader.iter() {
-        let catch_eval = CatchEval::new(ev.exact_sec, ev.real_sec);
-        let pos_left = SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(ev.column) - LANE_WIDTH / 2.0;
+        let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
+            NoteType::Normal { key } => {
+                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+            }
+        }) else { continue };
+        let catch_eval = CatchEval::new(ev.note.target_time, ev.real_sec);
         commands
             .spawn(NodeBundle {
                 style: Style {

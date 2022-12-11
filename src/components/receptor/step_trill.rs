@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use super::{NotesPattern, PatternReceptor};
-
 /// 3列トリル
 #[derive(Component)]
 pub struct StepTrillReceptor {
