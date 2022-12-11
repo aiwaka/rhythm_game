@@ -7,6 +7,7 @@ mod systems;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
+use constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use events::add_events_to_game;
 use resources::game_state::NextAppState;
 use systems::{
@@ -14,9 +15,6 @@ use systems::{
     result_screen::ResultScreenPlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin,
     ui::GameUiPlugin,
 };
-
-const SCREEN_WIDTH: f32 = 800.0;
-const SCREEN_HEIGHT: f32 = 600.0;
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
 pub enum AppState {
