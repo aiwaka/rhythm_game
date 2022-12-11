@@ -2372,7 +2372,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_yaml",
- "toml",
 ]
 
 [[package]]
