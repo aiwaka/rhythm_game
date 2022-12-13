@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::sprite::Mesh2dHandle;
 
 use crate::components::note::{KeyLane, NoteInfo};
 use crate::constants::{BASIC_NOTE_SPEED, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
@@ -17,7 +16,7 @@ use super::system_labels::TimerSystemLabel;
 
 fn spawn_notes(
     mut commands: Commands,
-    textures: Res<GameAssetsHandles>,
+    game_assets: Res<GameAssetsHandles>,
     mut notes: ResMut<SongNotes>,
     start_time: Res<SongStartTime>,
     time: Res<Time>,
@@ -35,8 +34,6 @@ fn spawn_notes(
         }
     } {
         let note = notes.pop_front().unwrap();
-        let note_mesh = textures.note.clone();
-        let color = textures.color_material_blue.clone();
 
         let note_bundle = match note.note_type {
             NoteType::Normal { key } => {
@@ -45,8 +42,21 @@ fn spawn_notes(
                     ..Default::default()
                 };
                 let mesh = ColorMesh2dBundle {
-                    mesh: Mesh2dHandle::from(note_mesh),
-                    material: color,
+                    mesh: game_assets.note.clone().into(),
+                    material: game_assets.color_material_blue.clone(),
+                    transform,
+                    ..Default::default()
+                };
+                (note.clone(), mesh)
+            }
+            NoteType::BarLine => {
+                let transform = Transform {
+                    translation: Vec3::new(0.0, NOTE_SPAWN_Y, 0.5),
+                    ..Default::default()
+                };
+                let mesh = ColorMesh2dBundle {
+                    mesh: game_assets.bar_note.clone().into(),
+                    material: game_assets.color_material_white_trans.clone(),
                     transform,
                     ..Default::default()
                 };
@@ -96,6 +106,7 @@ fn catch_notes(
             // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押された・まだ消去されていないノートを取得処理
             let note_caught = match note.note_type {
                 NoteType::Normal { key } => key == lane.0,
+                NoteType::BarLine => false,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)

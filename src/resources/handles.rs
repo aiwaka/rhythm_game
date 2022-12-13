@@ -67,6 +67,7 @@ pub struct GameAssetsHandles {
 
     // メッシュ
     pub note: Handle<Mesh>,
+    pub bar_note: Handle<Mesh>,
     pub judge_line: Handle<Mesh>,
     pub lane_line: Handle<Mesh>,
     pub lane_background: Handle<Mesh>,
@@ -92,6 +93,7 @@ impl GameAssetsHandles {
     ) -> Self {
         let numbers = server.load("images/numbers.png");
         let note_shape = shape::Quad::new(Vec2::new(100.0, 8.0));
+        let bar_note_shape = shape::Quad::new(Vec2::new(400.0, 5.0));
         let judge_line_shape = shape::Quad::new(Vec2::new(700.0, 8.0));
         let lane_line_shape = shape::Quad::new(Vec2::new(8.0, 500.0));
         let lane_background_shape = shape::Quad::new(Vec2::new(LANE_WIDTH, 500.0));
@@ -115,6 +117,7 @@ impl GameAssetsHandles {
             color_material_lane_background,
 
             note: meshes.add(Mesh::from(note_shape)),
+            bar_note: meshes.add(bar_note_shape.into()),
             judge_line: meshes.add(Mesh::from(judge_line_shape)),
             lane_line: meshes.add(Mesh::from(lane_line_shape)),
             lane_background: meshes.add(Mesh::from(lane_background_shape)),

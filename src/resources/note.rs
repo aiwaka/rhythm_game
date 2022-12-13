@@ -39,6 +39,7 @@ impl From<NoteSpawnParser> for NoteSpawn {
 #[derive(Debug, Clone)]
 pub enum NoteType {
     Normal { key: i32 },
+    BarLine,
 }
 impl From<NoteTypeParser> for NoteType {
     fn from(data: NoteTypeParser) -> Self {
