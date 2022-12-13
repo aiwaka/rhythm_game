@@ -50,7 +50,6 @@ fn spawn_notes(
                 (note.clone(), mesh)
             }
             NoteType::BarLine => {
-                info!("spawn bar");
                 let transform = Transform {
                     translation: Vec3::new(0.0, NOTE_SPAWN_Y, 0.5),
                     ..Default::default()
@@ -135,24 +134,16 @@ fn catch_notes(
 fn drop_notes(
     mut commands: Commands,
     query: Query<(&Transform, &NoteInfo, Entity)>,
-    // mut score: ResMut<ScoreResource>,
     mut eval_ev_writer: EventWriter<NoteEvalEvent>,
-    // start_time: Res<SongStartTime>,
-    // time: Res<Time>,
-    // bpm: Res<Bpm>,
-    // beat: Res<Beat>,
 ) {
     // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for (trans, note, ent) in query.iter() {
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
-            // let eval = CatchEval::Miss;
-            // score.update_score(&eval);
             if matches!(note.note_type, NoteType::Normal { key: _ }) {
                 // 物によっては追加で処理.
                 // ノーマルノーツの場合はミスイベントを送信する
-                // ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
                 eval_ev_writer.send(NoteEvalEvent(CatchEval::Miss));
             }
         }
