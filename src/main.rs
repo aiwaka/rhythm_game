@@ -12,8 +12,8 @@ use events::add_events_to_game;
 use resources::game_state::NextAppState;
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
-    result_screen::ResultScreenPlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin,
-    ui::GameUiPlugin,
+    result_screen::ResultScreenPlugin, score::ScorePlugin, song_select::SongSelectStatePlugin,
+    timer::TimersPlugin, ui::GameUiPlugin,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
@@ -62,6 +62,7 @@ fn main() {
     app.add_plugin(GameAudioPlugin);
     app.add_plugin(TimersPlugin);
     app.add_plugin(PatternReceptorPlugin);
+    app.add_plugin(ScorePlugin);
 
     app.add_plugin(SongSelectStatePlugin);
     app.add_plugin(ResultScreenPlugin);

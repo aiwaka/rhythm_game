@@ -2,12 +2,12 @@ use bevy::prelude::*;
 
 use crate::components::note::{KeyLane, NoteInfo};
 use crate::constants::{BASIC_NOTE_SPEED, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
-use crate::events::CatchNoteEvent;
+use crate::events::{CatchNoteEvent, NoteEvalEvent};
 use crate::resources::note::NoteType;
 use crate::resources::{
     config::{Beat, Bpm, NoteSpeed},
     handles::GameAssetsHandles,
-    score::{CatchEval, ScoreResource},
+    score::CatchEval,
     song::{SongNotes, SongStartTime},
 };
 use crate::AppState;
@@ -50,6 +50,7 @@ fn spawn_notes(
                 (note.clone(), mesh)
             }
             NoteType::BarLine => {
+                info!("spawn bar");
                 let transform = Transform {
                     translation: Vec3::new(0.0, NOTE_SPAWN_Y, 0.5),
                     ..Default::default()
@@ -72,15 +73,18 @@ fn move_notes(
     mut query: Query<(&mut Transform, &NoteInfo)>,
     speed: Res<NoteSpeed>,
 ) {
-    for (mut transform, _) in query.iter_mut() {
+    for (mut transform, note) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * speed.0 * BASIC_NOTE_SPEED;
         let allow_distance = MISS_THR as f32 * BASIC_NOTE_SPEED * speed.0;
         let distance_after_target = transform.translation.y - (TARGET_Y - allow_distance);
-        if distance_after_target < -0.02 {
-            transform.rotate_axis(Vec3::Z, 0.1);
-            transform.scale = (transform.scale
-                - time.delta_seconds() * distance_after_target * 0.01)
-                .clamp_length(0.0, 100.0);
+        if matches!(note.note_type, NoteType::Normal { key: _ }) {
+            // ミス処理を行うノーツのタイプを選択する
+            if distance_after_target < -0.02 {
+                transform.rotate_axis(Vec3::Z, 0.1);
+                transform.scale = (transform.scale
+                    - time.delta_seconds() * distance_after_target * 0.01)
+                    .clamp_length(0.0, 100.0);
+            }
         }
     }
 }
@@ -91,8 +95,8 @@ fn catch_notes(
     note_q: Query<(&NoteInfo, Entity)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
-    mut score: ResMut<ScoreResource>,
-    mut ev_writer: EventWriter<CatchNoteEvent>,
+    mut catch_ev_writer: EventWriter<CatchNoteEvent>,
+    mut eval_ev_writer: EventWriter<NoteEvalEvent>,
     start_time: Res<SongStartTime>,
     time: Res<Time>,
     bpm: Res<Bpm>,
@@ -116,9 +120,11 @@ fn catch_notes(
             {
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
-                let score_eval = CatchEval::new(note.target_time, time_after_start);
-                score.update_score(&score_eval);
-                ev_writer.send(CatchNoteEvent::new(note, time_after_start, bpm.0, beat.0));
+                catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
+                eval_ev_writer.send(NoteEvalEvent(CatchEval::new(
+                    note.target_time,
+                    time_after_start,
+                )));
             }
         }
     }
@@ -129,21 +135,26 @@ fn catch_notes(
 fn drop_notes(
     mut commands: Commands,
     query: Query<(&Transform, &NoteInfo, Entity)>,
-    mut score: ResMut<ScoreResource>,
-    mut ev_writer: EventWriter<CatchNoteEvent>,
-    start_time: Res<SongStartTime>,
-    time: Res<Time>,
-    bpm: Res<Bpm>,
-    beat: Res<Beat>,
+    // mut score: ResMut<ScoreResource>,
+    mut eval_ev_writer: EventWriter<NoteEvalEvent>,
+    // start_time: Res<SongStartTime>,
+    // time: Res<Time>,
+    // bpm: Res<Bpm>,
+    // beat: Res<Beat>,
 ) {
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for (trans, note, ent) in query.iter() {
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
-            let eval = CatchEval::Miss;
-            score.update_score(&eval);
-            ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
+            // let eval = CatchEval::Miss;
+            // score.update_score(&eval);
+            if matches!(note.note_type, NoteType::Normal { key: _ }) {
+                // 物によっては追加で処理.
+                // ノーマルノーツの場合はミスイベントを送信する
+                // ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
+                eval_ev_writer.send(NoteEvalEvent(CatchEval::Miss));
+            }
         }
     }
 }

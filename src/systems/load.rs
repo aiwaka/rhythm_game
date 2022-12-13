@@ -8,6 +8,7 @@ use crate::{
         config::{Beat, Bpm, NoteSpeed},
         game_state::NextAppState,
         handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
+        note::{NoteSpawn, NoteType},
         score::ScoreResource,
         song::{SongConfig, SongConfigParser, SongConfigResource, SongNotes},
         song_list::{AllSongData, SongData, SongDataParser},
@@ -60,8 +61,18 @@ fn load_song_config(
 
     let song_config = SongConfig::from(parsed);
 
-    // まずノーツをソートする.
     let mut config_notes = song_config.notes.clone();
+    // 小節線ノートを加える
+    let last_bar_num = config_notes.iter().last().unwrap().bar;
+    for bar in 0..(last_bar_num + 2) {
+        config_notes.push(NoteSpawn {
+            note_type: NoteType::BarLine,
+            bar,
+            beat: 0.0,
+        })
+    }
+
+    // ノーツをソートする.
     config_notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
         std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
         _ => a.bar.cmp(&b.bar),

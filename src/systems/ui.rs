@@ -150,7 +150,7 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
                     + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
                 score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
                     + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
-                score.get_eval_num(&CatchEval::Miss) + score.get_eval_num(&CatchEval::Miss),
+                score.get_eval_num(&CatchEval::Miss)
             );
         }
     }

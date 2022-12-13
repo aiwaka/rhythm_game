@@ -73,7 +73,7 @@ impl CatchEval {
         }
     }
 
-    pub fn get_score(&self) -> u32 {
+    pub fn as_score(&self) -> u32 {
         match self {
             CatchEval::Perfect => 2,
             CatchEval::NearPerfect(_) => 2,
@@ -106,6 +106,7 @@ pub struct ScoreResource {
     score: usize,
 
     pattern_vec: Vec<NotesPattern>,
+    /// 取得評価を保存しておく. 評価列挙型に`Hash`を実装することでキーとして使えるようにしている.
     eval_storage: HashMap<CatchEval, u32>,
 }
 impl ScoreResource {
@@ -117,7 +118,7 @@ impl ScoreResource {
             self.eval_storage.insert(*catch_eval, 1);
         }
 
-        self.score += catch_eval.get_score() as usize;
+        self.score += catch_eval.as_score() as usize;
     }
 
     pub fn add_score(&mut self, score: u32) {
