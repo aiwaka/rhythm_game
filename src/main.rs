@@ -1,22 +1,20 @@
 mod components;
+mod constants;
 mod events;
-mod game_constants;
 mod resources;
 mod systems;
 
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
+use constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use events::add_events_to_game;
-use resources::game_scene::NextAppState;
+use resources::game_state::NextAppState;
 use systems::{
     audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
-    result_screen::ResultScreenPlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin,
-    ui::GameUiPlugin,
+    result_screen::ResultScreenPlugin, score::ScorePlugin, song_select::SongSelectStatePlugin,
+    timer::TimersPlugin, ui::GameUiPlugin,
 };
-
-const SCREEN_WIDTH: f32 = 800.0;
-const SCREEN_HEIGHT: f32 = 600.0;
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
 pub enum AppState {
@@ -28,7 +26,7 @@ pub enum AppState {
 
 fn global_setup(mut commands: Commands) {
     // カメラのセット
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 }
 
 fn main() {
@@ -42,11 +40,13 @@ fn main() {
 
     let mut app = App::new();
 
-    app.insert_resource(window);
     // Set antialiasing to use 4 samples
     app.insert_resource(Msaa { samples: 4 });
     app.add_system(bevy::window::close_on_esc);
-    app.add_plugins(DefaultPlugins);
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        window,
+        ..Default::default()
+    }));
     app.add_plugin(AudioPlugin);
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
@@ -62,6 +62,7 @@ fn main() {
     app.add_plugin(GameAudioPlugin);
     app.add_plugin(TimersPlugin);
     app.add_plugin(PatternReceptorPlugin);
+    app.add_plugin(ScorePlugin);
 
     app.add_plugin(SongSelectStatePlugin);
     app.add_plugin(ResultScreenPlugin);

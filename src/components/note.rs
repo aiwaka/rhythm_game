@@ -1,9 +1,16 @@
 use bevy::prelude::*;
 
-use crate::{
-    game_constants::{DISTANCE, LANE_WIDTH, NOTE_BASE_SPEED},
-    resources::song::NoteTimeToml,
-};
+use crate::{constants::LANE_WIDTH, resources::note::NoteType};
+
+/// ゲームが使う情報を入れた構造体. 取得時の受け渡しのためコンポーネントとして使う.
+#[derive(Component, Debug, Clone)]
+pub struct NoteInfo {
+    pub note_type: NoteType,
+    pub bar: u32,
+    pub beat: f64,
+    pub spawn_time: f64,
+    pub target_time: f64,
+}
 
 /// 鍵盤レーン
 #[derive(Component, Clone, Copy, Debug)]
@@ -31,32 +38,32 @@ impl KeyLane {
     }
 }
 
-#[derive(Component, Clone, Copy, Debug)]
-pub struct Note {
-    /// 出現時間. 決められた拍に判定線に来るように設定される.
-    pub spawn_time: f64,
-    pub target_time: f64,
-    pub bar: u32,
-    pub beat: f64,
-    pub key_column: i32,
-}
-impl Note {
-    pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f32, speed_coeff: f32) -> Self {
-        // 座標の移動速度. BASE_SPEED * 倍率.
-        let speed = speed_coeff * NOTE_BASE_SPEED;
-        let second_par_beat = bpm.recip() * 60.0;
-        // 判定線に到達する時間を曲開始時刻から測ったもの.
-        let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat as f64;
-        Self {
-            spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
-            target_time: click_time,
-            bar: note.bar,
-            beat: note.beat,
-            key_column: note.key_column,
-        }
-    }
-}
+// #[derive(Component, Clone, Copy, Debug)]
+// pub struct Note {
+//     /// 出現時間. 決められた拍に判定線に来るように設定される.
+//     pub spawn_time: f64,
+//     pub target_time: f64,
+//     pub bar: u32,
+//     pub beat: f64,
+//     pub key_column: i32,
+// }
+// impl Note {
+//     pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f32, speed_coeff: f32) -> Self {
+//         // 座標の移動速度. BASE_SPEED * 倍率.
+//         let speed = speed_coeff * NOTE_BASE_SPEED;
+//         let second_par_beat = bpm.recip() * 60.0;
+//         // 判定線に到達する時間を曲開始時刻から測ったもの.
+//         let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat as f64;
+//         Self {
+//             spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
+//             target_time: click_time,
+//             bar: note.bar,
+//             beat: note.beat,
+//             key_column: note.key_column,
+//         }
+//     }
+// }
 
-/// 小節線コンポーネント
-#[derive(Component, Clone, Copy, Debug)]
-pub struct LineBar;
+// /// 小節線コンポーネント
+// #[derive(Component, Clone, Copy, Debug)]
+// pub struct LineBar;

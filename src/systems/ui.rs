@@ -1,4 +1,5 @@
 use bevy::{prelude::*, sprite::Mesh2dHandle};
+use itertools::Itertools;
 use rand::Rng;
 
 use crate::{
@@ -10,12 +11,14 @@ use crate::{
             TimeText,
         },
     },
+    constants::{LANE_WIDTH, TARGET_Y},
     events::{AchievePatternEvent, CatchNoteEvent},
-    game_constants::{LANE_WIDTH, TARGET_POSITION},
     resources::{
+        game_state::ExistingEntities,
         handles::GameAssetsHandles,
+        note::NoteType,
         score::{CatchEval, ScoreResource, TimingEval},
-        song::AudioStartTime,
+        song::SongStartTime,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -25,44 +28,9 @@ use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSyste
 fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     let font = handles.main_font.clone();
 
-    // DEBUG: 時間を表示するテキストノード
-    // commands
-    //     .spawn_bundle(NodeBundle {
-    //         style: Style {
-    //             position_type: PositionType::Absolute,
-    //             position: UiRect {
-    //                 left: Val::Px(10.),
-    //                 top: Val::Px(10.),
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         },
-    //         color: UiColor(Color::YELLOW_GREEN),
-    //         ..Default::default()
-    //     })
-    //     .insert(GameSceneObject)
-    //     .with_children(|parent| {
-    //         parent
-    //             .spawn_bundle(TextBundle {
-    //                 text: Text {
-    //                     sections: vec![TextSection {
-    //                         value: "Time: 0.0".to_string(),
-    //                         style: TextStyle {
-    //                             font: font.clone(),
-    //                             font_size: 40.0,
-    //                             color: Color::rgb(0.9, 0.9, 0.9),
-    //                         },
-    //                     }],
-    //                     ..Default::default()
-    //                 },
-    //                 ..Default::default()
-    //             })
-    //             .insert(TimeText);
-    //     });
-
     // スコア表示テキストノード
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -72,13 +40,13 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 },
                 ..Default::default()
             },
-            color: UiColor(Color::NONE),
+            background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
         .insert(GameSceneObject)
         .with_children(|parent| {
             parent
-                .spawn_bundle(TextBundle {
+                .spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: "Score: 0. Corrects: 0. Fails: 0".to_string(),
@@ -96,11 +64,11 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
         });
     // 判定線
     let transform = Transform {
-        translation: Vec3::new(0.0, TARGET_POSITION, 2.0),
+        translation: Vec3::new(0.0, TARGET_Y, 2.0),
         ..Default::default()
     };
     commands
-        .spawn_bundle(ColorMesh2dBundle {
+        .spawn(ColorMesh2dBundle {
             mesh: Mesh2dHandle::from(handles.judge_line.clone()),
             material: handles.color_material_white_trans.clone(),
             transform,
@@ -113,11 +81,11 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     for i in 0..5 {
         let x = KeyLane::x_coord_from_num(i);
         let transform = Transform {
-            translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_POSITION + 250.0, 2.0),
+            translation: Vec3::new(x - LANE_WIDTH / 2.0, TARGET_Y + 250.0, 2.0),
             ..Default::default()
         };
         commands
-            .spawn_bundle(ColorMesh2dBundle {
+            .spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle::from(handles.lane_line.clone()),
                 material: handles.color_material_white_trans.clone(),
                 transform,
@@ -128,13 +96,38 @@ fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
     }
 }
 
+fn setup_lane(
+    mut commands: Commands,
+    handles: Res<GameAssetsHandles>,
+    already_exist_q: Query<Entity>,
+) {
+    // シーン遷移時点で存在しているエンティティをすべて保存
+    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
+    for i in 0..4 {
+        let x = KeyLane::x_coord_from_num(i);
+        let transform = Transform {
+            translation: Vec3::new(x, TARGET_Y + 250.0, 0.1),
+            ..Default::default()
+        };
+        commands
+            .spawn(ColorMesh2dBundle {
+                mesh: Mesh2dHandle::from(handles.lane_background.clone()),
+                material: handles.color_material_lane_background[i as usize].clone(),
+                transform,
+                ..Default::default()
+            })
+            .insert(KeyLane(i))
+            .insert(FrameCounter::new_default(60));
+    }
+}
+
 fn update_time_text(
     mut query: Query<(&mut Text, &TimeText)>,
-    start_time: Res<AudioStartTime>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
 ) {
     // Song starts 3 seconds after real time
-    let time_after_start = time.seconds_since_startup() - start_time.0;
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
 
     // Don't do anything before the song starts
     if time_after_start < 0.0 {
@@ -157,8 +150,7 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
                     + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),
                 score.get_eval_num(&CatchEval::Ok(TimingEval::Fast))
                     + score.get_eval_num(&CatchEval::Ok(TimingEval::Slow)),
-                score.get_eval_num(&CatchEval::Miss(TimingEval::Fast))
-                    + score.get_eval_num(&CatchEval::Miss(TimingEval::Slow)),
+                score.get_eval_num(&CatchEval::Miss)
             );
         }
     }
@@ -198,7 +190,7 @@ fn spawn_pattern_text(
         };
         let pos_y: f32 = rng.gen_range(200.0..=300.0);
         commands
-            .spawn_bundle(NodeBundle {
+            .spawn(NodeBundle {
                 style: Style {
                     position_type: PositionType::Absolute,
                     position: UiRect {
@@ -208,13 +200,13 @@ fn spawn_pattern_text(
                     },
                     ..Default::default()
                 },
-                color: UiColor(Color::NONE),
+                background_color: BackgroundColor(Color::NONE),
                 ..Default::default()
             })
             .insert(CountDownTimer::new(30))
             .insert(PatternPopupText)
             .with_children(|parent| {
-                parent.spawn_bundle(TextBundle {
+                parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: format!("{}", ev.0),
@@ -259,12 +251,16 @@ fn spawn_catch_eval_text(
     handles: Res<GameAssetsHandles>,
 ) {
     let font = handles.main_font.clone();
-    let pos_bottom = SCREEN_HEIGHT / 2.0 + TARGET_POSITION;
     for ev in ev_reader.iter() {
-        let catch_eval = CatchEval::new(ev.exact_sec, ev.real_sec);
-        let pos_left = SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(ev.column) - LANE_WIDTH / 2.0;
+        let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
+            NoteType::Normal { key } => {
+                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+            }
+            NoteType::BarLine => None,
+        }) else { continue };
+        let catch_eval = CatchEval::new(ev.note.target_time, ev.real_sec);
         commands
-            .spawn_bundle(NodeBundle {
+            .spawn(NodeBundle {
                 style: Style {
                     flex_direction: FlexDirection::Column,
                     justify_content: JustifyContent::Center,
@@ -278,14 +274,14 @@ fn spawn_catch_eval_text(
                     },
                     ..Default::default()
                 },
-                color: UiColor(Color::NONE),
+                background_color: BackgroundColor(Color::NONE),
                 ..Default::default()
             })
             .insert(CountDownTimer::new(15))
             .insert(CatchEvalPopupText)
             .with_children(|parent| {
                 if let Some(timing) = catch_eval.get_timing() {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         text: Text {
                             sections: vec![TextSection {
                                 value: format!("{}", timing),
@@ -300,7 +296,7 @@ fn spawn_catch_eval_text(
                         ..Default::default()
                     });
                 }
-                parent.spawn_bundle(TextBundle {
+                parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
                             value: format!("{}", catch_eval),
@@ -342,6 +338,7 @@ pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_ui));
+        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_lane));
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
                 .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),

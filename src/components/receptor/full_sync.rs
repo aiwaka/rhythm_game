@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::{NotesPattern, PatternReceptor};
-use crate::events::CatchNoteEvent;
+use crate::{events::CatchNoteEvent, resources::note::NoteType};
 
 /// 4点同時押し
 #[derive(Component)]
@@ -34,14 +34,15 @@ impl PatternReceptor for FullSyncReceptor {
     }
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
-        // info!("note: {:?}", note_ev);
-        let column = note_ev.column;
-        let real_sec = note_ev.real_sec;
-        if self.is_init() {
-            self.first_time = real_sec;
-            self.lane[column as usize] = true;
-        } else {
-            self.lane[column as usize] = true;
+        if let NoteType::Normal { key } = note_ev.note.note_type {
+            let real_sec = note_ev.real_sec;
+            if self.is_init() {
+                self.first_time = real_sec;
+                // TODO: keyをusizeに変換するのでkeyがi32の意味がない. 鍵盤の使い方を検討
+                self.lane[key as usize] = true;
+            } else {
+                self.lane[key as usize] = true;
+            }
         }
     }
 
