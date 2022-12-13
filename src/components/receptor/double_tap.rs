@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game_constants::ERROR_THRESHOLD;
+use crate::resources::note::NoteType;
 
 use super::PatternReceptor;
 
@@ -40,12 +40,14 @@ impl PatternReceptor for DoubleTapReceptor {
     }
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
-        if self.is_init() {
-            self.first_time = note_ev.real_sec;
-            self.lane = note_ev.column;
-            self.num += 1;
-        } else if self.lane == note_ev.column {
-            self.num += 1;
+        if let NoteType::Normal { key } = note_ev.note.note_type {
+            if self.is_init() {
+                self.first_time = note_ev.real_sec;
+                self.lane = key;
+                self.num += 1;
+            } else if self.lane == key {
+                self.num += 1;
+            }
         }
     }
 

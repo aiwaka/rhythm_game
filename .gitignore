@@ -3,6 +3,6 @@ assets/*
 
 !assets/songs
 assets/songs/*
-!assets/songs/test.toml
+!assets/songs/*.yaml
 
 .DS_Store

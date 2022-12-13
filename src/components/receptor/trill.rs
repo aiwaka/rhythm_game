@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::resources::note::NoteType;
+
 use super::{NotesPattern, PatternReceptor};
 
 /// 2列トリル
@@ -42,20 +44,21 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
-        let column = note_ev.column;
-        self.last_time = note_ev.real_sec;
-        if self.is_init() {
-            self.lane[0] = column;
-        } else if self.length == 1 {
-            self.lane[1] = column;
-            self.last_lane = 1;
-        } else if self.lane[1 - self.last_lane] == column {
-            self.last_lane = 1 - self.last_lane;
-        } else {
-            self.broken = true;
-            return;
+        if let NoteType::Normal { key } = note_ev.note.note_type {
+            self.last_time = note_ev.real_sec;
+            if self.is_init() {
+                self.lane[0] = key;
+            } else if self.length == 1 {
+                self.lane[1] = key;
+                self.last_lane = 1;
+            } else if self.lane[1 - self.last_lane] == key {
+                self.last_lane = 1 - self.last_lane;
+            } else {
+                self.broken = true;
+                return;
+            }
+            self.length += 1;
         }
-        self.length += 1;
     }
 
     fn is_available(&self) -> bool {
@@ -63,6 +66,12 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn achieved(&self) -> Option<NotesPattern> {
-        (self.broken && self.length > 4).then_some(NotesPattern::Trill(self.length))
+        (self.broken && self.length > 4).then(|| {
+            if self.lane[0] == self.lane[1] {
+                NotesPattern::MultipleTap(self.length)
+            } else {
+                NotesPattern::Trill(self.length)
+            }
+        })
     }
 }

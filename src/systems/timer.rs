@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::timer::{CountDownTimer, FrameCounter},
-    resources::game_scene::GameCount,
+    resources::game_state::GameCount,
     AppState,
 };
 

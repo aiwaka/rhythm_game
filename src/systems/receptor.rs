@@ -3,10 +3,7 @@ use bevy::prelude::*;
 use crate::{
     components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::{
-        score::ScoreResource,
-        song::{AudioStartTime, SongConfig},
-    },
+    resources::{config::Bpm, score::ScoreResource, song::SongStartTime},
     systems::system_labels::PatternReceptorSystemLabel,
     AppState,
 };
@@ -15,7 +12,7 @@ use crate::{
 fn setup_receptor(mut commands: Commands) {
     macro_rules! spawn_receptor {
         ($x:expr) => {
-            commands.spawn().insert($x);
+            commands.spawn($x);
         };
     }
     spawn_receptor!(FullSyncReceptor::default());
@@ -31,16 +28,16 @@ fn receptor_pipeline<T: PatternReceptor>(
     mut q: Query<&mut T>,
     mut note_ev_reader: EventReader<CatchNoteEvent>,
     mut achieve_ev_writer: EventWriter<AchievePatternEvent>,
-    start_time: Res<AudioStartTime>,
+    start_time: Res<SongStartTime>,
     time: Res<Time>,
-    song_info: Res<SongConfig>,
+    bpm: Res<Bpm>,
 ) {
     if let Ok(mut receptor) = q.get_single_mut() {
-        let time_after_start = time.seconds_since_startup() - start_time.0;
+        let time_after_start = time.elapsed_seconds_f64() - start_time.0;
         if receptor.is_available() {
             // 初期化状態でないなら初期化するかどうか尋ねる
             if !receptor.is_init() {
-                receptor.init_or_defer(time_after_start, song_info.bpm);
+                receptor.init_or_defer(time_after_start, **bpm);
             }
             // ノーツを入力
             for note_ev in note_ev_reader.iter() {
@@ -81,10 +78,6 @@ impl Plugin for PatternReceptorPlugin {
         }
 
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_receptor));
-        // app.add_system_set(
-        //     SystemSet::on_update(AppState::Game).with_system(receptor_pipeline::<AllSyncReceptor>),
-        // );
-        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);

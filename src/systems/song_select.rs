@@ -3,14 +3,14 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongData, SongSelectCard},
+        song_select::{ActiveSongCard, SongSelectCard},
         timer::FrameCounter,
     },
     resources::{
-        game_scene::{AlreadyExistEntities, NextAppState},
+        config::NoteSpeed,
+        game_state::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
-        song::{SelectedSong, Speed},
-        song_list::AllSongData,
+        song_list::{AllSongData, SongData},
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -24,9 +24,9 @@ fn setup_song_select_scene(
     all_song_data: Res<AllSongData>,
 ) {
     // シーン遷移時点で存在しているエンティティをすべて保存
-    commands.insert_resource(AlreadyExistEntities(already_exist_q.iter().collect_vec()));
+    commands.insert_resource(ExistingEntities(already_exist_q.iter().collect_vec()));
     // 背景を出現
-    commands.spawn_bundle(SpriteBundle {
+    commands.spawn(SpriteBundle {
         sprite: Sprite {
             custom_size: Some(Vec2::new(SCREEN_WIDTH, SCREEN_HEIGHT)),
             ..Default::default()
@@ -36,11 +36,8 @@ fn setup_song_select_scene(
     });
 
     // 曲カードを出現
-    // let song_num = all_song_data.0.len();
-
-    // 曲カードを出現
     commands
-        .spawn_bundle(NodeBundle {
+        .spawn(NodeBundle {
             style: Style {
                 position: UiRect {
                     left: Val::Px(0.0),
@@ -50,7 +47,7 @@ fn setup_song_select_scene(
                 // overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            color: UiColor(Color::NONE),
+            background_color: BackgroundColor(Color::YELLOW),
             ..Default::default()
         })
         .insert(ActiveSongCard(0))
@@ -64,13 +61,13 @@ fn setup_song_select_scene(
                 //     + ((idx + song_num / 2) % song_num) as f32 * CARD_WIDTH;
                 // let pos_y = 140.0;
                 parent
-                    .spawn_bundle(NodeBundle {
+                    .spawn(NodeBundle {
                         style: Style {
                             size: Size::new(Val::Px(CARD_WIDTH), Val::Px(CARD_WIDTH * 1.618)),
                             margin: UiRect::all(Val::Px(20.0)),
                             ..Default::default()
                         },
-                        color: Color::ANTIQUE_WHITE.into(),
+                        background_color: Color::ANTIQUE_WHITE.into(),
                         ..Default::default()
                     })
                     .insert(FrameCounter::new())
@@ -78,7 +75,7 @@ fn setup_song_select_scene(
                     // 曲データをくっつけておく
                     .insert(song_data.clone())
                     .with_children(|parent| {
-                        parent.spawn_bundle(TextBundle::from_section(
+                        parent.spawn(TextBundle::from_section(
                             song_data.name.clone(),
                             TextStyle {
                                 font: handles.main_font.clone(),
@@ -94,13 +91,13 @@ fn setup_song_select_scene(
 /// 選択中のカードをふわふわさせる
 fn hover_card(
     active_q: Query<&ActiveSongCard>,
-    mut q: Query<(&SongSelectCard, &mut UiColor, &FrameCounter)>,
+    mut q: Query<(&SongSelectCard, &mut BackgroundColor, &FrameCounter)>,
 ) {
     if let Ok(active) = active_q.get_single() {
         for (card, mut color, counter) in q.iter_mut() {
             if card.0 == active.0 {
                 let param = (counter.count() as f32 / 20.0).sin();
-                color.0 = Color::rgb(0.7, 0.8, 0.8 + 0.1 * param);
+                color.0 = Color::rgb(0.8, 0.8, 0.8 + 0.1 * param);
             } else {
                 color.0 = Color::ANTIQUE_WHITE;
             }
@@ -121,6 +118,8 @@ fn move_cursor(
             let delta_idx = if key_input.just_pressed(KeyCode::Right) {
                 1
             } else if key_input.just_pressed(KeyCode::Left) {
+                // usizeは負の数を取れない.
+                // あとで割った余りを結果とするので、減算は全数-1を足すことで表現する.
                 item_num - 1
             } else {
                 0
@@ -129,13 +128,14 @@ fn move_cursor(
             let items_width = children
                 .iter()
                 // 幅を読み取る
-                .map(|ent| card_q.get(*ent).unwrap().1.size.x)
+                .map(|ent| card_q.get(*ent).unwrap().1.size().x)
                 .sum::<f32>();
 
-            let list_width = node.size.x;
+            let list_width = node.size().x;
             // はみ出たぶんだけスクロール可能. はみ出さないなら0になる.
             let max_scroll = (list_width - items_width).max(0.0);
 
+            // アクティブカードのインデックスを更新する
             active.0 = ((active.0 + delta_idx) % item_num).clamp(0, item_num - 1);
             style.position.left =
                 Val::Px((-(CARD_WIDTH + 20.0) * active.0 as f32).clamp(-max_scroll, 0.0));
@@ -156,8 +156,8 @@ fn determine_song(
             if let Some((_, song_data)) = card_q.iter().find(|(card, _)| card.0 == active.0) {
                 info!("select song {:?}", song_data);
                 // 必要な情報をセットしてからステート移行
-                commands.insert_resource(SelectedSong::from_song_card(song_data));
-                commands.insert_resource(Speed(1.5));
+                commands.insert_resource(song_data.clone());
+                commands.insert_resource(NoteSpeed(1.5));
                 commands.insert_resource(NextAppState(AppState::Game));
                 state.set(AppState::Loading).unwrap();
             } else {
@@ -169,7 +169,7 @@ fn determine_song(
 
 fn despawn_song_select_scene(
     mut commands: Commands,
-    already_exist: Res<AlreadyExistEntities>,
+    already_exist: Res<ExistingEntities>,
     entity_q: Query<Entity>,
 ) {
     for ent in entity_q.iter() {
@@ -178,7 +178,7 @@ fn despawn_song_select_scene(
             commands.entity(ent).despawn();
         }
     }
-    commands.remove_resource::<AlreadyExistEntities>();
+    commands.remove_resource::<ExistingEntities>();
     // 最後にアセットを破棄
     commands.remove_resource::<SongSelectAssetHandles>();
 }
