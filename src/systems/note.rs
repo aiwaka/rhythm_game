@@ -154,6 +154,7 @@ fn drop_notes(
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
+            // TODO: 消えたときではなくミスが確定した瞬間にイベントを一度だけ送る処理をしたい.
             if matches!(note.note_type, NoteType::Normal { key: _ }) {
                 // 物によっては追加で処理.
                 // ノーマルノーツの場合はミスイベントを送信する
