@@ -17,6 +17,7 @@ pub struct NoteSpawnParser {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum NoteTypeParser {
     Normal { key: i32 },
+    AdLib { key: i32 },
 }
 
 #[derive(Debug, Clone)]
@@ -38,13 +39,20 @@ impl From<NoteSpawnParser> for NoteSpawn {
 /// ノーツの種類ごとの情報を保持する構造体.
 #[derive(Debug, Clone)]
 pub enum NoteType {
-    Normal { key: i32 },
+    Normal {
+        key: i32,
+    },
     BarLine,
+    /// アドリブノーツ. 見えないためにプレイヤーの自由にリズムを取れる. 逃してもミスにならない.
+    AdLib {
+        key: i32,
+    },
 }
 impl From<NoteTypeParser> for NoteType {
     fn from(data: NoteTypeParser) -> Self {
         match data {
             NoteTypeParser::Normal { key } => NoteType::Normal { key },
+            NoteTypeParser::AdLib { key } => NoteType::AdLib { key },
         }
     }
 }

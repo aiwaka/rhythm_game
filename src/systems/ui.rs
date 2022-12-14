@@ -256,6 +256,9 @@ fn spawn_catch_eval_text(
             NoteType::Normal { key } => {
                 Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
             }
+            NoteType::AdLib { key } => {
+                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+            }
             NoteType::BarLine => None,
         }) else { continue };
         let catch_eval = CatchEval::new(ev.note.target_time, ev.real_sec);

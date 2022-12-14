@@ -32,6 +32,11 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
             thumbnail: 0,
             config_file_name: "abraxas.yaml".to_string(),
         },
+        SongDataParser {
+            name: "test".to_string(),
+            thumbnail: 0,
+            config_file_name: "test.yaml".to_string(),
+        },
         // SongDataParser {
         //     name: "Autoseeker".to_string(),
         //     thumbnail: 0,

@@ -62,6 +62,21 @@ fn spawn_notes(
                 };
                 (note.clone(), mesh)
             }
+            NoteType::AdLib { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(key), NOTE_SPAWN_Y, 1.0),
+                    ..Default::default()
+                };
+                let mesh = ColorMesh2dBundle {
+                    mesh: game_assets.note.clone().into(),
+                    material: game_assets.color_material_trans.clone(),
+                    // DEBUG: デバッグ時は色を変える
+                    // material: game_assets.color_material_red.clone(),
+                    transform,
+                    ..Default::default()
+                };
+                (note.clone(), mesh)
+            }
         };
         commands.spawn(note_bundle);
     }
@@ -110,6 +125,7 @@ fn catch_notes(
             let note_caught = match note.note_type {
                 NoteType::Normal { key } => key == lane.0,
                 NoteType::BarLine => false,
+                NoteType::AdLib { key } => key == lane.0,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
