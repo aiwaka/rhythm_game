@@ -136,10 +136,7 @@ fn catch_notes(
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
                 catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
-                eval_ev_writer.send(NoteEvalEvent(CatchEval::new(
-                    note.target_time,
-                    time_after_start,
-                )));
+                eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
             }
         }
     }
@@ -160,7 +157,10 @@ fn drop_notes(
             if matches!(note.note_type, NoteType::Normal { key: _ }) {
                 // 物によっては追加で処理.
                 // ノーマルノーツの場合はミスイベントを送信する
-                eval_ev_writer.send(NoteEvalEvent(CatchEval::Miss));
+                eval_ev_writer.send(NoteEvalEvent {
+                    eval: CatchEval::Miss,
+                    note: note.clone(),
+                });
             }
         }
     }

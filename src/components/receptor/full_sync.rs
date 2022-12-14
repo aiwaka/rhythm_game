@@ -35,7 +35,7 @@ impl PatternReceptor for FullSyncReceptor {
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
-            let real_sec = note_ev.real_sec;
+            let real_sec = note_ev.real_time;
             if self.is_init() {
                 self.first_time = real_sec;
                 // TODO: keyをusizeに変換するのでkeyがi32の意味がない. 鍵盤の使い方を検討

@@ -42,7 +42,7 @@ impl PatternReceptor for DoubleTapReceptor {
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
             if self.is_init() {
-                self.first_time = note_ev.real_sec;
+                self.first_time = note_ev.real_time;
                 self.lane = key;
                 self.num += 1;
             } else if self.lane == key {
