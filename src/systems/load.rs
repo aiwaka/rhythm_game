@@ -1,3 +1,6 @@
+use std::io::prelude::*;
+use std::{collections::VecDeque, fs::File};
+
 use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
@@ -5,7 +8,7 @@ use crate::{
     components::{load::NowLoadingText, note::NoteInfo},
     constants::{BASIC_NOTE_SPEED, DISTANCE},
     resources::{
-        config::{Beat, Bpm, NoteSpeed},
+        config::{Beat, Bpm, GameDifficulty, NoteSpeed},
         game_state::NextAppState,
         handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
         note::{NoteSpawn, NoteType},
@@ -15,8 +18,6 @@ use crate::{
     },
     AppState,
 };
-use std::io::prelude::*;
-use std::{collections::VecDeque, fs::File};
 
 /// 曲一覧情報を取得する.
 /// TODO: 現在ハードコーディングしているが, tomlファイルから読み込むように変更する.
@@ -161,6 +162,8 @@ fn load_assets(
             commands.insert_resource(assets);
 
             commands.insert_resource(AllSongData(data));
+            // 難易度をここで用意しておく（選択画面でもゲーム中でも共用する）
+            commands.insert_resource(GameDifficulty::Normal);
         }
         AppState::Game => {
             // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.

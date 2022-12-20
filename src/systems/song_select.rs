@@ -7,7 +7,7 @@ use crate::{
         timer::FrameCounter,
     },
     resources::{
-        config::NoteSpeed,
+        config::{GameDifficulty, NoteSpeed},
         game_state::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
         song_list::{AllSongData, SongData},
@@ -47,7 +47,7 @@ fn setup_song_select_scene(
                 // overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            background_color: BackgroundColor(Color::YELLOW),
+            background_color: BackgroundColor(Color::GREEN),
             ..Default::default()
         })
         .insert(ActiveSongCard(0))
@@ -116,6 +116,33 @@ fn hover_card(
             } else {
                 color.0 = Color::ANTIQUE_WHITE;
             }
+        }
+    }
+}
+
+/// Dキーで難易度変更
+fn change_difficulty(key_input: Res<Input<KeyCode>>, mut diff: ResMut<GameDifficulty>) {
+    if key_input.just_pressed(KeyCode::D) {
+        *diff = match *diff {
+            GameDifficulty::Normal => GameDifficulty::Expert,
+            GameDifficulty::Expert => GameDifficulty::Master,
+            GameDifficulty::Master => GameDifficulty::Normal,
+        }
+    }
+}
+
+// TODO: ActiveSongCardをくっつけているのは利便性のためでマーカーではないため,
+//       適切なマーカーコンポーネントに置き換えたほうが意味的には正しい.
+/// 難易度に応じて背景色を変化させる
+fn difficulty_board_color(
+    diff: Res<GameDifficulty>,
+    mut q: Query<&mut BackgroundColor, With<ActiveSongCard>>,
+) {
+    if let Ok(mut color) = q.get_single_mut() {
+        color.0 = match *diff {
+            GameDifficulty::Normal => Color::GREEN,
+            GameDifficulty::Expert => Color::YELLOW,
+            GameDifficulty::Master => Color::BLACK,
         }
     }
 }
@@ -205,6 +232,12 @@ impl Plugin for SongSelectStatePlugin {
             SystemSet::on_enter(AppState::SongSelect).with_system(setup_song_select_scene),
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(difficulty_board_color),
+        );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
         app.add_system_set(

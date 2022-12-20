@@ -20,11 +20,16 @@ pub struct Bpm(pub f32);
 #[derive(Resource, Deref, DerefMut)]
 pub struct Beat(pub u32);
 
-#[derive(Clone, Copy, Resource)]
+#[derive(Clone, Copy, Resource, Debug)]
 pub enum GameDifficulty {
     Normal,
     // パターン取得が解禁
     Expert,
     // ハードではアドリブノーツが取得可能
     Master,
+}
+impl std::fmt::Display for GameDifficulty {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
