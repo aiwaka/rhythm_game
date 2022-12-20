@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongSelectCard, SongSelectParentNode},
+        song_select::{ActiveSongCard, DifficultyText, SongSelectCard, SongSelectParentNode},
         timer::FrameCounter,
     },
     resources::{
@@ -102,6 +102,31 @@ fn setup_song_select_scene(
                     });
             }
         });
+
+    // 難易度テキスト
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect::new(Val::Auto, Val::Px(10.0), Val::Auto, Val::Px(20.0)),
+                ..Default::default()
+            },
+            background_color: Color::ANTIQUE_WHITE.into(),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn(TextBundle::from_section(
+                    // TODO: ここのハードコーディング解除
+                    "Normal".to_string(),
+                    TextStyle {
+                        font: handles.main_font.clone(),
+                        font_size: 30.0,
+                        color: Color::GRAY,
+                    },
+                ))
+                .insert(DifficultyText);
+        });
 }
 
 /// 選択中のカードをふわふわさせる
@@ -143,6 +168,12 @@ fn difficulty_board_color(
             GameDifficulty::Expert => Color::YELLOW,
             GameDifficulty::Master => Color::BLACK,
         }
+    }
+}
+/// 難易度テキストを変化させる
+fn difficulty_text(diff: Res<GameDifficulty>, mut q: Query<&mut Text, With<DifficultyText>>) {
+    if let Ok(mut text) = q.get_single_mut() {
+        text.sections[0].value = diff.to_string();
     }
 }
 
@@ -234,6 +265,7 @@ impl Plugin for SongSelectStatePlugin {
         app.add_system_set(
             SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
         );
+        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(difficulty_text));
         app.add_system_set(
             SystemSet::on_update(AppState::SongSelect).with_system(difficulty_board_color),
         );
