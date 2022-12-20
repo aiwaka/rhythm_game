@@ -65,6 +65,7 @@ fn setup_song_select_scene(
                         style: Style {
                             size: Size::new(Val::Px(CARD_WIDTH), Val::Px(CARD_WIDTH * 1.618)),
                             margin: UiRect::all(Val::Px(20.0)),
+                            flex_direction: FlexDirection::Column,
                             ..Default::default()
                         },
                         background_color: Color::ANTIQUE_WHITE.into(),
@@ -74,7 +75,21 @@ fn setup_song_select_scene(
                     .insert(SongSelectCard(idx))
                     // 曲データをくっつけておく
                     .insert(song_data.clone())
+                    // カードの中身のサムネイルとテキスト等
                     .with_children(|parent| {
+                        parent.spawn(ImageBundle {
+                            style: Style {
+                                size: Size::new(Val::Percent(80.0), Val::Percent(50.0)),
+                                ..default()
+                            },
+                            image: handles
+                                .thumb_img
+                                .get(&song_data.name)
+                                .unwrap()
+                                .clone()
+                                .into(),
+                            ..default()
+                        });
                         parent.spawn(TextBundle::from_section(
                             song_data.name.clone(),
                             TextStyle {

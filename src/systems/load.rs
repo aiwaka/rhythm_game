@@ -24,17 +24,17 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
     vec![
         SongDataParser {
             name: "Hot Tide".to_string(),
-            thumbnail: 0,
+            thumbnail: "hot_tide.png".to_string(),
             config_file_name: "hot_tide.yaml".to_string(),
         },
         SongDataParser {
             name: "Abraxas".to_string(),
-            thumbnail: 0,
+            thumbnail: "abraxas.png".to_string(),
             config_file_name: "abraxas.yaml".to_string(),
         },
         SongDataParser {
             name: "test".to_string(),
-            thumbnail: 0,
+            thumbnail: "test.png".to_string(),
             config_file_name: "test.yaml".to_string(),
         },
         // SongDataParser {
@@ -150,17 +150,17 @@ fn load_assets(
     match next_scene.0 {
         AppState::HomeMenu => {}
         AppState::SongSelect => {
+            // 全曲データを読み込む
+            let parsed_data = load_all_config_file_data();
+            let data = parsed_data.into_iter().map(SongData::from).collect_vec();
+
             let assets =
-                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes);
+                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes, &data);
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);
 
-            // 全曲データを読み込む
-            let data = load_all_config_file_data();
-            commands.insert_resource(AllSongData(
-                data.into_iter().map(|data| data.into()).collect_vec(),
-            ));
+            commands.insert_resource(AllSongData(data));
         }
         AppState::Game => {
             // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
