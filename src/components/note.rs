@@ -38,6 +38,9 @@ impl KeyLane {
     }
 }
 
+#[derive(Component)]
+pub struct MissingNote;
+
 // #[derive(Component, Clone, Copy, Debug)]
 // pub struct Note {
 //     /// 出現時間. 決められた拍に判定線に来るように設定される.
