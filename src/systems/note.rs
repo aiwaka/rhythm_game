@@ -62,6 +62,21 @@ fn spawn_notes(
                 };
                 (note.clone(), mesh)
             }
+            NoteType::AdLib { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(key), NOTE_SPAWN_Y, 1.0),
+                    ..Default::default()
+                };
+                let mesh = ColorMesh2dBundle {
+                    mesh: game_assets.note.clone().into(),
+                    material: game_assets.color_material_trans.clone(),
+                    // DEBUG: デバッグ時は色を変える
+                    // material: game_assets.color_material_red.clone(),
+                    transform,
+                    ..Default::default()
+                };
+                (note.clone(), mesh)
+            }
         };
         commands.spawn(note_bundle);
     }
@@ -110,6 +125,7 @@ fn catch_notes(
             let note_caught = match note.note_type {
                 NoteType::Normal { key } => key == lane.0,
                 NoteType::BarLine => false,
+                NoteType::AdLib { key } => key == lane.0,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
@@ -120,10 +136,7 @@ fn catch_notes(
                 commands.entity(ent).despawn();
                 removed_ent.push(ent);
                 catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
-                eval_ev_writer.send(NoteEvalEvent(CatchEval::new(
-                    note.target_time,
-                    time_after_start,
-                )));
+                eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
             }
         }
     }
@@ -141,10 +154,14 @@ fn drop_notes(
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
+            // TODO: 消えたときではなくミスが確定した瞬間にイベントを一度だけ送る処理をしたい.
             if matches!(note.note_type, NoteType::Normal { key: _ }) {
                 // 物によっては追加で処理.
                 // ノーマルノーツの場合はミスイベントを送信する
-                eval_ev_writer.send(NoteEvalEvent(CatchEval::Miss));
+                eval_ev_writer.send(NoteEvalEvent {
+                    eval: CatchEval::Miss,
+                    note: note.clone(),
+                });
             }
         }
     }

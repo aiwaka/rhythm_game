@@ -62,6 +62,7 @@ pub struct GameAssetsHandles {
     pub color_material_blue: Handle<ColorMaterial>,
     pub color_material_green: Handle<ColorMaterial>,
     pub color_material_white_trans: Handle<ColorMaterial>,
+    pub color_material_trans: Handle<ColorMaterial>,
     // 4鍵それぞれで色を用意するとエフェクトとして使える
     pub color_material_lane_background: Vec<Handle<ColorMaterial>>,
 
@@ -114,6 +115,7 @@ impl GameAssetsHandles {
             color_material_green: color_material.add(ColorMaterial::from(Color::GREEN)),
             color_material_white_trans: color_material
                 .add(ColorMaterial::from(Color::rgba(1.0, 1.0, 1.0, 0.5))),
+            color_material_trans: color_material.add(ColorMaterial::from(Color::NONE)),
             color_material_lane_background,
 
             note: meshes.add(Mesh::from(note_shape)),

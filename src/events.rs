@@ -10,26 +10,37 @@ use crate::{
 // #[derive(Clone, Copy, Debug)]
 // pub struct MissNoteEvent;
 
-/// ノーツ取得評価を送信するイベント
-#[derive(Clone, Debug, Deref)]
-pub struct NoteEvalEvent(pub CatchEval);
+/// ノーツ取得評価を送信するイベント. 評価と, 評価対象ノーツの情報を持つ.
+#[derive(Clone, Debug)]
+pub struct NoteEvalEvent {
+    pub eval: CatchEval,
+    pub note: NoteInfo,
+}
+impl NoteEvalEvent {
+    pub fn new(note: &NoteInfo, real_time: f64) -> Self {
+        Self {
+            eval: CatchEval::new(note.target_time, real_time),
+            note: note.clone(),
+        }
+    }
+}
 
 /// ノーツをキャッチできたときに発されるイベント
 #[derive(Clone, Debug)]
 pub struct CatchNoteEvent {
     pub note: NoteInfo,
     /// 実際に取得された時間
-    pub real_sec: f64,
+    pub real_time: f64,
     /// bpm
     pub bpm: f32,
     /// 一小節の拍数
     pub beat: u32,
 }
 impl CatchNoteEvent {
-    pub fn new(note: &NoteInfo, real_sec: f64, bpm: f32, beat: u32) -> Self {
+    pub fn new(note: &NoteInfo, real_time: f64, bpm: f32, beat: u32) -> Self {
         Self {
             note: note.clone(),
-            real_sec,
+            real_time,
             bpm,
             beat,
         }

@@ -12,7 +12,7 @@ use crate::{
         },
     },
     constants::{LANE_WIDTH, TARGET_Y},
-    events::{AchievePatternEvent, CatchNoteEvent},
+    events::{AchievePatternEvent, NoteEvalEvent},
     resources::{
         game_state::ExistingEntities,
         handles::GameAssetsHandles,
@@ -247,18 +247,22 @@ fn update_pattern_text(
 /// ノーツ取得評価テキストを出現させる
 fn spawn_catch_eval_text(
     mut commands: Commands,
-    mut ev_reader: EventReader<CatchNoteEvent>,
+    mut ev_reader: EventReader<NoteEvalEvent>,
     handles: Res<GameAssetsHandles>,
 ) {
     let font = handles.main_font.clone();
     for ev in ev_reader.iter() {
+        // イベントに含まれているノーツ情報から評価を出現させる位置を計算.
+        // 出現しないならNoneを返すようにして書くのを楽にする
         let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
             NoteType::Normal { key } => {
                 Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
             }
+            NoteType::AdLib { key } => {
+                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+            }
             NoteType::BarLine => None,
         }) else { continue };
-        let catch_eval = CatchEval::new(ev.note.target_time, ev.real_sec);
         commands
             .spawn(NodeBundle {
                 style: Style {
@@ -280,7 +284,8 @@ fn spawn_catch_eval_text(
             .insert(CountDownTimer::new(15))
             .insert(CatchEvalPopupText)
             .with_children(|parent| {
-                if let Some(timing) = catch_eval.get_timing() {
+                // タイミング評価が付いているならその表示も追加する
+                if let Some(timing) = ev.eval.get_timing() {
                     parent.spawn(TextBundle {
                         text: Text {
                             sections: vec![TextSection {
@@ -299,11 +304,11 @@ fn spawn_catch_eval_text(
                 parent.spawn(TextBundle {
                     text: Text {
                         sections: vec![TextSection {
-                            value: format!("{}", catch_eval),
+                            value: format!("{}", ev.eval),
                             style: TextStyle {
                                 font: font.clone(),
                                 font_size: 30.0,
-                                color: catch_eval.get_color(),
+                                color: ev.eval.get_color(),
                             },
                         }],
                         ..Default::default()

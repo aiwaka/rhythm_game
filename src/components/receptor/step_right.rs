@@ -40,7 +40,7 @@ impl PatternReceptor for StepRightReceptor {
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
-            let real_sec = note_ev.real_sec;
+            let real_sec = note_ev.real_time;
             // 0, 1がfalseなら受付状態で, 0, 1が来たら開始
             if self.is_init() && (key == 0 || key == 1) {
                 self.last_time = real_sec;
