@@ -1,7 +1,9 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_kira_audio::prelude::*;
 
 use crate::constants::LANE_WIDTH;
+
+use super::song_list::SongData;
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 #[derive(Resource)]
@@ -22,29 +24,48 @@ pub struct SongSelectAssetHandles {
 
     // 画像
     pub background: Handle<Image>,
+
+    // サムネ用マテリアル
+    thumb_img: Vec<Handle<Image>>,
+    pub thumb_material: HashMap<String, Handle<ColorMaterial>>,
 }
 
 impl SongSelectAssetHandles {
     pub fn new(
         server: &Res<AssetServer>,
+        color_material: &mut ResMut<Assets<ColorMaterial>>,
         _texture_atlas: &mut ResMut<Assets<TextureAtlas>>,
         _meshes: &mut ResMut<Assets<Mesh>>,
+        song_data: &[SongData],
     ) -> Self {
         // let numbers = server.load("images/numbers.png");
+
+        let mut thumb_img = Vec::<Handle<Image>>::new();
+        let mut thumb_material = HashMap::<String, Handle<ColorMaterial>>::new();
+        for data in song_data {
+            let img = server.load(format!("images/thumb/{}", data.thumbnail));
+            thumb_img.push(img.clone());
+            thumb_material.insert(data.name.clone(), color_material.add(img.into()));
+        }
 
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
             background: server.load("images/backg_2.png"),
+
+            thumb_img,
+            thumb_material,
         }
     }
 }
 impl AssetHandles for SongSelectAssetHandles {
     fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
-        vec![
+        let mut v = vec![
             self.main_font.clone_untyped(),
             self.background.clone_untyped(),
-        ]
+        ];
+        v.extend(self.thumb_img.iter().map(|img| img.clone_untyped()));
+        v
     }
 }
 
