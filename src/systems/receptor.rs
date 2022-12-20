@@ -78,6 +78,7 @@ impl Plugin for PatternReceptorPlugin {
         }
 
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_receptor));
+        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);
