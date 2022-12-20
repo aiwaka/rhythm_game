@@ -19,3 +19,12 @@ pub struct Bpm(pub f32);
 /// 拍子を表すリソース
 #[derive(Resource, Deref, DerefMut)]
 pub struct Beat(pub u32);
+
+#[derive(Clone, Copy, Resource)]
+pub enum GameDifficulty {
+    Normal,
+    // パターン取得が解禁
+    Expert,
+    // ハードではアドリブノーツが取得可能
+    Master,
+}
