@@ -36,13 +36,14 @@ fn spawn_notes(
 
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-    let time_last = time_after_start - time.delta_seconds_f64();
+    // let time_last = time_after_start - time.delta_seconds_f64();
 
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
-    // FIXME: ノーツが流れてこなくなるバグを確認. おそらくFixedTimeStepの関係で時間が飛ばされている.
     while {
         if let Some(note) = notes.front() {
-            (time_last..time_after_start).contains(&note.spawn_time)
+            // NOTE: 厳密にそのフレームで出現時間になっているかではなく, ソート済みを前提として時間が過ぎているかどうかのみで判定するようにした. 問題があれば直す.
+            // (time_last..time_after_start).contains(&note.spawn_time)
+            time_after_start > note.spawn_time
         } else {
             false
         }
