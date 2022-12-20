@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongSelectCard},
+        song_select::{ActiveSongCard, SongSelectCard, SongSelectParentNode},
         timer::FrameCounter,
     },
     resources::{
@@ -50,6 +50,7 @@ fn setup_song_select_scene(
             background_color: BackgroundColor(Color::GREEN),
             ..Default::default()
         })
+        .insert(SongSelectParentNode)
         .insert(ActiveSongCard(0))
         .with_children(|parent| {
             // カードを並べる
@@ -131,12 +132,10 @@ fn change_difficulty(key_input: Res<Input<KeyCode>>, mut diff: ResMut<GameDiffic
     }
 }
 
-// TODO: ActiveSongCardをくっつけているのは利便性のためでマーカーではないため,
-//       適切なマーカーコンポーネントに置き換えたほうが意味的には正しい.
 /// 難易度に応じて背景色を変化させる
 fn difficulty_board_color(
     diff: Res<GameDifficulty>,
-    mut q: Query<&mut BackgroundColor, With<ActiveSongCard>>,
+    mut q: Query<&mut BackgroundColor, With<SongSelectParentNode>>,
 ) {
     if let Ok(mut color) = q.get_single_mut() {
         color.0 = match *diff {

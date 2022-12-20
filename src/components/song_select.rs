@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+/// 曲選択UIの親ノードを示すマーカー
+#[derive(Component)]
+pub struct SongSelectParentNode;
+
 #[derive(Component)]
 pub struct SongSelectText;
 
