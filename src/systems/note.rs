@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use bevy::time::FixedTimestep;
 
 use crate::components::note::{KeyLane, NoteInfo};
-use crate::constants::{BASIC_NOTE_SPEED, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
+use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
 use crate::events::{CatchNoteEvent, NoteEvalEvent};
 use crate::resources::note::NoteType;
 use crate::resources::{
@@ -16,19 +17,33 @@ use super::system_labels::TimerSystemLabel;
 
 fn spawn_notes(
     mut commands: Commands,
-    game_assets: Res<GameAssetsHandles>,
-    mut notes: ResMut<SongNotes>,
-    start_time: Res<SongStartTime>,
-    time: Res<Time>,
+    game_assets: Option<Res<GameAssetsHandles>>,
+    notes: Option<ResMut<SongNotes>>,
+    start_time: Option<Res<SongStartTime>>,
+    time: Option<Res<Time>>,
+    state: Res<State<AppState>>,
 ) {
+    // FixedTimeStepを利用するためステート依存を外しているため特殊な引数となっている.
+    // ゲームステートかどうかを判定し, そうでないならまるごと実行しない.
+    if !matches!(state.current(), &AppState::Game) {
+        return;
+    }
+    // エラー回避のためにリソースにOptionを付けていたが, ゲームステートなら存在するはずなのでunwrapする.
+    let game_assets = game_assets.unwrap();
+    let mut notes = notes.unwrap();
+    let start_time = start_time.unwrap();
+    let time = time.unwrap();
+
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-    let time_last = time_after_start - time.delta_seconds_f64();
+    // let time_last = time_after_start - time.delta_seconds_f64();
 
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
     while {
         if let Some(note) = notes.front() {
-            (time_last..time_after_start).contains(&note.spawn_time)
+            // NOTE: 厳密にそのフレームで出現時間になっているかではなく, ソート済みを前提として時間が過ぎているかどうかのみで判定するようにした. 問題があれば直す.
+            // (time_last..time_after_start).contains(&note.spawn_time)
+            time_after_start > note.spawn_time
         } else {
             false
         }
@@ -167,11 +182,14 @@ fn drop_notes(
     }
 }
 
+const TIMESTEP: f64 = 1.0 / FRAMERATE;
+
 pub struct NotePlugin;
 impl Plugin for NotePlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_update(AppState::Game)
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(TIMESTEP))
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
         );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(move_notes));
