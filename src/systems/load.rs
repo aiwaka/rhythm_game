@@ -154,13 +154,8 @@ fn load_assets(
             let parsed_data = load_all_config_file_data();
             let data = parsed_data.into_iter().map(SongData::from).collect_vec();
 
-            let assets = SongSelectAssetHandles::new(
-                &asset_server,
-                &mut color_material,
-                &mut texture_atlas,
-                &mut meshes,
-                &data,
-            );
+            let assets =
+                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes, &data);
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);

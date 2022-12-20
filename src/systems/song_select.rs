@@ -75,6 +75,19 @@ fn setup_song_select_scene(
                     // 曲データをくっつけておく
                     .insert(song_data.clone())
                     .with_children(|parent| {
+                        parent.spawn(ImageBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(500.0), Val::Auto),
+                                ..default()
+                            },
+                            image: handles
+                                .thumb_img
+                                .get(&song_data.name)
+                                .unwrap()
+                                .clone()
+                                .into(),
+                            ..default()
+                        });
                         parent.spawn(TextBundle::from_section(
                             song_data.name.clone(),
                             TextStyle {

@@ -25,27 +25,25 @@ pub struct SongSelectAssetHandles {
     // 画像
     pub background: Handle<Image>,
 
+    /// サムネ画像メッシュ
+    pub thumb_mesh: Handle<Mesh>,
     // サムネ用マテリアル
-    thumb_img: Vec<Handle<Image>>,
-    pub thumb_material: HashMap<String, Handle<ColorMaterial>>,
+    pub thumb_img: HashMap<String, Handle<Image>>,
 }
 
 impl SongSelectAssetHandles {
     pub fn new(
         server: &Res<AssetServer>,
-        color_material: &mut ResMut<Assets<ColorMaterial>>,
         _texture_atlas: &mut ResMut<Assets<TextureAtlas>>,
-        _meshes: &mut ResMut<Assets<Mesh>>,
+        meshes: &mut ResMut<Assets<Mesh>>,
         song_data: &[SongData],
     ) -> Self {
         // let numbers = server.load("images/numbers.png");
-
-        let mut thumb_img = Vec::<Handle<Image>>::new();
-        let mut thumb_material = HashMap::<String, Handle<ColorMaterial>>::new();
+        let thumb_shape = shape::Quad::new(Vec2::new(80.0, 80.0 * 1.6));
+        let mut thumb_img = HashMap::<String, Handle<Image>>::new();
         for data in song_data {
             let img = server.load(format!("images/thumb/{}", data.thumbnail));
-            thumb_img.push(img.clone());
-            thumb_material.insert(data.name.clone(), color_material.add(img.into()));
+            thumb_img.insert(data.name.clone(), img.clone());
         }
 
         Self {
@@ -53,8 +51,8 @@ impl SongSelectAssetHandles {
 
             background: server.load("images/backg_2.png"),
 
+            thumb_mesh: meshes.add(thumb_shape.into()),
             thumb_img,
-            thumb_material,
         }
     }
 }
@@ -64,7 +62,7 @@ impl AssetHandles for SongSelectAssetHandles {
             self.main_font.clone_untyped(),
             self.background.clone_untyped(),
         ];
-        v.extend(self.thumb_img.iter().map(|img| img.clone_untyped()));
+        v.extend(self.thumb_img.values().map(|img| img.clone_untyped()));
         v
     }
 }
