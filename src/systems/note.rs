@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
-use crate::components::note::{KeyLane, NoteInfo};
+use crate::components::note::{KeyLane, MissingNote, NoteInfo};
 use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
 use crate::events::{CatchNoteEvent, NoteEvalEvent};
 use crate::resources::note::NoteType;
@@ -98,22 +98,30 @@ fn spawn_notes(
 }
 
 fn move_notes(
+    mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &NoteInfo)>,
+    mut query: Query<(&mut Transform, &NoteInfo, Option<&MissingNote>, Entity)>,
     speed: Res<NoteSpeed>,
+    mut eval_ev_writer: EventWriter<NoteEvalEvent>,
 ) {
-    for (mut transform, note) in query.iter_mut() {
+    for (mut transform, note, missing, ent) in query.iter_mut() {
         transform.translation.y -= time.delta_seconds() * speed.0 * BASIC_NOTE_SPEED;
         let allow_distance = MISS_THR as f32 * BASIC_NOTE_SPEED * speed.0;
         let distance_after_target = transform.translation.y - (TARGET_Y - allow_distance);
-        if matches!(note.note_type, NoteType::Normal { key: _ }) {
-            // ミス処理を行うノーツのタイプを選択する
-            if distance_after_target < -0.02 {
-                transform.rotate_axis(Vec3::Z, 0.1);
-                transform.scale = (transform.scale
-                    - time.delta_seconds() * distance_after_target * 0.01)
-                    .clamp_length(0.0, 100.0);
+        // ミス処理を行うノーツのタイプを選択する
+        if matches!(note.note_type, NoteType::Normal { key: _ }) && distance_after_target < -0.02 {
+            if missing.is_none() {
+                // ミスが確定したときにコンポーネントを付与しつつイベント送信
+                eval_ev_writer.send(NoteEvalEvent {
+                    eval: CatchEval::Miss,
+                    note: note.clone(),
+                });
+                commands.entity(ent).insert(MissingNote);
             }
+            transform.rotate_axis(Vec3::Z, 0.1);
+            transform.scale = (transform.scale
+                - time.delta_seconds() * distance_after_target * 0.01)
+                .clamp_length(0.0, 100.0);
         }
     }
 }
@@ -159,25 +167,12 @@ fn catch_notes(
 
 /// 取れなかったときの処理
 #[allow(clippy::too_many_arguments)]
-fn drop_notes(
-    mut commands: Commands,
-    query: Query<(&Transform, &NoteInfo, Entity)>,
-    mut eval_ev_writer: EventWriter<NoteEvalEvent>,
-) {
+fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
     // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-    for (trans, note, ent) in query.iter() {
+    for (trans, _, ent) in query.iter() {
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {
             commands.entity(ent).despawn();
-            // TODO: 消えたときではなくミスが確定した瞬間にイベントを一度だけ送る処理をしたい.
-            if matches!(note.note_type, NoteType::Normal { key: _ }) {
-                // 物によっては追加で処理.
-                // ノーマルノーツの場合はミスイベントを送信する
-                eval_ev_writer.send(NoteEvalEvent {
-                    eval: CatchEval::Miss,
-                    note: note.clone(),
-                });
-            }
         }
     }
 }
