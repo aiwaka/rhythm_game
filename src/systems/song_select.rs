@@ -157,22 +157,16 @@ fn change_difficulty(key_input: Res<Input<KeyCode>>, mut diff: ResMut<GameDiffic
     }
 }
 
-/// 難易度に応じて背景色を変化させる
-fn difficulty_board_color(
+/// 難易度に応じて背景色やテキストを変化させる
+fn reflect_difficulty(
     diff: Res<GameDifficulty>,
-    mut q: Query<&mut BackgroundColor, With<SongSelectParentNode>>,
+    mut node_q: Query<&mut BackgroundColor, With<SongSelectParentNode>>,
+    mut text_q: Query<&mut Text, With<DifficultyText>>,
 ) {
-    if let Ok(mut color) = q.get_single_mut() {
-        color.0 = match *diff {
-            GameDifficulty::Normal => Color::GREEN,
-            GameDifficulty::Expert => Color::YELLOW,
-            GameDifficulty::Master => Color::BLACK,
-        }
+    if let Ok(mut color) = node_q.get_single_mut() {
+        color.0 = diff.get_color();
     }
-}
-/// 難易度テキストを変化させる
-fn difficulty_text(diff: Res<GameDifficulty>, mut q: Query<&mut Text, With<DifficultyText>>) {
-    if let Ok(mut text) = q.get_single_mut() {
+    if let Ok(mut text) = text_q.get_single_mut() {
         text.sections[0].value = diff.to_string();
     }
 }
@@ -265,9 +259,8 @@ impl Plugin for SongSelectStatePlugin {
         app.add_system_set(
             SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
         );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(difficulty_text));
         app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(difficulty_board_color),
+            SystemSet::on_update(AppState::SongSelect).with_system(reflect_difficulty),
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));

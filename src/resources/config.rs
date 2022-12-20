@@ -28,6 +28,15 @@ pub enum GameDifficulty {
     // ハードではアドリブノーツが取得可能
     Master,
 }
+impl GameDifficulty {
+    pub fn get_color(&self) -> Color {
+        match *self {
+            GameDifficulty::Normal => Color::GREEN,
+            GameDifficulty::Expert => Color::YELLOW,
+            GameDifficulty::Master => Color::BLACK,
+        }
+    }
+}
 impl std::fmt::Display for GameDifficulty {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
