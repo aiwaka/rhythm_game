@@ -7,26 +7,68 @@ use crate::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
         ui::{
-            CatchEvalPopupText, GameSceneObject, LaneLine, PatternPopupText, ScoreText, TargetLine,
-            TimeText,
+            CatchEvalPopupText, ChartInfoNode, GameSceneObject, LaneLine, PatternPopupText,
+            ScoreText, TargetLine, TimeText,
         },
     },
     constants::{LANE_WIDTH, TARGET_Y},
     events::{AchievePatternEvent, NoteEvalEvent},
     resources::{
+        config::GameDifficulty,
         game_state::ExistingEntities,
         handles::GameAssetsHandles,
         note::NoteType,
         score::{CatchEval, ScoreResource, TimingEval},
-        song::SongStartTime,
+        song::{SongConfigResource, SongStartTime},
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
 use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSystemLabel};
 
-fn setup_ui(mut commands: Commands, handles: Res<GameAssetsHandles>) {
+fn setup_ui(
+    mut commands: Commands,
+    song_config: Res<SongConfigResource>,
+    diff: Res<GameDifficulty>,
+    handles: Res<GameAssetsHandles>,
+) {
     let font = handles.main_font.clone();
+    // 曲名・難易度表示ノード
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    left: Val::Px(10.),
+                    top: Val::Px(10.),
+                    ..Default::default()
+                },
+                flex_direction: FlexDirection::Column,
+                ..Default::default()
+            },
+            background_color: BackgroundColor(Color::NONE),
+            ..Default::default()
+        })
+        .insert(GameSceneObject)
+        .insert(ChartInfoNode)
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                song_config.name.clone(),
+                TextStyle {
+                    font: handles.main_font.clone(),
+                    font_size: 30.0,
+                    color: Color::WHITE,
+                },
+            ));
+            parent.spawn(TextBundle::from_section(
+                diff.to_string(),
+                TextStyle {
+                    font: handles.main_font.clone(),
+                    font_size: 20.0,
+                    color: diff.get_color(),
+                },
+            ));
+        });
 
     // スコア表示テキストノード
     commands
