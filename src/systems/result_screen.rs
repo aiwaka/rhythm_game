@@ -63,7 +63,7 @@ fn spawn_result(
             .with_children(|parent| {
                 let text = format!(
                     "Score: {}.\n\n\tPerfect: {}.\n\tOk: {}.\n\tMiss: {}.",
-                    score.score(),
+                    score.get_score(),
                     score.get_eval_num(&CatchEval::Perfect)
                         + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Fast))
                         + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),

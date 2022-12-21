@@ -186,7 +186,7 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
         for (mut text, _marker) in query.iter_mut() {
             text.sections[0].value = format!(
                 "Score: {}. Perfect: {}. Ok: {}. Miss: {}.",
-                score.score(),
+                score.get_score(),
                 score.get_eval_num(&CatchEval::Perfect)
                     + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Fast))
                     + score.get_eval_num(&CatchEval::NearPerfect(TimingEval::Slow)),

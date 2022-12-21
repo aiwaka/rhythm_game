@@ -37,7 +37,7 @@ impl From<NoteSpawnParser> for NoteSpawn {
 }
 
 /// ノーツの種類ごとの情報を保持する構造体.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum NoteType {
     Normal {
         key: i32,

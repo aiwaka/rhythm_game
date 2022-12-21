@@ -4,7 +4,7 @@ use crate::{events::NoteEvalEvent, resources::score::ScoreResource, AppState};
 
 fn update_score(mut ev_reader: EventReader<NoteEvalEvent>, mut score: ResMut<ScoreResource>) {
     for ev in ev_reader.iter() {
-        score.update_score(&ev.eval);
+        score.update_score(&ev.eval, &ev.note.note_type);
     }
 }
 
