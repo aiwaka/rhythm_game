@@ -23,6 +23,12 @@ impl Default for StepRightReceptor {
 
 impl PatternReceptor for StepRightReceptor {
     const NAME: &'static str = "StepRight";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        "D".to_string()
+    }
+
     fn init(&mut self) {
         self.last_lane = -1;
         self.lane = [false; 4];

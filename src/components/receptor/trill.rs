@@ -29,6 +29,12 @@ impl Default for TrillReceptor {
 
 impl PatternReceptor for TrillReceptor {
     const NAME: &'static str = "Trill";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        "D".to_string()
+    }
+
     fn initialized(&self) -> bool {
         self.length == 0
     }

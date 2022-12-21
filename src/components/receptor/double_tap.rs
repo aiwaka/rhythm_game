@@ -21,6 +21,12 @@ impl Default for DoubleTapReceptor {
 }
 impl PatternReceptor for DoubleTapReceptor {
     const NAME: &'static str = "DoubleTap";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        "D".to_string()
+    }
+
     fn init(&mut self) {
         *self = Self::default();
     }

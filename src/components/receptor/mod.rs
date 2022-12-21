@@ -69,8 +69,13 @@ pub struct PatternReceptorMarker(pub String);
 /// オートマトンを模した構造をしており, 初期化状態から入力を受け取り遷移する.
 /// どのノードからも初期化状態に飛ぶことがあり, 終端状態にたどり着くと任意のNotesPatternを返しながら初期化されるようにシステムを設計する.
 pub trait PatternReceptor: Default + Component {
-    /// レセプタとしての名前を一つ返す
+    /// レセプタとしての名前を一つ持っておく
     const NAME: &'static str;
+
+    /// デバッグ向けに, 文字列で状態を表す表現を返す（アスキーアート的なやり方でもOK）
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String;
+
     /// 初期化を行う. デフォルト状態に戻す実装がされているが, 何をもって初期化とするか上書きして実装することもできる.
     fn init(&mut self) {
         *self = Self::default();

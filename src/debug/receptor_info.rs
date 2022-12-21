@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::receptor::PatternReceptorMarker;
+use crate::components::receptor::{prelude::*, PatternReceptor, PatternReceptorMarker};
 
 #[derive(Component)]
 struct DebugWindow {
@@ -9,6 +9,9 @@ struct DebugWindow {
 /// ウィンドウの直下に配置されるリストアイテム. 番号を持ち区別する.
 #[derive(Component)]
 struct DebugListNode(pub usize);
+/// ウィンドウの直下に配置される情報テキストノード
+#[derive(Component)]
+struct DebugInfoTextNode;
 
 /// レセプタに付与する. 番号を持ち, ターゲットとして表示したいオブジェクトを探すための識別子となる.
 #[derive(Component)]
@@ -77,6 +80,28 @@ fn show_receptor_list(
         })
         .insert(TargetObject(0))
         .id();
+    // 情報テキストノード
+    let text_node_ent = commands
+        .spawn(NodeBundle {
+            style: Style {
+                margin: UiRect::all(Val::Px(20.0)),
+                ..Default::default()
+            },
+            background_color: Color::WHITE.into(),
+            ..Default::default()
+        })
+        .insert(DebugInfoTextNode)
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "".to_string(),
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 40.0,
+                    color: Color::GRAY,
+                },
+            ));
+        })
+        .id();
     for (idx, (receptor_marker, receptor_ent)) in receptor_q.iter().enumerate() {
         // オブジェクトに対応するノードをつくる.
         let node_ent = commands
@@ -104,6 +129,8 @@ fn show_receptor_list(
         commands.entity(window_ent).add_child(node_ent);
         commands.entity(receptor_ent).insert(DebugObject(idx));
     }
+    // 情報表示ノードを追加
+    commands.entity(window_ent).add_child(text_node_ent);
 }
 
 /// 横キーでtargetの番号を変更する.
@@ -126,6 +153,7 @@ fn list_cursor(
 ) {
     // ターゲット番号を取得
     if let Ok(target) = target_q.get_single() {
+        // info!("{}", target.0);
         // ノードとその子コンポーネントを取得
         for (node, children) in node_q.iter() {
             for &child in children.iter() {
@@ -143,29 +171,48 @@ fn list_cursor(
 }
 
 /// 注目しているレセプタの情報を見る
-fn show_info(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    key_input: Res<Input<KeyCode>>,
+fn show_info<T: PatternReceptor>(
     window_q: Query<With<DebugWindow>>,
+    info_q: Query<&Children, With<DebugInfoTextNode>>,
+    mut text_q: Query<&mut Text>,
     target_q: Query<&TargetObject>,
+    receptor_q: Query<(&T, &DebugObject)>,
 ) {
-    if !window_q.is_empty() {
-        return;
-    }
-    if !key_input.just_pressed(KeyCode::I) {
+    if window_q.is_empty() {
         return;
     }
 
-    let font: Handle<Font> = asset_server.load("fonts/FiraSans-Bold.ttf");
+    if let Ok(target_obj) = target_q.get_single() {
+        if let Some((receptor, _)) = receptor_q.iter().find(|(_, obj)| obj.0 == target_obj.0) {
+            if let Ok(children) = info_q.get_single() {
+                for &child in children.iter() {
+                    if let Ok(mut text) = text_q.get_mut(child) {
+                        text.sections[0].value = receptor.debug_display();
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub(super) struct ReceptorInfoPlugin;
 impl Plugin for ReceptorInfoPlugin {
     fn build(&self, app: &mut App) {
+        /// レセプタ構造体をappに追加するマクロ.
+        macro_rules! add_receptor_to_system {
+            ($receptor:ty) => {
+                app.add_system(show_info::<$receptor>)
+            };
+        }
         app.add_system(show_receptor_list);
         app.add_system(hide_receptor_list);
         app.add_system(move_cursor);
         app.add_system(list_cursor);
+
+        add_receptor_to_system!(FullSyncReceptor);
+        add_receptor_to_system!(StepRightReceptor);
+        add_receptor_to_system!(StepLeftReceptor);
+        add_receptor_to_system!(DoubleTapReceptor);
+        add_receptor_to_system!(TrillReceptor);
     }
 }

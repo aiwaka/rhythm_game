@@ -20,6 +20,12 @@ impl Default for FullSyncReceptor {
 
 impl PatternReceptor for FullSyncReceptor {
     const NAME: &'static str = "FullSync";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        "D".to_string()
+    }
+
     fn init(&mut self) {
         self.lane = [false; 4];
     }
