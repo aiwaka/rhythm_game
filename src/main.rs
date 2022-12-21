@@ -4,6 +4,9 @@ mod events;
 mod resources;
 mod systems;
 
+#[cfg(feature = "debug")]
+mod debug;
+
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
@@ -15,6 +18,9 @@ use systems::{
     result_screen::ResultScreenPlugin, score::ScorePlugin, song_select::SongSelectStatePlugin,
     timer::TimersPlugin, ui::GameUiPlugin,
 };
+
+#[cfg(feature = "debug")]
+use debug::AppDebugPlugin;
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
 pub enum AppState {
@@ -66,6 +72,9 @@ fn main() {
 
     app.add_plugin(SongSelectStatePlugin);
     app.add_plugin(ResultScreenPlugin);
+
+    #[cfg(feature = "debug")]
+    app.add_plugin(AppDebugPlugin);
     // app.add_plugin(ShadersPlugin);
     app.run();
 }

@@ -28,6 +28,24 @@ impl Default for TrillReceptor {
 }
 
 impl PatternReceptor for TrillReceptor {
+    const NAME: &'static str = "Trill";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        let lane_str = self
+            .lane
+            .iter()
+            .map(|l| {
+                if *l == -1 {
+                    "-".to_string()
+                } else {
+                    l.to_string()
+                }
+            })
+            .collect::<String>();
+        format!("{} : {}", lane_str, self.length)
+    }
+
     fn initialized(&self) -> bool {
         self.length == 0
     }
@@ -66,7 +84,8 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn achieved(&self) -> Option<NotesPattern> {
-        (self.broken && self.length > 4).then(|| {
+        // TODO: ここthenとクロージャにする必要あったっけ？
+        (self.broken && self.length > 3).then(|| {
             if self.lane[0] == self.lane[1] {
                 NotesPattern::MultipleTap(self.length)
             } else {

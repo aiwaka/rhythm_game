@@ -22,6 +22,20 @@ impl Default for StepLeftReceptor {
 }
 
 impl PatternReceptor for StepLeftReceptor {
+    const NAME: &'static str = "StepLeft";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        use crate::debug::utilities::boolean_string;
+
+        let lane_str = boolean_string(&self.lane);
+        format!(
+            "{} : {}",
+            lane_str,
+            self.lane.iter().filter(|l| **l).count()
+        )
+    }
+
     fn init(&mut self) {
         self.last_lane = -1;
         self.lane = [false; 4];

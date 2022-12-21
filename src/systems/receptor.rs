@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::receptor::{prelude::*, PatternReceptor},
+    components::receptor::{prelude::*, PatternReceptor, PatternReceptorMarker},
     events::{AchievePatternEvent, CatchNoteEvent},
     resources::{
         config::{Bpm, GameDifficulty},
@@ -14,18 +14,23 @@ use crate::{
 
 /// 難易度Expert, Masterの場合はレセプタをここで登録.
 fn setup_receptor(mut commands: Commands, diff: Res<GameDifficulty>) {
+    /// PatternReceptorを実装した構造体を入れる.
+    /// TODO: ここでトレイト境界を設定する方法を調べる（無いかも）
     macro_rules! spawn_receptor {
-        ($x:expr) => {
-            commands.spawn($x);
+        ($x:ty) => {
+            commands.spawn((
+                <$x>::default(),
+                PatternReceptorMarker(<$x>::NAME.to_string()),
+            ));
         };
     }
     // GameDifficultyにはOrdを実装しているので不等号で表現できる
     if GameDifficulty::Normal < *diff {
-        spawn_receptor!(FullSyncReceptor::default());
-        spawn_receptor!(StepRightReceptor::default());
-        spawn_receptor!(StepLeftReceptor::default());
-        spawn_receptor!(DoubleTapReceptor::default());
-        spawn_receptor!(TrillReceptor::default());
+        spawn_receptor!(FullSyncReceptor);
+        spawn_receptor!(StepRightReceptor);
+        spawn_receptor!(StepLeftReceptor);
+        spawn_receptor!(DoubleTapReceptor);
+        spawn_receptor!(TrillReceptor);
     }
 }
 

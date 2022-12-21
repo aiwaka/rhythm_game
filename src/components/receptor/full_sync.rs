@@ -19,6 +19,15 @@ impl Default for FullSyncReceptor {
 }
 
 impl PatternReceptor for FullSyncReceptor {
+    const NAME: &'static str = "FullSync";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        use crate::debug::utilities::boolean_string;
+
+        boolean_string(&self.lane)
+    }
+
     fn init(&mut self) {
         self.lane = [false; 4];
     }
