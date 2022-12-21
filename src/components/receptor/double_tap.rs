@@ -13,6 +13,8 @@ pub struct DoubleTapReceptor {
 impl Default for DoubleTapReceptor {
     fn default() -> Self {
         Self {
+            // FIXME: レーンごとに受け入れられるように変更すべき.
+            // そのせいで縦連中に他のレーンが挟まると途切れてしまう.
             first_time: 0.0,
             lane: -1,
             num: 0,
@@ -24,7 +26,11 @@ impl PatternReceptor for DoubleTapReceptor {
 
     #[cfg(feature = "debug")]
     fn debug_display(&self) -> String {
-        "D".to_string()
+        if self.initialized() {
+            "init".to_string()
+        } else {
+            "accepting".to_string()
+        }
     }
 
     fn init(&mut self) {

@@ -23,7 +23,10 @@ impl PatternReceptor for FullSyncReceptor {
 
     #[cfg(feature = "debug")]
     fn debug_display(&self) -> String {
-        "D".to_string()
+        self.lane
+            .iter()
+            .map(|l| (if *l { "o" } else { "-" }))
+            .collect::<String>()
     }
 
     fn init(&mut self) {

@@ -26,7 +26,16 @@ impl PatternReceptor for StepRightReceptor {
 
     #[cfg(feature = "debug")]
     fn debug_display(&self) -> String {
-        "D".to_string()
+        let lane_str = self
+            .lane
+            .iter()
+            .map(|l| (if *l { "o" } else { "-" }))
+            .collect::<String>();
+        format!(
+            "{} : {}",
+            lane_str,
+            self.lane.iter().filter(|l| **l).count()
+        )
     }
 
     fn init(&mut self) {
