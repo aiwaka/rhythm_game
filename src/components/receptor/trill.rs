@@ -28,6 +28,7 @@ impl Default for TrillReceptor {
 }
 
 impl PatternReceptor for TrillReceptor {
+    const NAME: &'static str = "Trill";
     fn initialized(&self) -> bool {
         self.length == 0
     }

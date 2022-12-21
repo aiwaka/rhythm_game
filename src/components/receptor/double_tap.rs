@@ -20,6 +20,7 @@ impl Default for DoubleTapReceptor {
     }
 }
 impl PatternReceptor for DoubleTapReceptor {
+    const NAME: &'static str = "DoubleTap";
     fn init(&mut self) {
         *self = Self::default();
     }

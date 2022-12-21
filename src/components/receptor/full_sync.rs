@@ -19,6 +19,7 @@ impl Default for FullSyncReceptor {
 }
 
 impl PatternReceptor for FullSyncReceptor {
+    const NAME: &'static str = "FullSync";
     fn init(&mut self) {
         self.lane = [false; 4];
     }

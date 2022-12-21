@@ -60,11 +60,17 @@ impl NotesPattern {
     }
 }
 
+/// レセプタにつけるマーカー. 処理はトレイトによってそれぞれ別に行うので概ねデバッグ用.
+#[derive(Component)]
+pub struct PatternReceptorMarker(pub String);
+
 /// パターン受容体の機能を与えるトレイト.
 /// 様々なノーツの配置パターンをキャッチできるようにするために機能を一般化する.
 /// オートマトンを模した構造をしており, 初期化状態から入力を受け取り遷移する.
 /// どのノードからも初期化状態に飛ぶことがあり, 終端状態にたどり着くと任意のNotesPatternを返しながら初期化されるようにシステムを設計する.
 pub trait PatternReceptor: Default + Component {
+    /// レセプタとしての名前を一つ返す
+    const NAME: &'static str;
     /// 初期化を行う. デフォルト状態に戻す実装がされているが, 何をもって初期化とするか上書きして実装することもできる.
     fn init(&mut self) {
         *self = Self::default();

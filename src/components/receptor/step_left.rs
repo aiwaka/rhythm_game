@@ -22,6 +22,7 @@ impl Default for StepLeftReceptor {
 }
 
 impl PatternReceptor for StepLeftReceptor {
+    const NAME: &'static str = "StepLeft";
     fn init(&mut self) {
         self.last_lane = -1;
         self.lane = [false; 4];
