@@ -20,7 +20,7 @@ pub struct Bpm(pub f32);
 #[derive(Resource, Deref, DerefMut)]
 pub struct Beat(pub u32);
 
-#[derive(Clone, Copy, Resource, Debug)]
+#[derive(Clone, Copy, Resource, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum GameDifficulty {
     Normal,
     // パターン取得が解禁
