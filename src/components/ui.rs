@@ -7,6 +7,10 @@ pub struct GameSceneObject;
 #[derive(Component)]
 pub struct TimeText;
 
+/// 曲名・難易度を含む譜面難易度を表すマーカー（プレイ中更新されない）
+#[derive(Component)]
+pub struct ChartInfoNode;
+
 #[derive(Component)]
 pub struct ScoreText;
 

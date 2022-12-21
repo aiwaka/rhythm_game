@@ -3,23 +3,30 @@ use bevy::prelude::*;
 use crate::{
     components::receptor::{prelude::*, PatternReceptor},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::{config::Bpm, score::ScoreResource, song::SongStartTime},
+    resources::{
+        config::{Bpm, GameDifficulty},
+        score::ScoreResource,
+        song::SongStartTime,
+    },
     systems::system_labels::PatternReceptorSystemLabel,
     AppState,
 };
 
-/// レセプタをここで登録
-fn setup_receptor(mut commands: Commands) {
+/// 難易度Expert, Masterの場合はレセプタをここで登録.
+fn setup_receptor(mut commands: Commands, diff: Res<GameDifficulty>) {
     macro_rules! spawn_receptor {
         ($x:expr) => {
             commands.spawn($x);
         };
     }
-    spawn_receptor!(FullSyncReceptor::default());
-    spawn_receptor!(StepRightReceptor::default());
-    spawn_receptor!(StepLeftReceptor::default());
-    spawn_receptor!(DoubleTapReceptor::default());
-    spawn_receptor!(TrillReceptor::default());
+    // GameDifficultyにはOrdを実装しているので不等号で表現できる
+    if GameDifficulty::Normal < *diff {
+        spawn_receptor!(FullSyncReceptor::default());
+        spawn_receptor!(StepRightReceptor::default());
+        spawn_receptor!(StepLeftReceptor::default());
+        spawn_receptor!(DoubleTapReceptor::default());
+        spawn_receptor!(TrillReceptor::default());
+    }
 }
 
 /// レセプタにノーツを入力して更新する.
@@ -78,6 +85,7 @@ impl Plugin for PatternReceptorPlugin {
         }
 
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_receptor));
+        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);
