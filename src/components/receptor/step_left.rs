@@ -27,11 +27,11 @@ impl PatternReceptor for StepLeftReceptor {
         self.lane = [false; 4];
     }
 
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         !self.lane[2] && !self.lane[3]
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
         if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + MISS_THR {
             self.init();
         }
@@ -41,7 +41,7 @@ impl PatternReceptor for StepLeftReceptor {
         if let NoteType::Normal { key } = note_ev.note.note_type {
             let real_sec = note_ev.real_time;
             // 2, 3がfalseなら受付状態で, 2, 3が来たら開始
-            if self.is_init() && (key == 2 || key == 3) {
+            if self.initialized() && (key == 2 || key == 3) {
                 self.last_time = real_sec;
                 self.last_lane = key;
                 self.lane[key as usize] = true;

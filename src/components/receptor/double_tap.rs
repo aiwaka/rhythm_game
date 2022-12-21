@@ -24,11 +24,11 @@ impl PatternReceptor for DoubleTapReceptor {
         *self = Self::default();
     }
 
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         self.num == 0
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
         // 16分を少し超えたらリセット. 16.5 = 15 * 1.1によって少し猶予をもたせる
         if current_time - self.first_time > (bpm as f64).recip() * 16.5 {
             self.init();
@@ -41,7 +41,7 @@ impl PatternReceptor for DoubleTapReceptor {
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
-            if self.is_init() {
+            if self.initialized() {
                 self.first_time = note_ev.real_time;
                 self.lane = key;
                 self.num += 1;

@@ -28,11 +28,11 @@ impl Default for TrillReceptor {
 }
 
 impl PatternReceptor for TrillReceptor {
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         self.length == 0
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
         if self.broken {
             self.init();
         }
@@ -46,7 +46,7 @@ impl PatternReceptor for TrillReceptor {
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
             self.last_time = note_ev.real_time;
-            if self.is_init() {
+            if self.initialized() {
                 self.lane[0] = key;
             } else if self.length == 1 {
                 self.lane[1] = key;

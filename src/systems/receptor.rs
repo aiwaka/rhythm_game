@@ -43,8 +43,8 @@ fn receptor_pipeline<T: PatternReceptor>(
         let time_after_start = time.elapsed_seconds_f64() - start_time.0;
         if receptor.is_available() {
             // 初期化状態でないなら初期化するかどうか尋ねる
-            if !receptor.is_init() {
-                receptor.init_or_defer(time_after_start, **bpm);
+            if !receptor.initialized() {
+                receptor.initialize_or_defer(time_after_start, **bpm);
             }
             // ノーツを入力
             for note_ev in note_ev_reader.iter() {

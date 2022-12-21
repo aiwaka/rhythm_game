@@ -23,11 +23,11 @@ impl PatternReceptor for FullSyncReceptor {
         self.lane = [false; 4];
     }
 
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         self.lane.iter().all(|&e| !e)
     }
 
-    fn init_or_defer(&mut self, current_time: f64, _: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, _: f32) {
         if (current_time - self.first_time).abs() > 0.1 {
             self.init();
         }
@@ -36,7 +36,7 @@ impl PatternReceptor for FullSyncReceptor {
     fn input(&mut self, note_ev: &CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
             let real_sec = note_ev.real_time;
-            if self.is_init() {
+            if self.initialized() {
                 self.first_time = real_sec;
                 // TODO: keyをusizeに変換するのでkeyがi32の意味がない. 鍵盤の使い方を検討
                 self.lane[key as usize] = true;
