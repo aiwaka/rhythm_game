@@ -13,10 +13,3 @@ pub struct ResultDisplayed;
 
 #[derive(Resource)]
 pub struct GameCount(pub u32);
-
-#[derive(Clone, Copy, Resource)]
-pub enum GameDifficulty {
-    Easy,
-    Normal,
-    Hard,
-}

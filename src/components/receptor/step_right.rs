@@ -22,16 +22,30 @@ impl Default for StepRightReceptor {
 }
 
 impl PatternReceptor for StepRightReceptor {
+    const NAME: &'static str = "StepRight";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        use crate::debug::utilities::boolean_string;
+
+        let lane_str = boolean_string(&self.lane);
+        format!(
+            "{} : {}",
+            lane_str,
+            self.lane.iter().filter(|l| **l).count()
+        )
+    }
+
     fn init(&mut self) {
         self.last_lane = -1;
         self.lane = [false; 4];
     }
 
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         !self.lane[0] && !self.lane[1]
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
         // bpmを用いて一拍の時間を計算し一拍分程度許容
         if (current_time - self.last_time).abs() > bpm.recip() as f64 * 60.0 + MISS_THR {
             self.init();
@@ -40,9 +54,9 @@ impl PatternReceptor for StepRightReceptor {
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
-            let real_sec = note_ev.real_sec;
+            let real_sec = note_ev.real_time;
             // 0, 1がfalseなら受付状態で, 0, 1が来たら開始
-            if self.is_init() && (key == 0 || key == 1) {
+            if self.initialized() && (key == 0 || key == 1) {
                 self.last_time = real_sec;
                 self.last_lane = key;
                 self.lane[key as usize] = true;

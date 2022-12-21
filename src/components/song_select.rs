@@ -1,5 +1,9 @@
 use bevy::prelude::*;
 
+/// 曲選択UIの親ノードを示すマーカー
+#[derive(Component)]
+pub struct SongSelectParentNode;
+
 #[derive(Component)]
 pub struct SongSelectText;
 
@@ -11,18 +15,5 @@ pub struct ActiveSongCard(pub usize);
 #[derive(Component)]
 pub struct SongSelectCard(pub usize);
 
-// #[derive(Component, Clone, Debug)]
-// pub struct SongData {
-//     pub name: String,
-//     pub thumbnail: i32,
-//     pub config_file_name: String,
-// }
-// impl SongData {
-//     pub fn new(toml_data: &SongDataToml) -> Self {
-//         Self {
-//             name: toml_data.name.clone(),
-//             thumbnail: toml_data.thumbnail,
-//             config_file_name: toml_data.config_file_name.clone(),
-//         }
-//     }
-// }
+#[derive(Component)]
+pub struct DifficultyText;

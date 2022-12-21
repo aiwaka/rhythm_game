@@ -1,3 +1,6 @@
+use std::io::prelude::*;
+use std::{collections::VecDeque, fs::File};
+
 use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
@@ -5,7 +8,7 @@ use crate::{
     components::{load::NowLoadingText, note::NoteInfo},
     constants::{BASIC_NOTE_SPEED, DISTANCE},
     resources::{
-        config::{Beat, Bpm, NoteSpeed},
+        config::{Beat, Bpm, GameDifficulty, NoteSpeed},
         game_state::NextAppState,
         handles::{AssetHandles, AssetsLoading, GameAssetsHandles, SongSelectAssetHandles},
         note::{NoteSpawn, NoteType},
@@ -15,8 +18,6 @@ use crate::{
     },
     AppState,
 };
-use std::io::prelude::*;
-use std::{collections::VecDeque, fs::File};
 
 /// 曲一覧情報を取得する.
 /// TODO: 現在ハードコーディングしているが, tomlファイルから読み込むように変更する.
@@ -24,13 +25,18 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
     vec![
         SongDataParser {
             name: "Hot Tide".to_string(),
-            thumbnail: 0,
+            thumbnail: "hot_tide.png".to_string(),
             config_file_name: "hot_tide.yaml".to_string(),
         },
         SongDataParser {
             name: "Abraxas".to_string(),
-            thumbnail: 0,
+            thumbnail: "abraxas.png".to_string(),
             config_file_name: "abraxas.yaml".to_string(),
+        },
+        SongDataParser {
+            name: "test".to_string(),
+            thumbnail: "test.png".to_string(),
+            config_file_name: "test.yaml".to_string(),
         },
         // SongDataParser {
         //     name: "Autoseeker".to_string(),
@@ -49,6 +55,7 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
 fn load_song_config(
     filename: &str,
     speed_coeff: f32,
+    diff: &GameDifficulty,
 ) -> (SongConfigResource, SongNotes, Bpm, Beat) {
     let mut file = File::open(format!("assets/songs/{}", filename)).expect("Couldn't open file");
     let mut contents = String::new();
@@ -117,6 +124,14 @@ fn load_song_config(
         prev_beat = note.beat;
     }
 
+    // Master難易度でない場合はアドリブノーツを削除する
+    if !matches!(*diff, GameDifficulty::Master) {
+        notes = notes
+            .into_iter()
+            .filter(|note| !matches!(note.note_type, NoteType::AdLib { key: _ }))
+            .collect_vec();
+    }
+
     (
         song_config.into(),
         SongNotes(VecDeque::from_iter(notes)),
@@ -137,6 +152,7 @@ fn load_assets(
     mut meshes: ResMut<Assets<Mesh>>,
     selected_song: Option<Res<SongData>>,
     speed: Option<Res<NoteSpeed>>,
+    diff: Option<Res<GameDifficulty>>,
 ) {
     // 型なしのアセット列を用意
     let mut assets_loading_vec = Vec::<HandleUntyped>::new();
@@ -145,17 +161,19 @@ fn load_assets(
     match next_scene.0 {
         AppState::HomeMenu => {}
         AppState::SongSelect => {
+            // 全曲データを読み込む
+            let parsed_data = load_all_config_file_data();
+            let data = parsed_data.into_iter().map(SongData::from).collect_vec();
+
             let assets =
-                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes);
+                SongSelectAssetHandles::new(&asset_server, &mut texture_atlas, &mut meshes, &data);
             // 読み込んだハンドルを型を外してクローンした配列をもらう.
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);
 
-            // 全曲データを読み込む
-            let data = load_all_config_file_data();
-            commands.insert_resource(AllSongData(
-                data.into_iter().map(|data| data.into()).collect_vec(),
-            ));
+            commands.insert_resource(AllSongData(data));
+            // 難易度をここで用意しておく（選択画面でもゲーム中でも共用する）
+            commands.insert_resource(GameDifficulty::Normal);
         }
         AppState::Game => {
             // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
@@ -164,7 +182,7 @@ fn load_assets(
 
             // 曲データをロード
             let (config, notes, bpm, beat) =
-                load_song_config(&selected_song.config_file_name, speed.0);
+                load_song_config(&selected_song.config_file_name, speed.0, &diff.unwrap());
             let music_filename = config.song_filename.clone();
             commands.insert_resource(config);
             commands.insert_resource(notes);
@@ -190,6 +208,10 @@ fn load_assets(
     // ローディング中の型無しアセットとしてリソースに追加
     commands.insert_resource(AssetsLoading(assets_loading_vec));
     // ローディング中テキストエンティティを出現させる.
+    #[cfg(feature = "debug")]
+    let loading_text = "Now Loading...(Debug Mode)".to_string();
+    #[cfg(not(feature = "debug"))]
+    let loading_text = "Now Loading...".to_string();
     commands
         .spawn(TextBundle {
             style: Style {
@@ -202,7 +224,7 @@ fn load_assets(
                 ..default()
             },
             text: Text::from_section(
-                "Now Loading...",
+                loading_text,
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                     font_size: 40.0,

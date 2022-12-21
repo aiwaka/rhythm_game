@@ -2,6 +2,8 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{components::receptor::NotesPattern, constants::MISS_THR};
 
+use super::note::NoteType;
+
 /// Perfect以外は遅いか早いかをもたせる
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum TimingEval {
@@ -105,17 +107,27 @@ impl CatchEval {
 pub struct ScoreResource {
     score: usize,
 
+    // NOTE: この実装は重いかもしれない. 鍵盤の数は少ないので問題ないと思うが, やってみて考える.
+    // 無理そうなら専用のキー用enumを作成し, そちらにHashを実装する.
+    /// ノーツタイプごとに取得数を保存しておく配列
+    note_type_storage: HashMap<NoteType, u32>,
+
     pattern_vec: Vec<NotesPattern>,
     /// 取得評価を保存しておく. 評価列挙型に`Hash`を実装することでキーとして使えるようにしている.
     eval_storage: HashMap<CatchEval, u32>,
 }
 impl ScoreResource {
     /// 取得数を増やし, スコアを増加させる.
-    pub fn update_score(&mut self, catch_eval: &CatchEval) {
+    pub fn update_score(&mut self, catch_eval: &CatchEval, ty: &NoteType) {
         if let Some(prev_val) = self.eval_storage.get_mut(catch_eval) {
             *prev_val += 1;
         } else {
             self.eval_storage.insert(*catch_eval, 1);
+        }
+        if let Some(prev_val) = self.note_type_storage.get_mut(ty) {
+            *prev_val += 1;
+        } else {
+            self.note_type_storage.insert(ty.clone(), 1);
         }
 
         self.score += catch_eval.as_score() as usize;
@@ -125,7 +137,7 @@ impl ScoreResource {
         self.score += score as usize;
     }
 
-    pub fn score(&self) -> usize {
+    pub fn get_score(&self) -> usize {
         self.score
     }
     pub fn get_eval_num(&self, key: &CatchEval) -> u32 {
@@ -139,5 +151,15 @@ impl ScoreResource {
     pub fn push_pattern(&mut self, pattern: NotesPattern) {
         self.pattern_vec.push(pattern);
         self.add_score(pattern.to_score());
+    }
+
+    pub fn get_eval_storage(&self) -> &HashMap<CatchEval, u32> {
+        &self.eval_storage
+    }
+    pub fn get_pattern_vec(&self) -> &Vec<NotesPattern> {
+        &self.pattern_vec
+    }
+    pub fn get_note_type_storage(&self) -> &HashMap<NoteType, u32> {
+        &self.note_type_storage
     }
 }

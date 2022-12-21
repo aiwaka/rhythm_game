@@ -1,7 +1,9 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_kira_audio::prelude::*;
 
 use crate::constants::LANE_WIDTH;
+
+use super::song_list::SongData;
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 #[derive(Resource)]
@@ -22,29 +24,46 @@ pub struct SongSelectAssetHandles {
 
     // 画像
     pub background: Handle<Image>,
+
+    /// サムネ画像メッシュ
+    pub thumb_mesh: Handle<Mesh>,
+    // サムネ用マテリアル
+    pub thumb_img: HashMap<String, Handle<Image>>,
 }
 
 impl SongSelectAssetHandles {
     pub fn new(
         server: &Res<AssetServer>,
         _texture_atlas: &mut ResMut<Assets<TextureAtlas>>,
-        _meshes: &mut ResMut<Assets<Mesh>>,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        song_data: &[SongData],
     ) -> Self {
         // let numbers = server.load("images/numbers.png");
+        let thumb_shape = shape::Quad::new(Vec2::new(80.0, 80.0 * 1.6));
+        let mut thumb_img = HashMap::<String, Handle<Image>>::new();
+        for data in song_data {
+            let img = server.load(format!("images/thumb/{}", data.thumbnail));
+            thumb_img.insert(data.name.clone(), img.clone());
+        }
 
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
             background: server.load("images/backg_2.png"),
+
+            thumb_mesh: meshes.add(thumb_shape.into()),
+            thumb_img,
         }
     }
 }
 impl AssetHandles for SongSelectAssetHandles {
     fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
-        vec![
+        let mut v = vec![
             self.main_font.clone_untyped(),
             self.background.clone_untyped(),
-        ]
+        ];
+        v.extend(self.thumb_img.values().map(|img| img.clone_untyped()));
+        v
     }
 }
 
@@ -62,6 +81,7 @@ pub struct GameAssetsHandles {
     pub color_material_blue: Handle<ColorMaterial>,
     pub color_material_green: Handle<ColorMaterial>,
     pub color_material_white_trans: Handle<ColorMaterial>,
+    pub color_material_trans: Handle<ColorMaterial>,
     // 4鍵それぞれで色を用意するとエフェクトとして使える
     pub color_material_lane_background: Vec<Handle<ColorMaterial>>,
 
@@ -114,6 +134,7 @@ impl GameAssetsHandles {
             color_material_green: color_material.add(ColorMaterial::from(Color::GREEN)),
             color_material_white_trans: color_material
                 .add(ColorMaterial::from(Color::rgba(1.0, 1.0, 1.0, 0.5))),
+            color_material_trans: color_material.add(ColorMaterial::from(Color::NONE)),
             color_material_lane_background,
 
             note: meshes.add(Mesh::from(note_shape)),

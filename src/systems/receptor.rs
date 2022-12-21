@@ -1,25 +1,37 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::receptor::{prelude::*, PatternReceptor},
+    components::receptor::{prelude::*, PatternReceptor, PatternReceptorMarker},
     events::{AchievePatternEvent, CatchNoteEvent},
-    resources::{config::Bpm, score::ScoreResource, song::SongStartTime},
+    resources::{
+        config::{Bpm, GameDifficulty},
+        score::ScoreResource,
+        song::SongStartTime,
+    },
     systems::system_labels::PatternReceptorSystemLabel,
     AppState,
 };
 
-/// レセプタをここで登録
-fn setup_receptor(mut commands: Commands) {
+/// 難易度Expert, Masterの場合はレセプタをここで登録.
+fn setup_receptor(mut commands: Commands, diff: Res<GameDifficulty>) {
+    /// PatternReceptorを実装した構造体を入れる.
+    /// TODO: ここでトレイト境界を設定する方法を調べる（無いかも）
     macro_rules! spawn_receptor {
-        ($x:expr) => {
-            commands.spawn($x);
+        ($x:ty) => {
+            commands.spawn((
+                <$x>::default(),
+                PatternReceptorMarker(<$x>::NAME.to_string()),
+            ));
         };
     }
-    spawn_receptor!(FullSyncReceptor::default());
-    spawn_receptor!(StepRightReceptor::default());
-    spawn_receptor!(StepLeftReceptor::default());
-    spawn_receptor!(DoubleTapReceptor::default());
-    spawn_receptor!(TrillReceptor::default());
+    // GameDifficultyにはOrdを実装しているので不等号で表現できる
+    if GameDifficulty::Normal < *diff {
+        spawn_receptor!(FullSyncReceptor);
+        spawn_receptor!(StepRightReceptor);
+        spawn_receptor!(StepLeftReceptor);
+        spawn_receptor!(DoubleTapReceptor);
+        spawn_receptor!(TrillReceptor);
+    }
 }
 
 /// レセプタにノーツを入力して更新する.
@@ -36,8 +48,8 @@ fn receptor_pipeline<T: PatternReceptor>(
         let time_after_start = time.elapsed_seconds_f64() - start_time.0;
         if receptor.is_available() {
             // 初期化状態でないなら初期化するかどうか尋ねる
-            if !receptor.is_init() {
-                receptor.init_or_defer(time_after_start, **bpm);
+            if !receptor.initialized() {
+                receptor.initialize_or_defer(time_after_start, **bpm);
             }
             // ノーツを入力
             for note_ev in note_ev_reader.iter() {
@@ -78,6 +90,7 @@ impl Plugin for PatternReceptorPlugin {
         }
 
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_receptor));
+        add_receptor_to_system!(FullSyncReceptor);
         add_receptor_to_system!(StepRightReceptor);
         add_receptor_to_system!(StepLeftReceptor);
         add_receptor_to_system!(DoubleTapReceptor);

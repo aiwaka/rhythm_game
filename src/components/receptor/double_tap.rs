@@ -13,6 +13,8 @@ pub struct DoubleTapReceptor {
 impl Default for DoubleTapReceptor {
     fn default() -> Self {
         Self {
+            // FIXME: レーンごとに受け入れられるように変更すべき.
+            // そのせいで縦連中に他のレーンが挟まると途切れてしまう.
             first_time: 0.0,
             lane: -1,
             num: 0,
@@ -20,15 +22,26 @@ impl Default for DoubleTapReceptor {
     }
 }
 impl PatternReceptor for DoubleTapReceptor {
+    const NAME: &'static str = "DoubleTap";
+
+    #[cfg(feature = "debug")]
+    fn debug_display(&self) -> String {
+        if self.initialized() {
+            "init".to_string()
+        } else {
+            "accepting".to_string()
+        }
+    }
+
     fn init(&mut self) {
         *self = Self::default();
     }
 
-    fn is_init(&self) -> bool {
+    fn initialized(&self) -> bool {
         self.num == 0
     }
 
-    fn init_or_defer(&mut self, current_time: f64, bpm: f32) {
+    fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
         // 16分を少し超えたらリセット. 16.5 = 15 * 1.1によって少し猶予をもたせる
         if current_time - self.first_time > (bpm as f64).recip() * 16.5 {
             self.init();
@@ -41,8 +54,8 @@ impl PatternReceptor for DoubleTapReceptor {
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
-            if self.is_init() {
-                self.first_time = note_ev.real_sec;
+            if self.initialized() {
+                self.first_time = note_ev.real_time;
                 self.lane = key;
                 self.num += 1;
             } else if self.lane == key {

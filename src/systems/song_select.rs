@@ -3,11 +3,11 @@ use itertools::Itertools;
 
 use crate::{
     components::{
-        song_select::{ActiveSongCard, SongSelectCard},
+        song_select::{ActiveSongCard, DifficultyText, SongSelectCard, SongSelectParentNode},
         timer::FrameCounter,
     },
     resources::{
-        config::NoteSpeed,
+        config::{GameDifficulty, NoteSpeed},
         game_state::{ExistingEntities, NextAppState},
         handles::SongSelectAssetHandles,
         song_list::{AllSongData, SongData},
@@ -47,9 +47,10 @@ fn setup_song_select_scene(
                 // overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            background_color: BackgroundColor(Color::YELLOW),
+            background_color: BackgroundColor(Color::GREEN),
             ..Default::default()
         })
+        .insert(SongSelectParentNode)
         .insert(ActiveSongCard(0))
         .with_children(|parent| {
             // カードを並べる
@@ -65,6 +66,7 @@ fn setup_song_select_scene(
                         style: Style {
                             size: Size::new(Val::Px(CARD_WIDTH), Val::Px(CARD_WIDTH * 1.618)),
                             margin: UiRect::all(Val::Px(20.0)),
+                            flex_direction: FlexDirection::Column,
                             ..Default::default()
                         },
                         background_color: Color::ANTIQUE_WHITE.into(),
@@ -74,7 +76,21 @@ fn setup_song_select_scene(
                     .insert(SongSelectCard(idx))
                     // 曲データをくっつけておく
                     .insert(song_data.clone())
+                    // カードの中身のサムネイルとテキスト等
                     .with_children(|parent| {
+                        parent.spawn(ImageBundle {
+                            style: Style {
+                                size: Size::new(Val::Percent(80.0), Val::Percent(50.0)),
+                                ..default()
+                            },
+                            image: handles
+                                .thumb_img
+                                .get(&song_data.name)
+                                .unwrap()
+                                .clone()
+                                .into(),
+                            ..default()
+                        });
                         parent.spawn(TextBundle::from_section(
                             song_data.name.clone(),
                             TextStyle {
@@ -85,6 +101,31 @@ fn setup_song_select_scene(
                         ));
                     });
             }
+        });
+
+    // 難易度テキスト
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect::new(Val::Auto, Val::Px(10.0), Val::Auto, Val::Px(20.0)),
+                ..Default::default()
+            },
+            background_color: Color::ANTIQUE_WHITE.into(),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn(TextBundle::from_section(
+                    // TODO: ここのハードコーディング解除
+                    "Normal".to_string(),
+                    TextStyle {
+                        font: handles.main_font.clone(),
+                        font_size: 30.0,
+                        color: Color::GRAY,
+                    },
+                ))
+                .insert(DifficultyText);
         });
 }
 
@@ -102,6 +143,31 @@ fn hover_card(
                 color.0 = Color::ANTIQUE_WHITE;
             }
         }
+    }
+}
+
+/// Dキーで難易度変更
+fn change_difficulty(key_input: Res<Input<KeyCode>>, mut diff: ResMut<GameDifficulty>) {
+    if key_input.just_pressed(KeyCode::D) {
+        *diff = match *diff {
+            GameDifficulty::Normal => GameDifficulty::Expert,
+            GameDifficulty::Expert => GameDifficulty::Master,
+            GameDifficulty::Master => GameDifficulty::Normal,
+        }
+    }
+}
+
+/// 難易度に応じて背景色やテキストを変化させる
+fn reflect_difficulty(
+    diff: Res<GameDifficulty>,
+    mut node_q: Query<&mut BackgroundColor, With<SongSelectParentNode>>,
+    mut text_q: Query<&mut Text, With<DifficultyText>>,
+) {
+    if let Ok(mut color) = node_q.get_single_mut() {
+        color.0 = diff.get_color();
+    }
+    if let Ok(mut text) = text_q.get_single_mut() {
+        text.sections[0].value = diff.to_string();
     }
 }
 
@@ -190,6 +256,12 @@ impl Plugin for SongSelectStatePlugin {
             SystemSet::on_enter(AppState::SongSelect).with_system(setup_song_select_scene),
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(reflect_difficulty),
+        );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
         app.add_system_set(
