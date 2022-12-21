@@ -26,11 +26,9 @@ impl PatternReceptor for StepLeftReceptor {
 
     #[cfg(feature = "debug")]
     fn debug_display(&self) -> String {
-        let lane_str = self
-            .lane
-            .iter()
-            .map(|l| (if *l { "o" } else { "-" }))
-            .collect::<String>();
+        use crate::debug::utilities::boolean_string;
+
+        let lane_str = boolean_string(&self.lane);
         format!(
             "{} : {}",
             lane_str,

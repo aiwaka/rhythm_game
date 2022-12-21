@@ -22,6 +22,14 @@ struct DebugObject(pub usize);
 #[derive(Component)]
 struct TargetObject(pub usize);
 
+/// boolの配列をoと-に対応させた文字列に変換するメソッド.
+/// 主にレセプタのデバッグ用文字列に使う.
+pub fn boolean_string(arr: &[bool]) -> String {
+    arr.iter()
+        .map(|l| (if *l { "o" } else { "-" }))
+        .collect::<String>()
+}
+
 /// デバッグウィンドウや関連エンティティを消去する
 fn hide_receptor_list(
     mut commands: Commands,

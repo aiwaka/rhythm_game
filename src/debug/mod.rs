@@ -4,6 +4,11 @@ mod song_select;
 
 use bevy::prelude::*;
 
+/// デバッグ用ユーティリティを外部に公開するためのモジュール
+pub mod utilities {
+    pub use super::receptor_info::boolean_string;
+}
+
 pub struct AppDebugPlugin;
 impl Plugin for AppDebugPlugin {
     fn build(&self, app: &mut App) {

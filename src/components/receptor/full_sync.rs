@@ -23,10 +23,9 @@ impl PatternReceptor for FullSyncReceptor {
 
     #[cfg(feature = "debug")]
     fn debug_display(&self) -> String {
-        self.lane
-            .iter()
-            .map(|l| (if *l { "o" } else { "-" }))
-            .collect::<String>()
+        use crate::debug::utilities::boolean_string;
+
+        boolean_string(&self.lane)
     }
 
     fn init(&mut self) {
