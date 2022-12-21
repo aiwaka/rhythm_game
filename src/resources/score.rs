@@ -156,6 +156,9 @@ impl ScoreResource {
     pub fn get_eval_storage(&self) -> &HashMap<CatchEval, u32> {
         &self.eval_storage
     }
+    pub fn get_pattern_vec(&self) -> &Vec<NotesPattern> {
+        &self.pattern_vec
+    }
     pub fn get_note_type_storage(&self) -> &HashMap<NoteType, u32> {
         &self.note_type_storage
     }
