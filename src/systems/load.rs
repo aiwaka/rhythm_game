@@ -208,6 +208,10 @@ fn load_assets(
     // ローディング中の型無しアセットとしてリソースに追加
     commands.insert_resource(AssetsLoading(assets_loading_vec));
     // ローディング中テキストエンティティを出現させる.
+    #[cfg(feature = "debug")]
+    let loading_text = "Now Loading...(Debug Mode)".to_string();
+    #[cfg(not(feature = "debug"))]
+    let loading_text = "Now Loading...".to_string();
     commands
         .spawn(TextBundle {
             style: Style {
@@ -220,7 +224,7 @@ fn load_assets(
                 ..default()
             },
             text: Text::from_section(
-                "Now Loading...",
+                loading_text,
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                     font_size: 40.0,
