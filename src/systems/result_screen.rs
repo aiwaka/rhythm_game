@@ -12,6 +12,22 @@ use crate::{
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
+#[cfg(feature = "debug")]
+use crate::resources::song::SongNotes;
+
+/// DEBUG: 強制的にノーツを残り0にしてリザルトに移行
+#[cfg(feature = "debug")]
+fn debug_spawn_result(
+    key_input: Res<Input<KeyCode>>,
+    mut note_deque: ResMut<SongNotes>,
+    mut song_config: ResMut<SongConfigResource>,
+) {
+    if key_input.just_pressed(KeyCode::R) && key_input.pressed(KeyCode::E) {
+        note_deque.clear();
+        song_config.length = 0.0;
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn spawn_result(
     mut commands: Commands,
@@ -121,6 +137,9 @@ fn despawn_game_state(
 pub struct ResultScreenPlugin;
 impl Plugin for ResultScreenPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "debug")]
+        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(debug_spawn_result));
+
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(spawn_result));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(exit_game_state));
         app.add_system_set(SystemSet::on_exit(AppState::Game).with_system(despawn_game_state));

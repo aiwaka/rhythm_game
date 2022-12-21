@@ -24,3 +24,9 @@ itertools = "0.10"
 serde = "1.0"
 serde_derive = "1.0"
 serde_yaml = "0.9"
+
+[features]
+default = []
+# デバッグでしか使わない関数などのビルドを制御するためのフラグ.
+# `cargo run --features bevy/dynamic --features debug`などとする.
+debug = []
