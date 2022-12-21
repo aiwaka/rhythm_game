@@ -17,7 +17,7 @@ fn debug_spawn_result(
     }
 }
 
-pub struct DebugResultPlugin;
+pub(super) struct DebugResultPlugin;
 impl Plugin for DebugResultPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(debug_spawn_result));
