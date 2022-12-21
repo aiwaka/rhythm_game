@@ -6,18 +6,19 @@ use crate::components::receptor::{prelude::*, PatternReceptor, PatternReceptorMa
 struct DebugWindow {
     pub item_num: usize,
 }
-/// ウィンドウの直下に配置されるリストアイテム. 番号を持ち区別する.
+/// レセプタリストのアイテムを表すノード. 番号を持ち区別する.
 #[derive(Component)]
 struct DebugListNode(pub usize);
 /// ウィンドウの直下に配置される情報テキストノード
 #[derive(Component)]
 struct DebugInfoTextNode;
 
-/// レセプタに付与する. 番号を持ち, ターゲットとして表示したいオブジェクトを探すための識別子となる.
+/// ウィンドウ表示時にレセプタに付与する.
+/// 番号を持ち, ターゲットとして表示したいオブジェクトを探すための識別子となる.
 #[derive(Component)]
 struct DebugObject(pub usize);
 
-/// ウィンドウにくっつける. どのオブジェクト番号を指すかを指定する.
+/// デバッグウィンドウにくっつける. どのオブジェクト番号を指すかを指定する.
 #[derive(Component)]
 struct TargetObject(pub usize);
 
@@ -68,11 +69,12 @@ fn show_receptor_list(
                     bottom: Val::Px(0.0),
                     ..Default::default()
                 },
-                max_size: Size::new(Val::Undefined, Val::Percent(80.0)),
+                flex_direction: FlexDirection::Column,
+                max_size: Size::new(Val::Undefined, Val::Percent(20.0)),
                 overflow: Overflow::Hidden,
                 ..Default::default()
             },
-            background_color: BackgroundColor(Color::rgba(1.0, 1.0, 1.0, 0.7)),
+            background_color: BackgroundColor(Color::rgba(1.0, 1.0, 1.0, 0.4)),
             ..Default::default()
         })
         .insert(DebugWindow {
@@ -83,10 +85,6 @@ fn show_receptor_list(
     // 情報テキストノード
     let text_node_ent = commands
         .spawn(NodeBundle {
-            style: Style {
-                margin: UiRect::all(Val::Px(20.0)),
-                ..Default::default()
-            },
             background_color: Color::WHITE.into(),
             ..Default::default()
         })
@@ -97,13 +95,20 @@ fn show_receptor_list(
                 TextStyle {
                     font: font.clone(),
                     font_size: 40.0,
-                    color: Color::GRAY,
+                    color: Color::GREEN,
                 },
             ));
         })
         .id();
+    // リストを包むノード
+    let list_node = commands
+        .spawn(NodeBundle {
+            background_color: BackgroundColor(Color::rgba(1.0, 1.0, 1.0, 0.7)),
+            ..Default::default()
+        })
+        .id();
     for (idx, (receptor_marker, receptor_ent)) in receptor_q.iter().enumerate() {
-        // オブジェクトに対応するノードをつくる.
+        // レセプタに対応するリスト要素ノード
         let node_ent = commands
             .spawn(NodeBundle {
                 style: Style {
@@ -125,11 +130,12 @@ fn show_receptor_list(
                 ));
             })
             .id();
-        // デバッグウィンドウにノードを追加し, 対応する番号を表すコンポーネントを各オブジェクトに追加する
-        commands.entity(window_ent).add_child(node_ent);
+        // リストにテキストノードを追加し, 対応する番号を表すコンポーネントを各オブジェクトに追加する
+        commands.entity(list_node).add_child(node_ent);
         commands.entity(receptor_ent).insert(DebugObject(idx));
     }
-    // 情報表示ノードを追加
+    // リストノードと情報表示ノードをウィンドウに追加
+    commands.entity(window_ent).add_child(list_node);
     commands.entity(window_ent).add_child(text_node_ent);
 }
 
@@ -148,7 +154,7 @@ fn move_cursor(mut q: Query<(&mut TargetObject, &DebugWindow)>, key_input: Res<I
 /// ターゲット番号と描画の対応付を行う.
 fn list_cursor(
     node_q: Query<(&DebugListNode, &Children)>,
-    mut list_q: Query<&mut Text>,
+    mut text_q: Query<&mut Text>,
     target_q: Query<&TargetObject>,
 ) {
     // ターゲット番号を取得
@@ -158,7 +164,7 @@ fn list_cursor(
         for (node, children) in node_q.iter() {
             for &child in children.iter() {
                 // テキストの色を変更
-                if let Ok(mut text) = list_q.get_mut(child) {
+                if let Ok(mut text) = text_q.get_mut(child) {
                     text.sections[0].style.color = if node.0 == target.0 {
                         Color::RED
                     } else {
