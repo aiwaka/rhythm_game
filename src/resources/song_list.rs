@@ -4,7 +4,6 @@ use serde_derive::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct SongDataParser {
     pub name: String,
-    /// TODO: 現在はダミーデータ. サムネイル画像を参照できる形式に将来的に置き換える.
     /// 画像名で指定
     pub thumbnail: String,
     pub config_file_name: String,
