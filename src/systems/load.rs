@@ -55,6 +55,7 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
 fn load_song_config(
     filename: &str,
     speed_coeff: f32,
+    diff: &GameDifficulty,
 ) -> (SongConfigResource, SongNotes, Bpm, Beat) {
     let mut file = File::open(format!("assets/songs/{}", filename)).expect("Couldn't open file");
     let mut contents = String::new();
@@ -123,6 +124,14 @@ fn load_song_config(
         prev_beat = note.beat;
     }
 
+    // Master難易度でない場合はアドリブノーツを削除する
+    if !matches!(*diff, GameDifficulty::Master) {
+        notes = notes
+            .into_iter()
+            .filter(|note| !matches!(note.note_type, NoteType::AdLib { key: _ }))
+            .collect_vec();
+    }
+
     (
         song_config.into(),
         SongNotes(VecDeque::from_iter(notes)),
@@ -143,6 +152,7 @@ fn load_assets(
     mut meshes: ResMut<Assets<Mesh>>,
     selected_song: Option<Res<SongData>>,
     speed: Option<Res<NoteSpeed>>,
+    diff: Option<Res<GameDifficulty>>,
 ) {
     // 型なしのアセット列を用意
     let mut assets_loading_vec = Vec::<HandleUntyped>::new();
@@ -172,7 +182,7 @@ fn load_assets(
 
             // 曲データをロード
             let (config, notes, bpm, beat) =
-                load_song_config(&selected_song.config_file_name, speed.0);
+                load_song_config(&selected_song.config_file_name, speed.0, &diff.unwrap());
             let music_filename = config.song_filename.clone();
             commands.insert_resource(config);
             commands.insert_resource(notes);
