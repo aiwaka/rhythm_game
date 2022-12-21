@@ -95,7 +95,7 @@ fn show_receptor_list(
                 TextStyle {
                     font: font.clone(),
                     font_size: 40.0,
-                    color: Color::GREEN,
+                    color: Color::DARK_GREEN,
                 },
             ));
         })
