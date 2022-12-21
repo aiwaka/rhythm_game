@@ -48,7 +48,10 @@ fn main() {
 
     // Set antialiasing to use 4 samples
     app.insert_resource(Msaa { samples: 4 });
+
+    #[cfg(feature = "debug")]
     app.add_system(bevy::window::close_on_esc);
+
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         window,
         ..Default::default()
