@@ -43,7 +43,7 @@ impl PatternReceptor for TrillReceptor {
                 }
             })
             .collect::<String>();
-        format!("{} : {}", lane_str, self.length)
+        format!("{} : {} : last = {}", lane_str, self.length, self.last_lane)
     }
 
     fn initialized(&self) -> bool {
@@ -51,6 +51,10 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
+        // TODO: この実装だと始動からトリルになっていないと判定できない.
+        // 複雑なパターンに内包されている場合でも取得できるようにしたい.
+        // NOTE: 入力された取得ノーツの系列の中からトリルを検出できる仕組みがあればok
+        // 正規表現とオートマトンについて勉強する
         if self.broken {
             self.init();
         }
@@ -64,7 +68,7 @@ impl PatternReceptor for TrillReceptor {
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         if let NoteType::Normal { key } = note_ev.note.note_type {
             self.last_time = note_ev.real_time;
-            if self.initialized() {
+            if self.length == 0 {
                 self.lane[0] = key;
             } else if self.length == 1 {
                 self.lane[1] = key;
@@ -84,7 +88,7 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn achieved(&self) -> Option<NotesPattern> {
-        // TODO: ここthenとクロージャにする必要あったっけ？
+        // bool.then()によりOptionで包んだ値を返している
         (self.broken && self.length > 3).then(|| {
             if self.lane[0] == self.lane[1] {
                 NotesPattern::MultipleTap(self.length)

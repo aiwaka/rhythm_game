@@ -4,6 +4,7 @@ use std::{collections::VecDeque, fs::File};
 use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
+use crate::resources::handles::HomeMenuAssetHandles;
 use crate::{
     components::{load::NowLoadingText, note::NoteInfo},
     constants::{BASIC_NOTE_SPEED, DISTANCE},
@@ -19,36 +20,16 @@ use crate::{
     AppState,
 };
 
-/// 曲一覧情報を取得する.
-/// TODO: 現在ハードコーディングしているが, tomlファイルから読み込むように変更する.
+/// 曲一覧情報をファイルから取得する.
 fn load_all_config_file_data() -> Vec<SongDataParser> {
-    vec![
-        SongDataParser {
-            name: "Hot Tide".to_string(),
-            thumbnail: "hot_tide.png".to_string(),
-            config_file_name: "hot_tide.yaml".to_string(),
-        },
-        SongDataParser {
-            name: "Abraxas".to_string(),
-            thumbnail: "abraxas.png".to_string(),
-            config_file_name: "abraxas.yaml".to_string(),
-        },
-        SongDataParser {
-            name: "test".to_string(),
-            thumbnail: "test.png".to_string(),
-            config_file_name: "test.yaml".to_string(),
-        },
-        // SongDataParser {
-        //     name: "Autoseeker".to_string(),
-        //     thumbnail: 0,
-        //     config_file_name: "hot_tide.toml".to_string(),
-        // },
-        // SongDataParser {
-        //     name: "hazed".to_string(),
-        //     thumbnail: 0,
-        //     config_file_name: "hot_tide.toml".to_string(),
-        // },
-    ]
+    let mut file = File::open("assets/songs/all_song_data.yaml").expect("Couldn't open file");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .expect("Couldn't read file into String");
+
+    let parsed: Vec<SongDataParser> =
+        serde_yaml::from_str(&contents).expect("Couldn't parse into data array");
+    parsed
 }
 
 /// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
@@ -62,7 +43,6 @@ fn load_song_config(
     file.read_to_string(&mut contents)
         .expect("Couldn't read file into String");
 
-    // serdeを用いてパースする
     let parsed: SongConfigParser =
         serde_yaml::from_str(&contents).expect("Couldn't parse into SongConfigParser");
 
@@ -159,7 +139,12 @@ fn load_assets(
 
     // 次がどのシーンに行くかによって分岐.
     match next_scene.0 {
-        AppState::HomeMenu => {}
+        AppState::HomeMenu => {
+            // NOTE: この辺の処理はうまく共通化できないか
+            let assets = HomeMenuAssetHandles::new(&asset_server);
+            assets_loading_vec.extend(assets.to_untyped_vec());
+            commands.insert_resource(assets);
+        }
         AppState::SongSelect => {
             // 全曲データを読み込む
             let parsed_data = load_all_config_file_data();

@@ -159,6 +159,7 @@ fn setup_lane(
                 ..Default::default()
             })
             .insert(KeyLane(i))
+            .insert(GameSceneObject)
             .insert(FrameCounter::new_default(60));
     }
 }
