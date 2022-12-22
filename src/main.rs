@@ -14,9 +14,9 @@ use constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use events::add_events_to_game;
 use resources::game_state::NextAppState;
 use systems::{
-    audio::GameAudioPlugin, load::LoadPlugin, note::NotePlugin, receptor::PatternReceptorPlugin,
-    result_screen::ResultScreenPlugin, score::ScorePlugin, song_select::SongSelectStatePlugin,
-    timer::TimersPlugin, ui::GameUiPlugin,
+    audio::GameAudioPlugin, home_menu::HomeMenuPlugin, load::LoadPlugin, note::NotePlugin,
+    receptor::PatternReceptorPlugin, result_screen::ResultScreenPlugin, score::ScorePlugin,
+    song_select::SongSelectStatePlugin, timer::TimersPlugin, ui::GameUiPlugin,
 };
 
 #[cfg(feature = "debug")]
@@ -59,7 +59,7 @@ fn main() {
     app.add_plugin(AudioPlugin);
     // ステート初期化
     // 次に向かいたいステートをセットしてからローディングステートで開始する.
-    app.insert_resource(NextAppState(AppState::SongSelect));
+    app.insert_resource(NextAppState(AppState::HomeMenu));
     app.add_state(AppState::Loading);
 
     add_events_to_game(&mut app);
@@ -73,11 +73,12 @@ fn main() {
     app.add_plugin(PatternReceptorPlugin);
     app.add_plugin(ScorePlugin);
 
+    app.add_plugin(HomeMenuPlugin);
     app.add_plugin(SongSelectStatePlugin);
     app.add_plugin(ResultScreenPlugin);
+    // app.add_plugin(ShadersPlugin);
 
     #[cfg(feature = "debug")]
     app.add_plugin(AppDebugPlugin);
-    // app.add_plugin(ShadersPlugin);
     app.run();
 }

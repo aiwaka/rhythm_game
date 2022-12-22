@@ -4,6 +4,7 @@ use std::{collections::VecDeque, fs::File};
 use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
+use crate::resources::handles::HomeMenuAssetHandles;
 use crate::{
     components::{load::NowLoadingText, note::NoteInfo},
     constants::{BASIC_NOTE_SPEED, DISTANCE},
@@ -138,7 +139,12 @@ fn load_assets(
 
     // 次がどのシーンに行くかによって分岐.
     match next_scene.0 {
-        AppState::HomeMenu => {}
+        AppState::HomeMenu => {
+            // NOTE: この辺の処理はうまく共通化できないか
+            let assets = HomeMenuAssetHandles::new(&asset_server);
+            assets_loading_vec.extend(assets.to_untyped_vec());
+            commands.insert_resource(assets);
+        }
         AppState::SongSelect => {
             // 全曲データを読み込む
             let parsed_data = load_all_config_file_data();
