@@ -51,6 +51,8 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn initialize_or_defer(&mut self, current_time: f64, bpm: f32) {
+        // TODO: この実装だと始動からトリルになっていないと判定できない.
+        // 複雑なパターンに内包されている場合でも取得できるようにしたい.
         if self.broken {
             self.init();
         }
