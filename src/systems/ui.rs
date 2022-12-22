@@ -159,6 +159,7 @@ fn setup_lane(
                 ..Default::default()
             })
             .insert(KeyLane(i))
+            .insert(GameSceneObject)
             .insert(FrameCounter::new_default(60));
     }
 }
@@ -198,7 +199,6 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
     }
 }
 
-// TODO: リザルト画面でも反応するのでレーン類を無効化する
 // TODO: esc以外で終了する手段
 fn update_lane_background(
     mut materials: ResMut<Assets<ColorMaterial>>,

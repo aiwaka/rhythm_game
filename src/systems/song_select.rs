@@ -117,8 +117,7 @@ fn setup_song_select_scene(
         .with_children(|parent| {
             parent
                 .spawn(TextBundle::from_section(
-                    // TODO: ここのハードコーディング解除
-                    "Normal".to_string(),
+                    "".to_string(),
                     TextStyle {
                         font: handles.main_font.clone(),
                         font_size: 30.0,
