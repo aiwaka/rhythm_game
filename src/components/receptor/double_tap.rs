@@ -13,8 +13,8 @@ pub struct DoubleTapReceptor {
 impl Default for DoubleTapReceptor {
     fn default() -> Self {
         Self {
-            // FIXME: レーンごとに受け入れられるように変更すべき.
-            // そのせいで縦連中に他のレーンが挟まると途切れてしまう.
+            // 縦連中に他のレーンが挟まると途切れてしまうが, 仕様ということにする
+            // 2鍵以上の縦連の場合は他のレセプタに任せるか, これを拡張する
             first_time: 0.0,
             lane: -1,
             num: 0,

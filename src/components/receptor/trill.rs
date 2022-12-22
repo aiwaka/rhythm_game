@@ -84,7 +84,7 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn achieved(&self) -> Option<NotesPattern> {
-        // TODO: ここthenとクロージャにする必要あったっけ？
+        // bool.then()によりOptionで包んだ値を返している
         (self.broken && self.length > 3).then(|| {
             if self.lane[0] == self.lane[1] {
                 NotesPattern::MultipleTap(self.length)

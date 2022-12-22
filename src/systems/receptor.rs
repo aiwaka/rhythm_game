@@ -15,7 +15,6 @@ use crate::{
 /// 難易度Expert, Masterの場合はレセプタをここで登録.
 fn setup_receptor(mut commands: Commands, diff: Res<GameDifficulty>) {
     /// PatternReceptorを実装した構造体を入れる.
-    /// TODO: ここでトレイト境界を設定する方法を調べる（無いかも）
     macro_rules! spawn_receptor {
         ($x:ty) => {
             commands.spawn((
