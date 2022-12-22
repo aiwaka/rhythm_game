@@ -199,7 +199,6 @@ fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &Sc
     }
 }
 
-// TODO: esc以外で終了する手段
 fn update_lane_background(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query: Query<(&Handle<ColorMaterial>, &KeyLane, &mut FrameCounter)>,

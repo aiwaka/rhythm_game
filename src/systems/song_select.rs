@@ -128,6 +128,19 @@ fn setup_song_select_scene(
         });
 }
 
+/// Xキーでホームに戻る
+fn back_to_home_menu(
+    mut commands: Commands,
+    mut key_input: ResMut<Input<KeyCode>>,
+    mut state: ResMut<State<AppState>>,
+) {
+    if key_input.just_pressed(KeyCode::X) {
+        key_input.reset_all();
+        commands.insert_resource(NextAppState(AppState::HomeMenu));
+        state.set(AppState::Loading).unwrap();
+    }
+}
+
 /// 選択中のカードをふわふわさせる
 fn hover_card(
     active_q: Query<&ActiveSongCard>,
@@ -253,6 +266,9 @@ impl Plugin for SongSelectStatePlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_enter(AppState::SongSelect).with_system(setup_song_select_scene),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(back_to_home_menu),
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
         app.add_system_set(
