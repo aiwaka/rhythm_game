@@ -164,7 +164,7 @@ fn load_assets(
             // 難易度をここで用意しておく（選択画面でもゲーム中でも共用する）
             commands.insert_resource(GameDifficulty::Normal);
         }
-        AppState::Game => {
+        AppState::Game | AppState::Editor => {
             // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
             let selected_song = selected_song.unwrap();
             let speed = speed.unwrap();

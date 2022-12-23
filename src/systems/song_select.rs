@@ -236,7 +236,12 @@ fn determine_song(
                 // 必要な情報をセットしてからステート移行
                 commands.insert_resource(song_data.clone());
                 commands.insert_resource(NoteSpeed(1.5));
-                commands.insert_resource(NextAppState(AppState::Game));
+                // Eキーを押した状態だったら行き先をエディットモードに変更
+                if key_input.pressed(KeyCode::E) {
+                    commands.insert_resource(NextAppState(AppState::Editor));
+                } else {
+                    commands.insert_resource(NextAppState(AppState::Game));
+                }
                 state.set(AppState::Loading).unwrap();
             } else {
                 panic!("cannot specify the selected song.");

@@ -14,9 +14,9 @@ use constants::{SCREEN_HEIGHT, SCREEN_WIDTH};
 use events::add_events_to_game;
 use resources::game_state::NextAppState;
 use systems::{
-    audio::GameAudioPlugin, home_menu::HomeMenuPlugin, load::LoadPlugin, note::NotePlugin,
-    receptor::PatternReceptorPlugin, result_screen::ResultScreenPlugin, score::ScorePlugin,
-    song_select::SongSelectStatePlugin, timer::TimersPlugin, ui::GameUiPlugin,
+    audio::GameAudioPlugin, editor::ChartEditorPlugin, home_menu::HomeMenuPlugin, load::LoadPlugin,
+    note::NotePlugin, receptor::PatternReceptorPlugin, result_screen::ResultScreenPlugin,
+    score::ScorePlugin, song_select::SongSelectStatePlugin, timer::TimersPlugin, ui::GameUiPlugin,
 };
 
 #[cfg(feature = "debug")]
@@ -28,6 +28,7 @@ pub enum AppState {
     SongSelect,
     Loading,
     Game,
+    Editor,
 }
 
 fn global_setup(mut commands: Commands) {
@@ -77,6 +78,8 @@ fn main() {
     app.add_plugin(SongSelectStatePlugin);
     app.add_plugin(ResultScreenPlugin);
     // app.add_plugin(ShadersPlugin);
+
+    app.add_plugin(ChartEditorPlugin);
 
     #[cfg(feature = "debug")]
     app.add_plugin(AppDebugPlugin);
