@@ -50,7 +50,11 @@ fn load_song_config(
 
     let mut config_notes = song_config.notes.clone();
     // 小節線ノートを加える
-    let last_bar_num = config_notes.iter().last().unwrap().bar;
+    let last_bar_num = if let Some(note) = config_notes.iter().last() {
+        note.bar
+    } else {
+        0
+    };
     for bar in 0..(last_bar_num + 2) {
         config_notes.push(NoteSpawn {
             note_type: NoteType::BarLine,

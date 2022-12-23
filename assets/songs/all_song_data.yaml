@@ -7,3 +7,6 @@
 - name: "test"
   thumbnail: "test.png"
   config_file_name: "test.yaml"
+- name: "Autoseeker"
+  thumbnail: "abraxas.png"
+  config_file_name: "autoseeker.yaml"
