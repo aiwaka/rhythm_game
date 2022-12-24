@@ -2,8 +2,11 @@ use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
 use crate::components::note::{KeyLane, NoteInfo};
-use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
-use crate::resources::editor::EditorNotesQueue;
+use crate::constants::{
+    BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, SCREEN_HEIGHT, TARGET_Y,
+};
+use crate::events::EditNoteEvent;
+use crate::resources::editor::{EditNote, EditorNotesQueue};
 use crate::resources::note::NoteType;
 use crate::resources::{
     config::{Beat, Bpm, NoteSpeed},
@@ -118,12 +121,47 @@ fn input_notes(
     start_time: Res<SongStartTime>,
     mut queue: ResMut<EditorNotesQueue>,
     time: Res<Time>,
-    bpm: Res<Bpm>,
-    beat: Res<Beat>,
+    mut ev_writer: EventWriter<EditNoteEvent>,
 ) {
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for lane in lane_q.iter_mut() {
-        if lane.key_just_pressed(&key_input) {}
+        if lane.key_just_pressed(&key_input) {
+            let note = EditNote {
+                key: lane.0,
+                time_after_start,
+            };
+            ev_writer.send(note.clone().into());
+            queue.push_back(note);
+        }
+    }
+}
+
+/// エディットノートを出現
+fn spawn_edit_note(
+    mut commands: Commands,
+    mut ev_reader: EventReader<EditNoteEvent>,
+    game_assets: Res<GameAssetsHandles>,
+) {
+    for ev in ev_reader.iter() {
+        let key = ev.key;
+        let transform = Transform {
+            translation: Vec3::new(KeyLane::x_coord_from_num(key), TARGET_Y, 1.0),
+            ..Default::default()
+        };
+        let mesh = ColorMesh2dBundle {
+            mesh: game_assets.note.clone().into(),
+            material: game_assets.color_material_blue.clone(),
+            transform,
+            ..Default::default()
+        };
+        let note_info = NoteInfo {
+            note_type: NoteType::Normal { key },
+            bar: 0,
+            beat: 0.0,
+            spawn_time: 0.0,
+            target_time: 0.0,
+        };
+        commands.spawn((note_info, mesh));
     }
 }
 
@@ -157,13 +195,13 @@ fn execute_notes(
     }
 }
 
-/// 取れなかったときの処理
+/// 画面外にでたノーツを消去する
 #[allow(clippy::too_many_arguments)]
 fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
     // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for (trans, _, ent) in query.iter() {
         let pos_y = trans.translation.y;
-        if pos_y < 2.0 * TARGET_Y {
+        if pos_y > SCREEN_HEIGHT / 2.0 {
             commands.entity(ent).despawn();
         }
     }
@@ -182,6 +220,7 @@ impl Plugin for EditorNotePlugin {
         );
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(move_notes));
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(input_notes));
+        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(spawn_edit_note));
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(execute_notes));
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(drop_notes));
     }
