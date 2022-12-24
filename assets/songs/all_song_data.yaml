@@ -10,3 +10,4 @@
 - name: "Autoseeker"
   thumbnail: "abraxas.png"
   config_file_name: "autoseeker.yaml"
+  edit_freeze: false
