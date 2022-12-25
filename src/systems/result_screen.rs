@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{note::NoteInfo, result_screen::ScrollingList, ui::GameSceneObject},
+    components::{note::NoteInfo, result_screen::ScrollingList, ui::GameStateObject},
     events::PanicAudio,
     resources::{
         game_state::{ExistingEntities, NextAppState, ResultDisplayed},
@@ -23,7 +23,7 @@ fn spawn_result(
     handles: Res<GameAssetsHandles>,
     // すでに出現したかどうか
     spawned: Option<Res<ResultDisplayed>>,
-    game_obj_q: Query<Entity, With<GameSceneObject>>,
+    game_obj_q: Query<Entity, With<GameStateObject>>,
     mut panic_audio_ev_writer: EventWriter<PanicAudio>,
 ) {
     if spawned.is_some() {

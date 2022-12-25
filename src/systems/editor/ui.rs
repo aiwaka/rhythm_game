@@ -4,7 +4,7 @@ use crate::{
     components::{
         note::KeyLane,
         timer::FrameCounter,
-        ui::{ChartInfoNode, EditorSceneObject, GameSceneObject, LaneLine, TargetLine},
+        ui::{ChartInfoNode, EditorStateObject, GameStateObject, LaneLine, TargetLine},
     },
     constants::{LANE_WIDTH, TARGET_Y},
     resources::{
@@ -39,7 +39,7 @@ fn setup_ui(
             background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
-        .insert(EditorSceneObject)
+        .insert(EditorStateObject)
         .insert(ChartInfoNode)
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
@@ -73,7 +73,7 @@ fn setup_ui(
             ..Default::default()
         })
         .insert(TargetLine)
-        .insert(GameSceneObject);
+        .insert(GameStateObject);
 
     // 鍵盤線
     for i in 0..5 {
@@ -90,7 +90,7 @@ fn setup_ui(
                 ..Default::default()
             })
             .insert(LaneLine)
-            .insert(GameSceneObject);
+            .insert(GameStateObject);
     }
 }
 
@@ -109,7 +109,7 @@ fn setup_lane(mut commands: Commands, handles: Res<GameAssetsHandles>) {
                 ..Default::default()
             })
             .insert(KeyLane(i))
-            .insert(EditorSceneObject)
+            .insert(EditorStateObject)
             .insert(FrameCounter::new_default(60));
         info!("setup lane");
     }
