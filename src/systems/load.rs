@@ -32,12 +32,8 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
     parsed
 }
 
-/// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
-fn load_song_config(
-    filename: &str,
-    speed_coeff: f32,
-    diff: &GameDifficulty,
-) -> (SongConfigResource, SongNotes, Bpm, Beat) {
+/// 指定された曲情報ファイルの内容を返す
+pub(super) fn load_song_config(filename: &str) -> SongConfig {
     let mut file = File::open(format!("assets/songs/{}", filename)).expect("Couldn't open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
@@ -46,7 +42,16 @@ fn load_song_config(
     let parsed: SongConfigParser =
         serde_yaml::from_str(&contents).expect("Couldn't parse into SongConfigParser");
 
-    let song_config = SongConfig::from(parsed);
+    SongConfig::from(parsed)
+}
+
+/// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
+fn load_song_config_resources(
+    filename: &str,
+    speed_coeff: f32,
+    diff: &GameDifficulty,
+) -> (SongConfigResource, SongNotes, Bpm, Beat) {
+    let song_config = load_song_config(filename);
 
     let mut config_notes = song_config.notes.clone();
     // 小節線ノートを加える
@@ -170,8 +175,11 @@ fn load_assets(
             let speed = speed.unwrap();
 
             // 曲データをロード
-            let (config, notes, bpm, beat) =
-                load_song_config(&selected_song.config_file_name, speed.0, &diff.unwrap());
+            let (config, notes, bpm, beat) = load_song_config_resources(
+                &selected_song.config_file_name,
+                speed.0,
+                &diff.unwrap(),
+            );
             let music_filename = config.song_filename.clone();
             commands.insert_resource(config);
             commands.insert_resource(notes);
