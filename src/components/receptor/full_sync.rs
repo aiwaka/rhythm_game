@@ -32,6 +32,7 @@ impl PatternReceptor for FullSyncReceptor {
         boolean_string(&self.lane)
     }
 
+    #[inline(always)]
     fn init(&mut self) {
         self.lane = [false; 4];
     }
