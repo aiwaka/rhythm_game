@@ -4,7 +4,9 @@ use itertools::Itertools;
 use crate::{
     components::{
         editor::FrozenChartErrorText,
-        song_select::{ActiveSongCard, DifficultyText, SongSelectCard, SongSelectParentNode},
+        song_select::{
+            ActiveSongCard, DifficultyText, SongSelectCard, SongSelectParentNode, SpeedSettingNode,
+        },
         timer::FrameCounter,
     },
     resources::{
@@ -275,7 +277,6 @@ fn determine_song(
                 info!("select song {:?}", song_data);
                 // 必要な情報をセットしてからステート移行
                 commands.insert_resource(song_data.clone());
-                commands.insert_resource(NoteSpeed(1.5));
                 // Eキーを押した状態だったら行き先をエディットモードに変更
                 if key_input.pressed(KeyCode::E) {
                     if song_data.edit_freeze {
@@ -316,6 +317,63 @@ fn despawn_song_select_scene(
     commands.remove_resource::<SongSelectAssetHandles>();
 }
 
+fn speed_setting_node(
+    mut commands: Commands,
+    key_input: Res<Input<KeyCode>>,
+    node_q: Query<(&Children, Entity), With<SpeedSettingNode>>,
+    mut text_q: Query<&mut Text>,
+    handles: Res<SongSelectAssetHandles>,
+    mut speed_coeff: ResMut<NoteSpeed>,
+) {
+    if key_input.pressed(KeyCode::S) {
+        if node_q.is_empty() {
+            // Sが押されていてノードが表示されていないなら出す
+            commands
+                .spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        position: UiRect::new(Val::Px(20.0), Val::Auto, Val::Auto, Val::Px(20.0)),
+                        ..Default::default()
+                    },
+                    background_color: Color::ANTIQUE_WHITE.into(),
+                    ..Default::default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "".to_string(),
+                        TextStyle {
+                            font: handles.main_font.clone(),
+                            font_size: 30.0,
+                            color: Color::BLUE,
+                        },
+                    ));
+                })
+                .insert(SpeedSettingNode);
+        } else {
+            // 表示されているなら更新する
+            let speed_int = (**speed_coeff * 10.0) as i32;
+            let delta = if key_input.just_pressed(KeyCode::Up) {
+                1
+            } else if key_input.just_pressed(KeyCode::Down) {
+                -1
+            } else {
+                0
+            };
+            **speed_coeff = ((speed_int + delta) as f32 / 10.0).clamp(0.5, 4.0);
+            let (children, _) = node_q.get_single().unwrap();
+            for &child in children.iter() {
+                if let Ok(mut text) = text_q.get_mut(child) {
+                    text.sections[0].value = format!("SPEED: {}", **speed_coeff);
+                }
+            }
+        }
+    } else {
+        for (_, ent) in node_q.iter() {
+            commands.entity(ent).despawn_recursive();
+        }
+    }
+}
+
 pub struct SongSelectStatePlugin;
 impl Plugin for SongSelectStatePlugin {
     fn build(&self, app: &mut App) {
@@ -340,6 +398,9 @@ impl Plugin for SongSelectStatePlugin {
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
         app.add_system_set(
             SystemSet::on_exit(AppState::SongSelect).with_system(despawn_song_select_scene),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect).with_system(speed_setting_node),
         );
     }
 }

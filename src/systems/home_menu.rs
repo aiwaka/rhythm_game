@@ -5,6 +5,7 @@ use crate::{
     components::home_menu::{ActiveOption, HomeMenuObject, HomeMenuOption, HomeMenuOptionItem},
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     resources::{
+        config::NoteSpeed,
         game_state::{ExistingEntities, NextAppState},
         handles::HomeMenuAssetHandles,
     },
@@ -142,6 +143,8 @@ fn determine_option(
             if let Some((_, opt)) = card_q.iter().find(|(card, _)| card.0 == active.0) {
                 match opt {
                     HomeMenuOption::Start => {
+                        // ハイスピ設定を入れる
+                        commands.insert_resource(NoteSpeed(2.0));
                         commands.insert_resource(NextAppState(AppState::SongSelect));
                         state.set(AppState::Loading).unwrap();
                     }
