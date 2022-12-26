@@ -1,0 +1,13 @@
+- name: "Hot Tide"
+  thumbnail: "hot_tide.png"
+  config_file_name: "hot_tide.yaml"
+- name: "Abraxas"
+  thumbnail: "abraxas.png"
+  config_file_name: "abraxas.yaml"
+- name: "test"
+  thumbnail: "test.png"
+  config_file_name: "test.yaml"
+- name: "A Limited One"
+  thumbnail: "a_limited_one.png"
+  config_file_name: "a_limited_one.yaml"
+  edit_freeze: false

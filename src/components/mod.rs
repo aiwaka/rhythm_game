@@ -1,3 +1,5 @@
+pub mod editor;
+pub mod home_menu;
 pub mod load;
 pub mod note;
 pub mod receptor;

@@ -7,7 +7,7 @@ use crate::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
         ui::{
-            CatchEvalPopupText, ChartInfoNode, GameSceneObject, LaneLine, PatternPopupText,
+            CatchEvalPopupText, ChartInfoNode, GameStateObject, LaneLine, PatternPopupText,
             ScoreText, TargetLine, TimeText,
         },
     },
@@ -49,7 +49,7 @@ fn setup_ui(
             background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
-        .insert(GameSceneObject)
+        .insert(GameStateObject)
         .insert(ChartInfoNode)
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
@@ -85,7 +85,7 @@ fn setup_ui(
             background_color: BackgroundColor(Color::NONE),
             ..Default::default()
         })
-        .insert(GameSceneObject)
+        .insert(GameStateObject)
         .with_children(|parent| {
             parent
                 .spawn(TextBundle {
@@ -117,7 +117,7 @@ fn setup_ui(
             ..Default::default()
         })
         .insert(TargetLine)
-        .insert(GameSceneObject);
+        .insert(GameStateObject);
 
     // 鍵盤線
     for i in 0..5 {
@@ -134,7 +134,7 @@ fn setup_ui(
                 ..Default::default()
             })
             .insert(LaneLine)
-            .insert(GameSceneObject);
+            .insert(GameStateObject);
     }
 }
 
@@ -159,6 +159,7 @@ fn setup_lane(
                 ..Default::default()
             })
             .insert(KeyLane(i))
+            .insert(GameStateObject)
             .insert(FrameCounter::new_default(60));
     }
 }

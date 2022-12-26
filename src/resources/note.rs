@@ -17,6 +17,7 @@ pub struct NoteSpawnParser {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum NoteTypeParser {
     Normal { key: i32 },
+    BarLine,
     AdLib { key: i32 },
 }
 
@@ -30,6 +31,15 @@ impl From<NoteSpawnParser> for NoteSpawn {
     fn from(data: NoteSpawnParser) -> Self {
         Self {
             note_type: data.note.into(),
+            bar: data.bar,
+            beat: data.beat,
+        }
+    }
+}
+impl From<NoteSpawn> for NoteSpawnParser {
+    fn from(data: NoteSpawn) -> Self {
+        Self {
+            note: data.note_type.into(),
             bar: data.bar,
             beat: data.beat,
         }
@@ -52,7 +62,17 @@ impl From<NoteTypeParser> for NoteType {
     fn from(data: NoteTypeParser) -> Self {
         match data {
             NoteTypeParser::Normal { key } => NoteType::Normal { key },
+            NoteTypeParser::BarLine => NoteType::BarLine,
             NoteTypeParser::AdLib { key } => NoteType::AdLib { key },
+        }
+    }
+}
+impl From<NoteType> for NoteTypeParser {
+    fn from(data: NoteType) -> Self {
+        match data {
+            NoteType::Normal { key } => NoteTypeParser::Normal { key },
+            NoteType::BarLine => NoteTypeParser::BarLine,
+            NoteType::AdLib { key } => NoteTypeParser::AdLib { key },
         }
     }
 }

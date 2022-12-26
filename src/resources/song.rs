@@ -48,6 +48,18 @@ impl From<SongConfigParser> for SongConfig {
         }
     }
 }
+impl From<SongConfig> for SongConfigParser {
+    fn from(data: SongConfig) -> Self {
+        Self {
+            name: data.name,
+            filename: data.filename,
+            length: data.length,
+            initial_beat: data.initial_beat,
+            initial_bpm: data.initial_bpm,
+            notes: data.notes.into_iter().map(|note| note.into()).collect_vec(),
+        }
+    }
+}
 
 /// リソースとして追加する曲データ構造体
 #[derive(Resource, Debug, Clone)]

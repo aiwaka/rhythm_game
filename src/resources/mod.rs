@@ -1,4 +1,5 @@
 pub mod config;
+pub mod editor;
 pub mod game_state;
 pub mod handles;
 pub mod note;

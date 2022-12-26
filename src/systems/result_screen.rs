@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    components::{note::NoteInfo, result_screen::ScrollingList, ui::GameSceneObject},
+    components::{note::NoteInfo, result_screen::ScrollingList, ui::GameStateObject},
     events::PanicAudio,
     resources::{
         game_state::{ExistingEntities, NextAppState, ResultDisplayed},
@@ -23,7 +23,7 @@ fn spawn_result(
     handles: Res<GameAssetsHandles>,
     // すでに出現したかどうか
     spawned: Option<Res<ResultDisplayed>>,
-    game_obj_q: Query<Entity, With<GameSceneObject>>,
+    game_obj_q: Query<Entity, With<GameStateObject>>,
     mut panic_audio_ev_writer: EventWriter<PanicAudio>,
 ) {
     if spawned.is_some() {
@@ -241,7 +241,7 @@ impl Plugin for ResultScreenPlugin {
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(spawn_result));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(scroll_pattern_list));
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(exit_game_state));
-        // TODO: このようにexitで実行されるようなシステムはそういう役割のプラグイン等にまとめるべき
+        // NOTE: exit処理が散在しているのはよくないかもしれないがとりあえずここで処理することにしておく
         app.add_system_set(SystemSet::on_exit(AppState::Game).with_system(despawn_game_state));
     }
 }
