@@ -17,3 +17,6 @@ pub struct SongSelectCard(pub usize);
 
 #[derive(Component)]
 pub struct DifficultyText;
+
+#[derive(Component)]
+pub struct SpeedSettingNode;
