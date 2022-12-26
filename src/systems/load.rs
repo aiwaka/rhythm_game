@@ -45,6 +45,57 @@ pub(super) fn load_song_config(filename: &str) -> SongConfig {
     SongConfig::from(parsed)
 }
 
+/// barとbeatのみの構造の列からspawn_timeとtarget_timeを持った構造の列に変換する
+pub fn to_notes_info_from_notes_spawn(
+    mut spawn_notes: Vec<NoteSpawn>,
+    speed: f32,
+    initial_bpm: f32,
+    initial_beat: u32,
+) -> Vec<NoteInfo> {
+    // ノーツをソートする.
+    spawn_notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
+        std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
+        _ => a.bar.cmp(&b.bar),
+    });
+
+    // ノーツを配列に収める
+    #[allow(unused_mut)]
+    let mut beat_par_bar = initial_beat; // 拍子
+    #[allow(unused_mut)]
+    let mut bpm = initial_bpm;
+    // 判定線への到達タイムを蓄積させる変数
+    // 途中でBPMや拍子を変更するようなイベントがあればそれを反映する.
+    // 判定線に到達する時間を曲開始時刻から測ったもの.
+    let mut target_time = 0.0;
+    let mut notes = vec![];
+    let mut prev_beat = 0.0;
+
+    let mut prev_bar = 0u32;
+    for note in spawn_notes {
+        // このような仕様のため, 拍子を変更する場合は小節の最初に行い, かつbeat_diffの計算の前に行う.
+        // その上で, 前の拍から変更前の小節が終わるまで何拍か記憶しておき, 次の拍に足し合わせる作業が必要.
+        let beat_diff = if note.bar == prev_bar {
+            note.beat - prev_beat
+        } else {
+            // 小節番号の差を追加
+            let bar_diff = note.bar - prev_bar;
+            prev_bar = note.bar;
+            note.beat + (bar_diff * beat_par_bar) as f64 - prev_beat
+        };
+        target_time += beat_diff * (bpm as f64).recip() * 60.0;
+        let spawn_time = target_time - ((DISTANCE / speed) as f64).abs();
+        notes.push(NoteInfo {
+            note_type: note.note_type.clone(),
+            target_time,
+            spawn_time,
+            bar: note.bar,
+            beat: note.beat,
+        });
+        prev_beat = note.beat;
+    }
+    notes
+}
+
 /// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
 fn load_song_config_resources(
     filename: &str,
@@ -80,48 +131,12 @@ fn load_song_config_resources(
         })
     }
 
-    // ノーツをソートする.
-    config_notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
-        std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
-        _ => a.bar.cmp(&b.bar),
-    });
-
-    // ノーツを配列に収める
-    #[allow(unused_mut)]
-    let mut beat_par_bar = initial_beat; // 拍子
-    #[allow(unused_mut)]
-    let mut bpm = initial_bpm;
-    // 判定線への到達タイムを蓄積させる変数
-    // 途中でBPMや拍子を変更するようなイベントがあればそれを反映する.
-    // 判定線に到達する時間を曲開始時刻から測ったもの.
-    let mut target_time = 0.0;
-    let speed = speed_coeff * BASIC_NOTE_SPEED;
-    let mut notes = vec![];
-    let mut prev_beat = 0.0;
-
-    let mut prev_bar = 0u32;
-    for note in config_notes {
-        // このような仕様のため, 拍子を変更する場合は小節の最初に行い, かつbeat_diffの計算の前に行う.
-        // その上で, 前の拍から変更前の小節が終わるまで何拍か記憶しておき, 次の拍に足し合わせる作業が必要.
-        let beat_diff = if note.bar == prev_bar {
-            note.beat - prev_beat
-        } else {
-            // 小節番号の差を追加
-            let bar_diff = note.bar - prev_bar;
-            prev_bar = note.bar;
-            note.beat + (bar_diff * beat_par_bar) as f64 - prev_beat
-        };
-        target_time += beat_diff * (bpm as f64).recip() * 60.0;
-        let spawn_time = target_time - ((DISTANCE / speed) as f64).abs();
-        notes.push(NoteInfo {
-            note_type: note.note_type.clone(),
-            target_time,
-            spawn_time,
-            bar: note.bar,
-            beat: note.beat,
-        });
-        prev_beat = note.beat;
-    }
+    let mut notes = to_notes_info_from_notes_spawn(
+        config_notes,
+        speed_coeff * BASIC_NOTE_SPEED,
+        initial_bpm,
+        initial_beat,
+    );
 
     // Master難易度でない場合はアドリブノーツを削除する
     if !matches!(*diff, GameDifficulty::Master) {
