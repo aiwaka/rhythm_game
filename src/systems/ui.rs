@@ -39,8 +39,8 @@ fn setup_ui(
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
-                    left: Val::Px(10.),
-                    top: Val::Px(10.),
+                    left: Val::Px(10.0),
+                    top: Val::Px(10.0),
                     ..Default::default()
                 },
                 flex_direction: FlexDirection::Column,
@@ -112,7 +112,7 @@ fn setup_ui(
     commands
         .spawn(ColorMesh2dBundle {
             mesh: Mesh2dHandle::from(handles.judge_line.clone()),
-            material: handles.color_material_white_trans.clone(),
+            material: handles.color_material_white.clone(),
             transform,
             ..Default::default()
         })
@@ -129,7 +129,7 @@ fn setup_ui(
         commands
             .spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle::from(handles.lane_line.clone()),
-                material: handles.color_material_white_trans.clone(),
+                material: handles.color_material_white.clone(),
                 transform,
                 ..Default::default()
             })
