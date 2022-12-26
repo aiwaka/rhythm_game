@@ -127,8 +127,8 @@ fn update_bar_and_beat(
         let time_diff = time.raw_delta_seconds_f64();
         // 拍の差分
         let beat_diff = time_diff / 60.0 * **bpm as f64;
-        **beat += beat_diff as f32;
-        let bpb_float = **beat_par_bar as f32;
+        **beat += beat_diff;
+        let bpb_float = **beat_par_bar as f64;
         if **beat > bpb_float {
             // 超えていたら拍をリセット
             **bar += 1;

@@ -6,7 +6,7 @@ use bevy::prelude::*;
 pub struct EditNote {
     pub key: i32,
     pub bar: u32,
-    pub beat: f32,
+    pub beat: f64,
     // pub time_after_start: f64,
 }
 
@@ -15,7 +15,7 @@ pub struct EditNote {
 pub struct EditorBar(pub u32);
 /// エディタ中における拍番号
 #[derive(Resource, Deref, DerefMut, Debug)]
-pub struct EditorBeat(pub f32);
+pub struct EditorBeat(pub f64);
 
 /// 存在していればエディタを終了している状態を表す.
 #[derive(Resource, Debug)]
