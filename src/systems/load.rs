@@ -51,9 +51,21 @@ fn load_song_config_resources(
     speed_coeff: f32,
     diff: &GameDifficulty,
 ) -> (SongConfigResource, SongNotes, Bpm, Beat) {
-    let song_config = load_song_config(filename);
+    // cloneが不要になるよう全部バラしてから再構成する
+    let SongConfig {
+        name,
+        filename,
+        length,
+        initial_beat,
+        initial_bpm,
+        notes: mut config_notes,
+    } = load_song_config(filename);
 
-    let mut config_notes = song_config.notes.clone();
+    let song_config_resource = SongConfigResource {
+        name,
+        song_filename: filename,
+        length,
+    };
     // 小節線ノートを加える
     let last_bar_num = if let Some(note) = config_notes.iter().last() {
         note.bar
@@ -75,12 +87,10 @@ fn load_song_config_resources(
     });
 
     // ノーツを配列に収める
-    let bpm_resource = Bpm(song_config.initial_bpm);
-    let beat_resource = Beat(song_config.initial_beat);
     #[allow(unused_mut)]
-    let mut beat_par_bar = song_config.initial_beat; // 拍子
+    let mut beat_par_bar = initial_beat; // 拍子
     #[allow(unused_mut)]
-    let mut bpm = song_config.initial_bpm;
+    let mut bpm = initial_bpm;
     // 判定線への到達タイムを蓄積させる変数
     // 途中でBPMや拍子を変更するようなイベントがあればそれを反映する.
     // 判定線に到達する時間を曲開始時刻から測ったもの.
@@ -122,10 +132,10 @@ fn load_song_config_resources(
     }
 
     (
-        song_config.into(),
+        song_config_resource,
         SongNotes(VecDeque::from_iter(notes)),
-        bpm_resource,
-        beat_resource,
+        Bpm(initial_bpm),
+        Beat(initial_beat),
     )
 }
 
