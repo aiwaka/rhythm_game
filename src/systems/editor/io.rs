@@ -4,19 +4,17 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
-    components::{note::NoteInfo, ui::EditorStateObject},
-    constants::BASIC_NOTE_SPEED,
+    components::ui::EditorStateObject,
     events::PanicAudio,
     resources::{
-        config::NoteSpeed,
         editor::{EditorNotesQueue, QuittingEditor},
         game_state::NextAppState,
         handles::GameAssetsHandles,
-        note::NoteSpawn,
+        note::{NoteSpawn, NoteType},
         song::{SongConfig, SongConfigParser},
         song_list::SongData,
     },
-    systems::load::{load_song_config, to_notes_info_from_notes_spawn},
+    systems::load::{load_song_config, sort_spawn_notes},
     AppState,
 };
 
@@ -32,24 +30,9 @@ pub(super) fn output_chart(filename: &str, config: SongConfig) -> Result<(), std
 }
 
 /// もとの譜面情報のノーツ情報を出力したいノーツ列で上書きしたデータを返す
-fn merge_song_config(mut song_config: SongConfig, new_notes: Vec<NoteInfo>) -> SongConfig {
-    song_config.notes = new_notes
-        .iter()
-        .map(|n| NoteSpawn {
-            note_type: n.note_type.clone(),
-            bar: n.bar,
-            beat: n.beat,
-        })
-        .collect_vec();
+fn merge_song_config(mut song_config: SongConfig, new_notes: Vec<NoteSpawn>) -> SongConfig {
+    song_config.notes = new_notes;
     song_config
-}
-
-/// 時刻情報のみ持っている入力されたノーツ列と他のイベント（BPM変更等含む）を組み合わせてパース可能な列にする
-pub(super) fn convert_raw_input_notes(
-    queue: &EditorNotesQueue,
-    notes: &[NoteInfo],
-) -> Vec<NoteInfo> {
-    vec![]
 }
 
 /// エディットモードをやめて保存するか聞く
@@ -105,7 +88,6 @@ fn back_to_home(
     mut key_input: ResMut<Input<KeyCode>>,
     mut state: ResMut<State<AppState>>,
     queue: Res<EditorNotesQueue>,
-    speed_coeff: Res<NoteSpeed>,
     song_data: Res<SongData>,
 ) {
     if quitting.is_some()
@@ -116,14 +98,21 @@ fn back_to_home(
         if key_input.just_pressed(KeyCode::S) {
             // 新しく譜面データを読み出し
             let song_config = load_song_config(&song_data.config_file_name);
-            let notes = to_notes_info_from_notes_spawn(
-                song_config.notes.clone(),
-                speed_coeff.0 * BASIC_NOTE_SPEED,
-                song_config.initial_bpm,
-                song_config.initial_beat,
-            );
-            let merged_notes = convert_raw_input_notes(&queue, &notes);
+            let mut old_notes = song_config.notes.clone();
+            let new_notes = queue
+                .iter()
+                .map(|n| NoteSpawn {
+                    // TODO: ここでグリッドスナップ
+                    note_type: NoteType::Normal { key: n.key },
+                    bar: n.bar,
+                    beat: n.beat,
+                })
+                .collect_vec();
+            old_notes.extend(new_notes);
+            let mut merged_notes = old_notes;
+            sort_spawn_notes(&mut merged_notes);
             let merged_config = merge_song_config(song_config, merged_notes);
+            // NOTE: 現状では（安定化するまで）バイナリの実行ディレクトリに吐き出される仕様となっている.
             output_chart(&song_data.config_file_name, merged_config).unwrap();
         }
         key_input.clear();

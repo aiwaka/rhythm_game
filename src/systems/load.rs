@@ -45,6 +45,15 @@ pub(super) fn load_song_config(filename: &str) -> SongConfig {
     SongConfig::from(parsed)
 }
 
+/// NoteSpawnの列を小節と拍によりソートする.
+pub fn sort_spawn_notes(notes: &mut [NoteSpawn]) {
+    notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
+        std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
+        std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+        std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+    });
+}
+
 /// barとbeatのみの構造の列からspawn_timeとtarget_timeを持った構造の列に変換する
 pub fn to_notes_info_from_notes_spawn(
     mut spawn_notes: Vec<NoteSpawn>,
@@ -53,10 +62,7 @@ pub fn to_notes_info_from_notes_spawn(
     initial_beat: u32,
 ) -> Vec<NoteInfo> {
     // ノーツをソートする.
-    spawn_notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
-        std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
-        _ => a.bar.cmp(&b.bar),
-    });
+    sort_spawn_notes(&mut spawn_notes);
 
     // ノーツを配列に収める
     #[allow(unused_mut)]
