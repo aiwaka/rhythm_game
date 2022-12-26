@@ -6,7 +6,7 @@ use crate::constants::{
     BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, SCREEN_HEIGHT, TARGET_Y,
 };
 use crate::events::EditNoteEvent;
-use crate::resources::editor::{EditNote, EditorNotesQueue};
+use crate::resources::editor::{EditNote, EditorBar, EditorBeat, EditorNotesQueue};
 use crate::resources::note::NoteType;
 use crate::resources::{
     config::{Beat, Bpm, NoteSpeed},
@@ -15,14 +15,15 @@ use crate::resources::{
 };
 use crate::AppState;
 
-use crate::systems::system_labels::TimerSystemLabel;
+use crate::systems::system_labels::{EditorSystemLabel, TimerSystemLabel};
 
 /// エディット時は下から出現するため出現位置を調整したものを用意する
 const EDIT_NOTE_SPAWN_Y: f32 = (NOTE_SPAWN_Y - TARGET_Y) * -1.0 + TARGET_Y;
 
-fn setup_queue(mut commands: Commands) {
-    // エディットキューを用意する
+fn setup_editor_resources(mut commands: Commands) {
     commands.insert_resource(EditorNotesQueue::default());
+    commands.insert_resource(EditorBar(0));
+    commands.insert_resource(EditorBeat(0.0));
 }
 
 /// エディット中でもすでに存在しているものは使う.
@@ -112,6 +113,30 @@ fn move_notes(
     }
 }
 
+/// 小節と拍を更新する
+fn update_bar_and_beat(
+    mut bar: ResMut<EditorBar>,
+    mut beat: ResMut<EditorBeat>,
+    start_time: Res<SongStartTime>,
+    time: Res<Time>,
+    bpm: Res<Bpm>,
+    beat_par_bar: Res<Beat>,
+) {
+    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    if time_after_start > 0.0 {
+        let time_diff = time.raw_delta_seconds_f64();
+        // 拍の差分
+        let beat_diff = time_diff / 60.0 * **bpm as f64;
+        **beat += beat_diff as f32;
+        let bpb_float = **beat_par_bar as f32;
+        if **beat > bpb_float {
+            // 超えていたら拍をリセット
+            **bar += 1;
+            **beat -= bpb_float;
+        }
+    }
+}
+
 /// エディター本体.
 /// 鍵盤対応のキーを押したらノーツが出現し, ノーツ情報キューに溜め込まれる.
 #[allow(clippy::too_many_arguments)]
@@ -121,6 +146,8 @@ fn input_notes(
     start_time: Res<SongStartTime>,
     mut queue: ResMut<EditorNotesQueue>,
     time: Res<Time>,
+    current_bar: Res<EditorBar>,
+    current_beat: Res<EditorBeat>,
     mut ev_writer: EventWriter<EditNoteEvent>,
 ) {
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
@@ -131,7 +158,8 @@ fn input_notes(
         if lane.key_just_pressed(&key_input) {
             let note = EditNote {
                 key: lane.0,
-                time_after_start,
+                bar: **current_bar,
+                beat: **current_beat,
             };
             ev_writer.send(note.clone().into());
             queue.push_back(note);
@@ -153,7 +181,7 @@ fn spawn_edit_note(
         };
         let mesh = ColorMesh2dBundle {
             mesh: game_assets.note.clone().into(),
-            material: game_assets.color_material_blue.clone(),
+            material: game_assets.color_material_green.clone(),
             transform,
             ..Default::default()
         };
@@ -215,15 +243,27 @@ const TIMESTEP: f64 = 1.0 / FRAMERATE;
 pub(super) struct EditorNotePlugin;
 impl Plugin for EditorNotePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_queue));
+        app.add_system_set(
+            SystemSet::on_enter(AppState::Editor).with_system(setup_editor_resources),
+        );
         app.add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIMESTEP))
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
         );
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(move_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(input_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(spawn_edit_note));
+        app.add_system_set(
+            SystemSet::on_update(AppState::Editor)
+                .with_system(update_bar_and_beat.label(EditorSystemLabel::UpdateBarAndBeat)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Editor)
+                .with_system(input_notes.after(EditorSystemLabel::UpdateBarAndBeat)),
+        );
+        app.add_system_set(
+            SystemSet::on_update(AppState::Editor)
+                .with_system(spawn_edit_note.after(EditorSystemLabel::UpdateBarAndBeat)),
+        );
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(execute_notes));
         app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(drop_notes));
     }

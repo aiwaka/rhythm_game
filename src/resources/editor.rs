@@ -5,8 +5,17 @@ use bevy::prelude::*;
 #[derive(Clone, Debug)]
 pub struct EditNote {
     pub key: i32,
-    pub time_after_start: f64,
+    pub bar: u32,
+    pub beat: f32,
+    // pub time_after_start: f64,
 }
+
+/// エディタ中における小節番号
+#[derive(Resource, Deref, DerefMut, Debug)]
+pub struct EditorBar(pub u32);
+/// エディタ中における拍番号
+#[derive(Resource, Deref, DerefMut, Debug)]
+pub struct EditorBeat(pub f32);
 
 /// 存在していればエディタを終了している状態を表す.
 #[derive(Resource, Debug)]

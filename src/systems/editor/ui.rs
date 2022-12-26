@@ -87,6 +87,49 @@ fn setup_ui(
             .insert(LaneLine)
             .insert(EditorStateObject);
     }
+
+    // DEBUG: 小節と拍表示用. EditorStateObjectなので終了時は勝手に消えてくれる
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    left: Val::Percent(80.0),
+                    top: Val::Px(10.0),
+                    ..Default::default()
+                },
+                flex_direction: FlexDirection::Column,
+                ..Default::default()
+            },
+            background_color: BackgroundColor(Color::NONE),
+            ..Default::default()
+        })
+        .insert(EditorStateObject)
+        .with_children(|parent| {
+            parent
+                .spawn(TextBundle::from_section(
+                    "init".to_string(),
+                    TextStyle {
+                        font: handles.main_font.clone(),
+                        font_size: 30.0,
+                        color: Color::WHITE,
+                    },
+                ))
+                .insert(BarBeatText);
+        });
+}
+#[derive(Component)]
+struct BarBeatText;
+
+use crate::resources::editor::{EditorBar, EditorBeat};
+fn debug_bb_text(
+    mut q: Query<&mut Text, With<BarBeatText>>,
+    current_bar: Res<EditorBar>,
+    current_beat: Res<EditorBeat>,
+) {
+    for mut t in q.iter_mut() {
+        t.sections[0].value = format!("{}:{}", **current_bar, **current_beat);
+    }
 }
 
 fn setup_lane(mut commands: Commands, handles: Res<GameAssetsHandles>) {
@@ -129,6 +172,7 @@ impl Plugin for EditorUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_ui));
         app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_lane));
+        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(debug_bb_text));
         app.add_system_set(
             SystemSet::on_update(AppState::Editor)
                 .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
