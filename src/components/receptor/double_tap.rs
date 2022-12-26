@@ -37,6 +37,7 @@ impl PatternReceptor for DoubleTapReceptor {
         *self = Self::default();
     }
 
+    #[inline(always)]
     fn initialized(&self) -> bool {
         self.num == 0
     }
@@ -53,14 +54,17 @@ impl PatternReceptor for DoubleTapReceptor {
     }
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
-        if let NoteType::Normal { key } = note_ev.note.note_type {
-            if self.initialized() {
-                self.first_time = note_ev.real_time;
-                self.lane = key;
-                self.num += 1;
-            } else if self.lane == key {
-                self.num += 1;
+        match note_ev.note.note_type {
+            NoteType::Normal { key } | NoteType::AdLib { key } => {
+                if self.initialized() {
+                    self.first_time = note_ev.real_time;
+                    self.lane = key;
+                    self.num += 1;
+                } else if self.lane == key {
+                    self.num += 1;
+                }
             }
+            NoteType::BarLine => {}
         }
     }
 

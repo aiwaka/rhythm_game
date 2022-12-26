@@ -66,7 +66,7 @@ impl PatternReceptor for TrillReceptor {
     }
 
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
-        if let NoteType::Normal { key } = note_ev.note.note_type {
+        if let NoteType::Normal { key } | NoteType::AdLib { key } = note_ev.note.note_type {
             self.last_time = note_ev.real_time;
             if self.length == 0 {
                 self.lane[0] = key;

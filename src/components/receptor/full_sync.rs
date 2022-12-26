@@ -49,7 +49,7 @@ impl PatternReceptor for FullSyncReceptor {
     }
 
     fn input(&mut self, note_ev: &CatchNoteEvent) {
-        if let NoteType::Normal { key } = note_ev.note.note_type {
+        if let NoteType::Normal { key } | NoteType::AdLib { key } = note_ev.note.note_type {
             let real_sec = note_ev.real_time;
             // 鍵盤番号を0始まりのインデックスに変換する
             let idx = (key - KEY_FIRST_NUM) as usize;
