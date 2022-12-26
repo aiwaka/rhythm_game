@@ -124,6 +124,9 @@ fn input_notes(
     mut ev_writer: EventWriter<EditNoteEvent>,
 ) {
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    if time_after_start < 0.0 {
+        return;
+    }
     for lane in lane_q.iter_mut() {
         if lane.key_just_pressed(&key_input) {
             let note = EditNote {

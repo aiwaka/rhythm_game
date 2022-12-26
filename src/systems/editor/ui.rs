@@ -7,13 +7,9 @@ use crate::{
         ui::{ChartInfoNode, EditorStateObject, LaneLine, TargetLine},
     },
     constants::{LANE_WIDTH, TARGET_Y},
-    resources::{
-        config::GameDifficulty,
-        handles::GameAssetsHandles,
-        song::{SongConfigResource, SongStartTime},
-    },
+    resources::{config::GameDifficulty, handles::GameAssetsHandles, song::SongConfigResource},
     systems::system_labels::TimerSystemLabel,
-    AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
+    AppState,
 };
 
 fn setup_ui(
@@ -22,7 +18,6 @@ fn setup_ui(
     diff: Res<GameDifficulty>,
     handles: Res<GameAssetsHandles>,
 ) {
-    let font = handles.main_font.clone();
     // 曲名・難易度表示ノード
     commands
         .spawn(NodeBundle {
