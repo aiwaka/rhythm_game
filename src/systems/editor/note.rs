@@ -167,7 +167,7 @@ fn input_notes(
     }
 }
 
-/// エディットノートを出現
+/// エディットノートを出現（ノーマルノートと同等なものとする）
 fn spawn_edit_note(
     mut commands: Commands,
     mut ev_reader: EventReader<EditNoteEvent>,
@@ -208,7 +208,7 @@ fn execute_notes(
 ) {
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for lane in lane_q.iter_mut() {
-        for (note, ent) in note_q.iter() {
+        for (note, _) in note_q.iter() {
             let note_target_time = note.target_time;
             // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押された・まだ消去されていないノートを取得処理
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
@@ -227,9 +227,7 @@ fn execute_notes(
 }
 
 /// 画面外にでたノーツを消去する
-#[allow(clippy::too_many_arguments)]
 fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
-    // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for (trans, _, ent) in query.iter() {
         let pos_y = trans.translation.y;
         if pos_y > SCREEN_HEIGHT / 2.0 {

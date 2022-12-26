@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
-    components::ui::EditorStateObject,
+    components::{note::NoteInfo, ui::EditorStateObject},
     events::PanicAudio,
     resources::{
         editor::{EditorNotesQueue, QuittingEditor},
@@ -41,6 +41,7 @@ fn quit_editting(
     key_input: Res<Input<KeyCode>>,
     handles: Res<GameAssetsHandles>,
     obj_q: Query<Entity, With<EditorStateObject>>,
+    note_q: Query<Entity, With<NoteInfo>>,
     mut panic_audio_ev_writer: EventWriter<PanicAudio>,
 ) {
     if key_input.pressed(KeyCode::E) && key_input.just_pressed(KeyCode::Q) {
@@ -48,6 +49,9 @@ fn quit_editting(
         panic_audio_ev_writer.send(PanicAudio);
         // エディタステートのオブジェクトを全て消去
         for ent in obj_q.iter() {
+            commands.entity(ent).despawn_recursive();
+        }
+        for ent in note_q.iter() {
             commands.entity(ent).despawn_recursive();
         }
 
