@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::{note::NoteInfo, receptor::NotesPattern},
-    resources::score::CatchEval,
+    resources::{editor::EditNote, score::CatchEval},
 };
 
 // /// ノーツを取り逃したときのイベント
@@ -51,6 +51,15 @@ impl CatchNoteEvent {
 #[derive(Clone, Debug)]
 pub struct AchievePatternEvent(pub NotesPattern);
 
+/// エディットノートを出現させるイベント
+#[derive(Clone, Debug, Deref)]
+pub struct EditNoteEvent(pub EditNote);
+impl From<EditNote> for EditNoteEvent {
+    fn from(n: EditNote) -> Self {
+        Self(n)
+    }
+}
+
 /// すべての音を止めるイベント
 pub struct PanicAudio;
 
@@ -60,5 +69,6 @@ pub(super) fn add_events_to_game(app: &mut App) {
     // app.add_event::<MissNoteEvent>();
     app.add_event::<NoteEvalEvent>();
     app.add_event::<AchievePatternEvent>();
+    app.add_event::<EditNoteEvent>();
     app.add_event::<PanicAudio>();
 }

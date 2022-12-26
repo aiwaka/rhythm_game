@@ -23,3 +23,8 @@ pub(super) struct ReflectTransform;
 pub(super) enum PatternReceptorSystemLabel {
     Recept,
 }
+
+#[derive(SystemLabel)]
+pub(super) enum EditorSystemLabel {
+    UpdateBarAndBeat,
+}

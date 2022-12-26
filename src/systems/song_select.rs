@@ -3,6 +3,7 @@ use itertools::Itertools;
 
 use crate::{
     components::{
+        editor::FrozenChartErrorText,
         song_select::{ActiveSongCard, DifficultyText, SongSelectCard, SongSelectParentNode},
         timer::FrameCounter,
     },
@@ -12,6 +13,7 @@ use crate::{
         handles::SongSelectAssetHandles,
         song_list::{AllSongData, SongData},
     },
+    systems::system_labels::TimerSystemLabel,
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 
@@ -221,11 +223,49 @@ fn move_cursor(
     }
 }
 
+/// Bevyのシステムではない. ノード出現処理のコードは煩雑なので外部化しているだけ.
+fn spawn_frozen_edit_alert(commands: &mut Commands, font: Handle<Font>, chart_name: &String) {
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                position_type: PositionType::Absolute,
+                position: UiRect::new(Val::Px(20.0), Val::Auto, Val::Auto, Val::Px(20.0)),
+                ..Default::default()
+            },
+            background_color: Color::ANTIQUE_WHITE.into(),
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                format!("Cannot edit this chart '{}'", chart_name),
+                TextStyle {
+                    font,
+                    font_size: 30.0,
+                    color: Color::RED,
+                },
+            ));
+        })
+        .insert(FrameCounter::new())
+        .insert(FrozenChartErrorText);
+}
+/// 時間経過で消去
+fn update_frozen_edit_alert(
+    mut commands: Commands,
+    q: Query<(&FrameCounter, Entity), With<FrozenChartErrorText>>,
+) {
+    for (counter, ent) in q.iter() {
+        if counter.count() > 60 {
+            commands.entity(ent).despawn_recursive();
+        }
+    }
+}
+
 /// 決定キーで曲を選択
 fn determine_song(
     mut commands: Commands,
     list_q: Query<&ActiveSongCard>,
     card_q: Query<(&SongSelectCard, &SongData)>,
+    handles: Res<SongSelectAssetHandles>,
     key_input: Res<Input<KeyCode>>,
     mut state: ResMut<State<AppState>>,
 ) {
@@ -236,8 +276,23 @@ fn determine_song(
                 // 必要な情報をセットしてからステート移行
                 commands.insert_resource(song_data.clone());
                 commands.insert_resource(NoteSpeed(1.5));
-                commands.insert_resource(NextAppState(AppState::Game));
-                state.set(AppState::Loading).unwrap();
+                // Eキーを押した状態だったら行き先をエディットモードに変更
+                if key_input.pressed(KeyCode::E) {
+                    if song_data.edit_freeze {
+                        info!("edit freeze");
+                        spawn_frozen_edit_alert(
+                            &mut commands,
+                            handles.main_font.clone(),
+                            &song_data.name,
+                        );
+                    } else {
+                        commands.insert_resource(NextAppState(AppState::Editor));
+                        state.set(AppState::Loading).unwrap();
+                    }
+                } else {
+                    commands.insert_resource(NextAppState(AppState::Game));
+                    state.set(AppState::Loading).unwrap();
+                }
             } else {
                 panic!("cannot specify the selected song.");
             }
@@ -278,6 +333,10 @@ impl Plugin for SongSelectStatePlugin {
             SystemSet::on_update(AppState::SongSelect).with_system(reflect_difficulty),
         );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
+        app.add_system_set(
+            SystemSet::on_update(AppState::SongSelect)
+                .with_system(update_frozen_edit_alert.after(TimerSystemLabel::FrameCounterUpdate)),
+        );
         app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
         app.add_system_set(
             SystemSet::on_exit(AppState::SongSelect).with_system(despawn_song_select_scene),

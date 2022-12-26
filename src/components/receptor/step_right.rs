@@ -36,6 +36,7 @@ impl PatternReceptor for StepRightReceptor {
         )
     }
 
+    #[inline]
     fn init(&mut self) {
         self.last_lane = -1;
         self.lane = [false; 4];

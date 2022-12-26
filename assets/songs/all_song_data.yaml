@@ -7,3 +7,7 @@
 - name: "test"
   thumbnail: "test.png"
   config_file_name: "test.yaml"
+- name: "A Limited One"
+  thumbnail: "a_limited_one.png"
+  config_file_name: "a_limited_one.yaml"
+  edit_freeze: false

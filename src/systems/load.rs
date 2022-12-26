@@ -32,12 +32,8 @@ fn load_all_config_file_data() -> Vec<SongDataParser> {
     parsed
 }
 
-/// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
-fn load_song_config(
-    filename: &str,
-    speed_coeff: f32,
-    diff: &GameDifficulty,
-) -> (SongConfigResource, SongNotes, Bpm, Beat) {
+/// 指定された曲情報ファイルの内容を返す
+pub(super) fn load_song_config(filename: &str) -> SongConfig {
     let mut file = File::open(format!("assets/songs/{}", filename)).expect("Couldn't open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)
@@ -46,42 +42,42 @@ fn load_song_config(
     let parsed: SongConfigParser =
         serde_yaml::from_str(&contents).expect("Couldn't parse into SongConfigParser");
 
-    let song_config = SongConfig::from(parsed);
+    SongConfig::from(parsed)
+}
 
-    let mut config_notes = song_config.notes.clone();
-    // 小節線ノートを加える
-    let last_bar_num = config_notes.iter().last().unwrap().bar;
-    for bar in 0..(last_bar_num + 2) {
-        config_notes.push(NoteSpawn {
-            note_type: NoteType::BarLine,
-            bar,
-            beat: 0.0,
-        })
-    }
-
-    // ノーツをソートする.
-    config_notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
+/// NoteSpawnの列を小節と拍によりソートする.
+pub fn sort_spawn_notes(notes: &mut [NoteSpawn]) {
+    notes.sort_by(|a, b| match a.bar.cmp(&b.bar) {
         std::cmp::Ordering::Equal => a.beat.partial_cmp(&b.beat).unwrap(),
-        _ => a.bar.cmp(&b.bar),
+        std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+        std::cmp::Ordering::Less => std::cmp::Ordering::Less,
     });
+}
+
+/// barとbeatのみの構造の列からspawn_timeとtarget_timeを持った構造の列に変換する
+pub fn to_notes_info_from_notes_spawn(
+    mut spawn_notes: Vec<NoteSpawn>,
+    speed: f32,
+    initial_bpm: f32,
+    initial_beat: u32,
+) -> Vec<NoteInfo> {
+    // ノーツをソートする.
+    sort_spawn_notes(&mut spawn_notes);
 
     // ノーツを配列に収める
-    let bpm_resource = Bpm(song_config.initial_bpm);
-    let beat_resource = Beat(song_config.initial_beat);
     #[allow(unused_mut)]
-    let mut beat_par_bar = song_config.initial_beat; // 拍子
+    let mut beat_par_bar = initial_beat; // 拍子
     #[allow(unused_mut)]
-    let mut bpm = song_config.initial_bpm;
+    let mut bpm = initial_bpm;
     // 判定線への到達タイムを蓄積させる変数
     // 途中でBPMや拍子を変更するようなイベントがあればそれを反映する.
     // 判定線に到達する時間を曲開始時刻から測ったもの.
     let mut target_time = 0.0;
-    let speed = speed_coeff * BASIC_NOTE_SPEED;
     let mut notes = vec![];
     let mut prev_beat = 0.0;
 
     let mut prev_bar = 0u32;
-    for note in config_notes {
+    for note in spawn_notes {
         // このような仕様のため, 拍子を変更する場合は小節の最初に行い, かつbeat_diffの計算の前に行う.
         // その上で, 前の拍から変更前の小節が終わるまで何拍か記憶しておき, 次の拍に足し合わせる作業が必要.
         let beat_diff = if note.bar == prev_bar {
@@ -103,6 +99,50 @@ fn load_song_config(
         });
         prev_beat = note.beat;
     }
+    notes
+}
+
+/// 指定された曲情報ファイルから曲の情報を持ったリソースを返す.
+fn load_song_config_resources(
+    filename: &str,
+    speed_coeff: f32,
+    diff: &GameDifficulty,
+) -> (SongConfigResource, SongNotes, Bpm, Beat) {
+    // cloneが不要になるよう全部バラしてから再構成する
+    let SongConfig {
+        name,
+        filename,
+        length,
+        initial_beat,
+        initial_bpm,
+        notes: mut config_notes,
+    } = load_song_config(filename);
+
+    let song_config_resource = SongConfigResource {
+        name,
+        song_filename: filename,
+        length,
+    };
+    // 小節線ノートを加える
+    let last_bar_num = if let Some(note) = config_notes.iter().last() {
+        note.bar
+    } else {
+        0
+    };
+    for bar in 0..(last_bar_num + 2) {
+        config_notes.push(NoteSpawn {
+            note_type: NoteType::BarLine,
+            bar,
+            beat: 0.0,
+        })
+    }
+
+    let mut notes = to_notes_info_from_notes_spawn(
+        config_notes,
+        speed_coeff * BASIC_NOTE_SPEED,
+        initial_bpm,
+        initial_beat,
+    );
 
     // Master難易度でない場合はアドリブノーツを削除する
     if !matches!(*diff, GameDifficulty::Master) {
@@ -113,10 +153,10 @@ fn load_song_config(
     }
 
     (
-        song_config.into(),
+        song_config_resource,
         SongNotes(VecDeque::from_iter(notes)),
-        bpm_resource,
-        beat_resource,
+        Bpm(initial_bpm),
+        Beat(initial_beat),
     )
 }
 
@@ -160,14 +200,17 @@ fn load_assets(
             // 難易度をここで用意しておく（選択画面でもゲーム中でも共用する）
             commands.insert_resource(GameDifficulty::Normal);
         }
-        AppState::Game => {
+        AppState::Game | AppState::Editor => {
             // ゲームステートに遷移する前にはこれらのリソースを用意しておかなければならない.
             let selected_song = selected_song.unwrap();
             let speed = speed.unwrap();
 
             // 曲データをロード
-            let (config, notes, bpm, beat) =
-                load_song_config(&selected_song.config_file_name, speed.0, &diff.unwrap());
+            let (config, notes, bpm, beat) = load_song_config_resources(
+                &selected_song.config_file_name,
+                speed.0,
+                &diff.unwrap(),
+            );
             let music_filename = config.song_filename.clone();
             commands.insert_resource(config);
             commands.insert_resource(notes);

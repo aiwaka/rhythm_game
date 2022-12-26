@@ -2,7 +2,9 @@ use bevy::prelude::*;
 
 /// ゲームの中で使われるエンティティに付与
 #[derive(Component)]
-pub struct GameSceneObject;
+pub struct GameStateObject;
+#[derive(Component)]
+pub struct EditorStateObject;
 
 #[derive(Component)]
 pub struct TimeText;
