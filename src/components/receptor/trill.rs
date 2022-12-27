@@ -83,10 +83,6 @@ impl PatternReceptor for TrillReceptor {
         }
     }
 
-    fn is_available(&self) -> bool {
-        true
-    }
-
     fn achieved(&self) -> Option<NotesPattern> {
         // bool.then()によりOptionで包んだ値を返している
         (self.broken && self.length > 3).then(|| {

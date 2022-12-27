@@ -73,8 +73,4 @@ impl PatternReceptor for StepLeftReceptor {
     fn achieved(&self) -> Option<NotesPattern> {
         (self.lane.iter().filter(|&&e| e).count() == 3).then_some(NotesPattern::StepLeft)
     }
-
-    fn is_available(&self) -> bool {
-        true
-    }
 }
