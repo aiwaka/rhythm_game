@@ -22,11 +22,11 @@ impl KeyLane {
     /// 番号とキーを結びつけ, 指定された鍵盤番号に対応するキーが今押されたかどうかを取得.
     pub fn key_just_pressed(&self, input: &Input<KeyCode>) -> bool {
         let keys = match self.0 {
-            0 => [KeyCode::C, KeyCode::D],
-            1 => [KeyCode::V, KeyCode::F],
-            2 => [KeyCode::N, KeyCode::J],
-            3 => [KeyCode::M, KeyCode::K],
-            _ => [KeyCode::Return, KeyCode::Return],
+            0 => [KeyCode::C, KeyCode::D, KeyCode::S],
+            1 => [KeyCode::V, KeyCode::F, KeyCode::G],
+            2 => [KeyCode::N, KeyCode::J, KeyCode::H],
+            3 => [KeyCode::M, KeyCode::K, KeyCode::L],
+            _ => [KeyCode::Return, KeyCode::Return, KeyCode::Return],
         };
         input.any_just_pressed(keys)
     }
