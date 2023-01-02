@@ -245,7 +245,7 @@ impl GameAssetsHandles {
                 let transform = Transform {
                     translation: Vec3::new(
                         KeyLane::x_coord_from_num(*key),
-                        spawn_y - note_height / 2.0,
+                        spawn_y + note_height / 2.0,
                         1.0,
                     ),
                     // 8.0はメッシュのy長さ.
