@@ -1,6 +1,7 @@
 {
   "yaml.customTags": [
     "!Normal mapping",
-    "!AdLib mapping"
+    "!AdLib mapping",
+    "!Long mapping",
   ],
 }

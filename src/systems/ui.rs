@@ -296,15 +296,25 @@ fn spawn_catch_eval_text(
     let font = handles.main_font.clone();
     for ev in ev_reader.iter() {
         // イベントに含まれているノーツ情報から評価を出現させる位置を計算.
+        let get_pos_closure = |key: i32| {
+            Vec2::new(
+                SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0,
+                SCREEN_HEIGHT / 2.0 + TARGET_Y,
+            )
+        };
         // 出現しないならNoneを返すようにして書くのを楽にする
         let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
             NoteType::Normal { key } => {
-                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+                Some(get_pos_closure(key))
             }
             NoteType::AdLib { key } => {
-                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+                Some(get_pos_closure(key))
             }
             NoteType::BarLine => None,
+            // TODO:
+            NoteType::Long { key, length: _ } => {
+                Some(get_pos_closure(key))
+            }
         }) else { continue };
         commands
             .spawn(NodeBundle {

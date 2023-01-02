@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
 use crate::components::note::{KeyLane, MissingNote, NoteInfo};
-use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, TARGET_Y};
+use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, TARGET_Y};
 use crate::events::{CatchNoteEvent, NoteEvalEvent};
 use crate::resources::note::NoteType;
 use crate::resources::{
@@ -15,11 +15,14 @@ use crate::AppState;
 
 use super::system_labels::TimerSystemLabel;
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_notes(
     mut commands: Commands,
     game_assets: Option<Res<GameAssetsHandles>>,
     notes: Option<ResMut<SongNotes>>,
     start_time: Option<Res<SongStartTime>>,
+    speed: Option<Res<NoteSpeed>>,
+    bpm: Option<Res<Bpm>>,
     time: Option<Res<Time>>,
     state: Res<State<AppState>>,
 ) {
@@ -33,6 +36,8 @@ fn spawn_notes(
     let mut notes = notes.unwrap();
     let start_time = start_time.unwrap();
     let time = time.unwrap();
+    let speed = speed.unwrap();
+    let bpm = bpm.unwrap();
 
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
@@ -50,49 +55,9 @@ fn spawn_notes(
     } {
         let note = notes.pop_front().unwrap();
 
-        let note_bundle = match note.note_type {
-            NoteType::Normal { key } => {
-                let transform = Transform {
-                    translation: Vec3::new(KeyLane::x_coord_from_num(key), NOTE_SPAWN_Y, 1.0),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.note.clone().into(),
-                    material: game_assets.color_material_blue.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-            NoteType::BarLine => {
-                let transform = Transform {
-                    translation: Vec3::new(0.0, NOTE_SPAWN_Y, 0.5),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.bar_note.clone().into(),
-                    material: game_assets.color_material_white_trans.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-            NoteType::AdLib { key } => {
-                let transform = Transform {
-                    translation: Vec3::new(KeyLane::x_coord_from_num(key), NOTE_SPAWN_Y, 1.0),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.note.clone().into(),
-                    material: game_assets.color_material_trans.clone(),
-                    // DEBUG: デバッグ時は色を変える
-                    // material: game_assets.color_material_red.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-        };
+        let note_mesh = game_assets.get_mesh_from_note_type(&note.note_type, **speed, **bpm, false);
+        let note_bundle = (note, note_mesh);
+
         commands.spawn(note_bundle);
     }
 }
@@ -149,6 +114,8 @@ fn catch_notes(
                 NoteType::Normal { key } => key == lane.0,
                 NoteType::BarLine => false,
                 NoteType::AdLib { key } => key == lane.0,
+                // TODO: ロングノーツを取得する処理
+                NoteType::Long { key, length } => false,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)

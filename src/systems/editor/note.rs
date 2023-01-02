@@ -2,9 +2,7 @@ use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
 use crate::components::note::{KeyLane, NoteInfo};
-use crate::constants::{
-    BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, NOTE_SPAWN_Y, SCREEN_HEIGHT, TARGET_Y,
-};
+use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, SCREEN_HEIGHT, TARGET_Y};
 use crate::events::EditNoteEvent;
 use crate::resources::editor::{EditNote, EditorBar, EditorBeat, EditorNotesQueue};
 use crate::resources::note::NoteType;
@@ -17,9 +15,6 @@ use crate::AppState;
 
 use crate::systems::system_labels::{EditorSystemLabel, TimerSystemLabel};
 
-/// エディット時は下から出現するため出現位置を調整したものを用意する
-const EDIT_NOTE_SPAWN_Y: f32 = (NOTE_SPAWN_Y - TARGET_Y) * -1.0 + TARGET_Y;
-
 fn setup_editor_resources(mut commands: Commands) {
     commands.insert_resource(EditorNotesQueue::default());
     commands.insert_resource(EditorBar(0));
@@ -28,11 +23,14 @@ fn setup_editor_resources(mut commands: Commands) {
 
 /// エディット中でもすでに存在しているものは使う.
 /// BPM変更等も反映できるようにする.
+#[allow(clippy::too_many_arguments)]
 fn spawn_notes(
     mut commands: Commands,
     game_assets: Option<Res<GameAssetsHandles>>,
     notes: Option<ResMut<SongNotes>>,
     start_time: Option<Res<SongStartTime>>,
+    speed: Option<Res<NoteSpeed>>,
+    bpm: Option<Res<Bpm>>,
     time: Option<Res<Time>>,
     state: Res<State<AppState>>,
 ) {
@@ -44,6 +42,8 @@ fn spawn_notes(
     let mut notes = notes.unwrap();
     let start_time = start_time.unwrap();
     let time = time.unwrap();
+    let speed = speed.unwrap();
+    let bpm = bpm.unwrap();
 
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
     let time_after_start = time.elapsed_seconds_f64() - start_time.0;
@@ -57,47 +57,9 @@ fn spawn_notes(
     } {
         let note = notes.pop_front().unwrap();
 
-        let note_bundle = match note.note_type {
-            NoteType::Normal { key } => {
-                let transform = Transform {
-                    translation: Vec3::new(KeyLane::x_coord_from_num(key), EDIT_NOTE_SPAWN_Y, 1.0),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.note.clone().into(),
-                    material: game_assets.color_material_blue.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-            NoteType::BarLine => {
-                let transform = Transform {
-                    translation: Vec3::new(0.0, EDIT_NOTE_SPAWN_Y, 0.5),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.bar_note.clone().into(),
-                    material: game_assets.color_material_white_trans.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-            NoteType::AdLib { key } => {
-                let transform = Transform {
-                    translation: Vec3::new(KeyLane::x_coord_from_num(key), EDIT_NOTE_SPAWN_Y, 1.0),
-                    ..Default::default()
-                };
-                let mesh = ColorMesh2dBundle {
-                    mesh: game_assets.note.clone().into(),
-                    material: game_assets.color_material_red.clone(),
-                    transform,
-                    ..Default::default()
-                };
-                (note.clone(), mesh)
-            }
-        };
+        let note_mesh = game_assets.get_mesh_from_note_type(&note.note_type, **speed, **bpm, true);
+        let note_bundle = (note, note_mesh);
+
         commands.spawn(note_bundle);
     }
 }
