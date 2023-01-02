@@ -63,8 +63,6 @@ pub enum LongNoteState {
     /// 未取得, 未処理
     #[default]
     BeforeRetrieve,
-    /// 始点タップ成功
-    Start,
     /// ホールド中
     Hold,
     /// 取得失敗

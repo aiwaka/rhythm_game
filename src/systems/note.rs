@@ -119,7 +119,7 @@ fn long_note_operation(
     for (color_handle, note) in q.iter() {
         let color = &mut materials.get_mut(color_handle).unwrap().color;
         match note.state {
-            LongNoteState::BeforeRetrieve | LongNoteState::Start => {
+            LongNoteState::BeforeRetrieve => {
                 *color = Color::rgba(1.0, 1.0, 1.0, 0.7);
             }
             LongNoteState::Hold | LongNoteState::End => {
@@ -182,8 +182,7 @@ fn catch_notes(
 /// ロングノーツの取得処理はこちら
 #[allow(clippy::too_many_arguments)]
 fn catch_long_notes(
-    mut commands: Commands,
-    mut note_q: Query<(&NoteInfo, &mut LongNote, &mut FrameCounter, Entity)>,
+    mut note_q: Query<(&NoteInfo, &mut LongNote, &mut FrameCounter)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
     mut catch_ev_writer: EventWriter<CatchNoteEvent>,
@@ -195,13 +194,11 @@ fn catch_long_notes(
 ) {
     let time_after_start = start_time.time_after_start(&time);
     for lane in lane_q.iter_mut() {
-        for (note, mut long_note, mut counter, ent) in note_q.iter_mut() {
+        for (note, mut long_note, mut counter) in note_q.iter_mut() {
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
             let NoteType::Long { key, length, id: _} = note.note_type else { continue };
             // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
-            if key != lane.0
-            // || matches!(long_note.state, LongNoteState::End | LongNoteState::Miss)
-            {
+            if key != lane.0 {
                 continue;
             }
             // ロングノーツの場合は始点の到着時刻
@@ -221,18 +218,13 @@ fn catch_long_notes(
                             **beat,
                         ));
                         eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
-                        long_note.state = LongNoteState::Start;
+                        long_note.state = LongNoteState::Hold;
                     } else if time_after_start > note_target_time + MISS_THR {
                         long_note.state = LongNoteState::Miss;
-                    }
-                }
-                LongNoteState::Start => {
-                    if lane.key_pressed(&key_input) {
-                        // 始点取得成功で押しっぱなしならホールドへ移行
-                        long_note.state = LongNoteState::Hold;
                         counter.reset();
-                    } else {
-                        long_note.state = LongNoteState::Miss;
+                    } else if time_after_start > note_target_time {
+                        // ちょうど到達したときにカウンターをリセットする
+                        counter.reset();
                     }
                 }
                 LongNoteState::Hold => {
@@ -265,7 +257,17 @@ fn catch_long_notes(
                         long_note.state = LongNoteState::Miss;
                     }
                 }
-                LongNoteState::Miss | LongNoteState::End => {}
+                LongNoteState::Miss => {
+                    if (note_target_time..=note_end_time).contains(&time_after_start)
+                        && (counter.count() + 1) % 12 == 0
+                    {
+                        eval_ev_writer.send(NoteEvalEvent {
+                            eval: CatchEval::Miss,
+                            note: note.clone(),
+                        });
+                    }
+                }
+                LongNoteState::End => {}
             }
         }
     }
