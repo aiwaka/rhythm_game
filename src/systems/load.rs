@@ -180,7 +180,6 @@ fn load_assets(
     // 次がどのシーンに行くかによって分岐.
     match next_scene.0 {
         AppState::HomeMenu => {
-            // NOTE: この辺の処理はうまく共通化できないか
             let assets = HomeMenuAssetHandles::new(&asset_server);
             assets_loading_vec.extend(assets.to_untyped_vec());
             commands.insert_resource(assets);

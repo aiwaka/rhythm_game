@@ -307,7 +307,6 @@ fn spawn_catch_eval_text(
                 Some(get_pos_closure(key))
             }
             NoteType::BarLine => None,
-            // TODO:
             NoteType::Long { key, length: _ } => {
                 Some(get_pos_closure(key))
             }
