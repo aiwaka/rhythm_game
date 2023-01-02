@@ -40,8 +40,7 @@ fn spawn_notes(
     let bpm = bpm.unwrap();
 
     // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-    // let time_last = time_after_start - time.delta_seconds_f64();
+    let time_after_start = start_time.time_after_start(&time);
 
     // キューの先頭を見て, 出現時刻なら出現させることを繰り返す.
     while {
@@ -104,7 +103,9 @@ fn catch_notes(
     bpm: Res<Bpm>,
     beat: Res<Beat>,
 ) {
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
+    // despawnはクエリには影響しないため, 重複したキーで一つのノーツを複数回取れてしまう.
+    // これを防ぐために取得したノーツをメモする.
     let mut removed_ent = vec![];
     for lane in lane_q.iter_mut() {
         for (note, ent) in note_q.iter() {
@@ -135,7 +136,6 @@ fn catch_notes(
 /// 取れなかったときの処理
 #[allow(clippy::too_many_arguments)]
 fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
-    // let time_after_start = time.elapsed_seconds_f64() - start_time.0;
     for (trans, _, ent) in query.iter() {
         let pos_y = trans.translation.y;
         if pos_y < 2.0 * TARGET_Y {

@@ -11,6 +11,11 @@ use super::note::{NoteSpawn, NoteSpawnParser};
 /// 曲再生を開始するゲーム開始からの時間（秒）
 #[derive(Resource)]
 pub struct SongStartTime(pub f64);
+impl SongStartTime {
+    pub fn time_after_start(&self, time: &Res<Time>) -> f64 {
+        time.elapsed_seconds_f64() - self.0
+    }
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SongConfigParser {

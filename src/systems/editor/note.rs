@@ -45,8 +45,7 @@ fn spawn_notes(
     let speed = speed.unwrap();
     let bpm = bpm.unwrap();
 
-    // 現在スタートから何秒経ったかと前の処理が何秒だったかを取得する.
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
 
     while {
         if let Some(note) = notes.front() {
@@ -84,7 +83,7 @@ fn update_bar_and_beat(
     bpm: Res<Bpm>,
     beat_par_bar: Res<Beat>,
 ) {
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     if time_after_start > 0.0 {
         let time_diff = time.raw_delta_seconds_f64();
         // 拍の差分
@@ -112,8 +111,7 @@ fn input_notes(
     current_beat: Res<EditorBeat>,
     mut ev_writer: EventWriter<EditNoteEvent>,
 ) {
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-    if time_after_start < 0.0 {
+    if start_time.time_after_start(&time) < 0.0 {
         return;
     }
     for lane in lane_q.iter_mut() {
@@ -168,7 +166,7 @@ fn execute_notes(
     _bpm: Res<Bpm>,
     _beat: Res<Beat>,
 ) {
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     for lane in lane_q.iter_mut() {
         for (note, _) in note_q.iter() {
             let note_target_time = note.target_time;

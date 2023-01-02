@@ -23,7 +23,7 @@ fn start_song(
     handles: Res<GameAssetsHandles>,
 ) {
     // 曲開始時刻から現在時刻までの差
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let time_last = time_after_start - time.delta_seconds_f64();
     if (time_last..time_after_start).contains(&0.0) {
         info!("music start");
@@ -42,8 +42,7 @@ fn editor_start_song(
     time: Res<Time>,
     handles: Res<GameAssetsHandles>,
 ) {
-    // 曲開始時刻から現在時刻までの差
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let time_last = time_after_start - time.delta_seconds_f64();
     if (time_last..time_after_start).contains(&0.0) {
         info!("editor music start");
