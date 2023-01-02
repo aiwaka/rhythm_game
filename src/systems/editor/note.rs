@@ -32,6 +32,7 @@ fn spawn_notes(
     speed: Option<Res<NoteSpeed>>,
     bpm: Option<Res<Bpm>>,
     time: Option<Res<Time>>,
+    mut color_material: ResMut<Assets<ColorMaterial>>,
     state: Res<State<AppState>>,
 ) {
     // FixedTimeStepを利用するためステート依存を外しているため特殊な引数となっている.
@@ -56,7 +57,13 @@ fn spawn_notes(
     } {
         let note = notes.pop_front().unwrap();
 
-        let note_mesh = game_assets.get_mesh_from_note_type(&note.note_type, **speed, **bpm, true);
+        let note_mesh = game_assets.get_mesh_from_note_type(
+            &mut color_material,
+            &note.note_type,
+            **speed,
+            **bpm,
+            true,
+        );
         let note_bundle = (note, note_mesh);
 
         commands.spawn(note_bundle);

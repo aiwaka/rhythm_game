@@ -190,6 +190,7 @@ impl GameAssetsHandles {
     }
     pub fn get_mesh_from_note_type(
         &self,
+        color_material: &mut ResMut<Assets<ColorMaterial>>,
         note_type: &NoteType,
         speed: f32,
         bpm: f32,
@@ -252,9 +253,10 @@ impl GameAssetsHandles {
                     scale: Vec3::new(1.0, note_height / 8.0, 1.0),
                     ..Default::default()
                 };
+                let new_color = color_material.add(Color::rgba(1.0, 1.0, 1.0, 0.7).into());
                 ColorMesh2dBundle {
                     mesh: self.note.clone().into(),
-                    material: self.color_material_white_trans.clone(),
+                    material: new_color,
                     transform,
                     ..Default::default()
                 }
