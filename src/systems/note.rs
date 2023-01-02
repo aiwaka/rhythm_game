@@ -188,55 +188,73 @@ fn catch_long_notes(
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
             let NoteType::Long { key, length } = note.note_type else { continue };
             // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
-            if key != lane.0 || matches!(long_note.state, LongNoteState::End | LongNoteState::Miss)
+            if key != lane.0
+            // || matches!(long_note.state, LongNoteState::End | LongNoteState::Miss)
             {
                 continue;
             }
             // ロングノーツの場合は始点の到着時刻
             let note_target_time = note.target_time;
             let note_end_time = note_target_time + (length / **bpm * 60.0) as f64;
-            if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
-                .contains(&time_after_start)
-                && lane.key_just_pressed(&key_input)
-                && matches!(long_note.state, LongNoteState::BeforeRetrieve)
-            {
-                // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押されたら始点の取得処理
-                long_note.state = LongNoteState::Start;
-                catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
-                eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
-            } else if lane.key_pressed(&key_input)
-                && matches!(long_note.state, LongNoteState::Start)
-            {
-                // 始点取得成功で押しっぱなしならホールドへ移行
-                long_note.state = LongNoteState::Hold;
-                counter.reset();
-            } else if lane.key_pressed(&key_input)
-                && (note_target_time..=note_end_time).contains(&time_after_start)
-                && matches!(long_note.state, LongNoteState::Hold)
-            {
-                if (counter.count() + 1) % 12 == 0 {
-                    // 押しっぱなしでホールド中なら一定間隔で加点
-                    // TODO: ノーツが判定可能かどうかで分岐し, ホールド中ならPerfect, そうでないならMissを送るように変更したい.
-                    catch_ev_writer.send(CatchNoteEvent::new(
-                        note,
-                        time_after_start,
-                        **bpm,
-                        **beat,
-                    ));
-                    eval_ev_writer.send(NoteEvalEvent {
-                        eval: CatchEval::Perfect,
-                        note: note.clone(),
-                    });
+            match long_note.state {
+                LongNoteState::BeforeRetrieve => {
+                    if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
+                        .contains(&time_after_start)
+                        && lane.key_just_pressed(&key_input)
+                    {
+                        // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押されたら始点の取得処理
+                        catch_ev_writer.send(CatchNoteEvent::new(
+                            note,
+                            time_after_start,
+                            **bpm,
+                            **beat,
+                        ));
+                        eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
+                        long_note.state = LongNoteState::Start;
+                    } else if time_after_start > note_target_time + MISS_THR {
+                        long_note.state = LongNoteState::Miss;
+                    }
                 }
-            } else if lane.key_just_released(&key_input) {
-                // 離された場合は終点かどうかチェックして分岐
-                if (note_end_time - MISS_THR..=note_end_time + MISS_THR).contains(&time_after_start)
-                {
-                    // NOTE: 終点でも許容範囲で離すことを要請している. 押しっぱなしでもいいようにする？
-                    long_note.state = LongNoteState::End;
+                LongNoteState::Start => {
+                    if lane.key_pressed(&key_input) {
+                        // 始点取得成功で押しっぱなしならホールドへ移行
+                        long_note.state = LongNoteState::Hold;
+                        counter.reset();
+                    } else {
+                        long_note.state = LongNoteState::Miss;
+                    }
                 }
-            } else if time_after_start > note_target_time + MISS_THR {
-                long_note.state = LongNoteState::Miss;
+                LongNoteState::Hold => {
+                    if lane.key_pressed(&key_input)
+                        && (note_target_time..=note_end_time).contains(&time_after_start)
+                    {
+                        if (counter.count() + 1) % 12 == 0 {
+                            // 押しっぱなしでホールド中なら一定間隔で加点
+                            // TODO: ノーツが判定可能かどうかで分岐し, ホールド中ならPerfect, そうでないならMissを送るように変更したい.
+                            catch_ev_writer.send(CatchNoteEvent::new(
+                                note,
+                                time_after_start,
+                                **bpm,
+                                **beat,
+                            ));
+                            eval_ev_writer.send(NoteEvalEvent {
+                                eval: CatchEval::Perfect,
+                                note: note.clone(),
+                            });
+                        }
+                    } else if lane.key_just_released(&key_input) {
+                        // 離された場合は終点かどうかチェックして分岐
+                        if (note_end_time - MISS_THR..=note_end_time + MISS_THR)
+                            .contains(&time_after_start)
+                        {
+                            // NOTE: 終点でも許容範囲で離すことを要請している. 押しっぱなしでもいいようにする？
+                            long_note.state = LongNoteState::End;
+                        }
+                    } else if time_after_start > note_target_time + MISS_THR {
+                        long_note.state = LongNoteState::Miss;
+                    }
+                }
+                LongNoteState::Miss | LongNoteState::End => {}
             }
         }
     }
