@@ -211,6 +211,7 @@ fn catch_long_notes(
             {
                 if (counter.count() + 1) % 12 == 0 {
                     // 押しっぱなしでホールド中なら一定間隔で加点
+                    // TODO: ノーツが判定可能かどうかで分岐し, ホールド中ならPerfect, そうでないならMissを送るように変更したい.
                     catch_ev_writer.send(CatchNoteEvent::new(
                         note,
                         time_after_start,
