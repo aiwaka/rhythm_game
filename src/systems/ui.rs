@@ -8,7 +8,7 @@ use crate::{
         timer::{CountDownTimer, FrameCounter},
         ui::{
             CatchEvalPopupText, ChartInfoNode, GameStateObject, LaneLine, PatternPopupText,
-            ScoreText, TargetLine, TimeText,
+            ScoreText, TargetLine,
         },
     },
     constants::{LANE_WIDTH, TARGET_Y},
@@ -19,7 +19,7 @@ use crate::{
         handles::GameAssetsHandles,
         note::NoteType,
         score::{CatchEval, ScoreResource, TimingEval},
-        song::{SongConfigResource, SongStartTime},
+        song::SongConfigResource,
     },
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
