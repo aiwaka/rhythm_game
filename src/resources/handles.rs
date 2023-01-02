@@ -247,7 +247,7 @@ impl GameAssetsHandles {
                     translation: Vec3::new(
                         KeyLane::x_coord_from_num(*key),
                         spawn_y + note_height / 2.0,
-                        1.0,
+                        0.9,
                     ),
                     // 8.0はメッシュのy長さ.
                     scale: Vec3::new(1.0, note_height / 8.0, 1.0),
