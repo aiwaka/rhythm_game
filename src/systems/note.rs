@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
-use crate::components::note::{KeyLane, LongNote, MissingNote, NoteInfo};
+use crate::components::note::{KeyLane, LongNote, LongNoteState, MissingNote, NoteInfo};
 use crate::components::timer::FrameCounter;
 use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, TARGET_Y};
 use crate::events::{CatchNoteEvent, NoteEvalEvent};
@@ -111,14 +111,16 @@ fn long_note_operation(
 ) {
     for (color_handle, note) in q.iter() {
         let color = &mut materials.get_mut(color_handle).unwrap().color;
-        if note.state == 2 {
-            color.set_r(0.5);
-        } else if note.state == 3 {
-            color.set_r(0.0);
-            color.set_g(0.0);
-            color.set_b(0.0);
-        } else if note.state == 4 {
-            color.set_r(1.0);
+        match note.state {
+            LongNoteState::BeforeRetrieve | LongNoteState::Start => {
+                *color = Color::rgba(1.0, 1.0, 1.0, 0.7);
+            }
+            LongNoteState::Hold | LongNoteState::End => {
+                *color = Color::CYAN;
+            }
+            LongNoteState::Miss => {
+                *color = Color::rgba(0.2, 0.0, 0.0, 0.7);
+            }
         }
     }
 }
@@ -186,7 +188,8 @@ fn catch_long_notes(
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
             let NoteType::Long { key, length } = note.note_type else { continue };
             // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
-            if key != lane.0 || long_note.state == 3 || long_note.state == 4 {
+            if key != lane.0 || matches!(long_note.state, LongNoteState::End | LongNoteState::Miss)
+            {
                 continue;
             }
             // ロングノーツの場合は始点の到着時刻
@@ -195,19 +198,21 @@ fn catch_long_notes(
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
                 && lane.key_just_pressed(&key_input)
-                && long_note.state == 0
+                && matches!(long_note.state, LongNoteState::BeforeRetrieve)
             {
                 // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押されたら始点の取得処理
-                long_note.state = 1;
+                long_note.state = LongNoteState::Start;
                 catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
                 eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
-            } else if lane.key_pressed(&key_input) && long_note.state == 1 {
+            } else if lane.key_pressed(&key_input)
+                && matches!(long_note.state, LongNoteState::Start)
+            {
                 // 始点取得成功で押しっぱなしならホールドへ移行
-                long_note.state = 2;
+                long_note.state = LongNoteState::Hold;
                 counter.reset();
             } else if lane.key_pressed(&key_input)
                 && (note_target_time..=note_end_time).contains(&time_after_start)
-                && long_note.state == 2
+                && matches!(long_note.state, LongNoteState::Hold)
             {
                 if (counter.count() + 1) % 12 == 0 {
                     // 押しっぱなしでホールド中なら一定間隔で加点
@@ -228,10 +233,10 @@ fn catch_long_notes(
                 if (note_end_time - MISS_THR..=note_end_time + MISS_THR).contains(&time_after_start)
                 {
                     // NOTE: 終点でも許容範囲で離すことを要請している. 押しっぱなしでもいいようにする？
-                    long_note.state = 4;
+                    long_note.state = LongNoteState::End;
                 }
             } else if time_after_start > note_target_time + MISS_THR {
-                long_note.state = 3;
+                long_note.state = LongNoteState::Miss;
             }
         }
     }
