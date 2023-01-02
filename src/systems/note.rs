@@ -227,43 +227,44 @@ fn catch_long_notes(
                         counter.reset();
                     }
                 }
-                LongNoteState::Hold => {
-                    if lane.key_pressed(&key_input)
+                LongNoteState::Hold | LongNoteState::Miss => {
+                    if (counter.count() + 1) % 12 == 0
                         && (note_target_time..=note_end_time).contains(&time_after_start)
                     {
-                        if (counter.count() + 1) % 12 == 0 {
-                            // 押しっぱなしでホールド中なら一定間隔で加点
-                            catch_ev_writer.send(CatchNoteEvent::new(
-                                note,
-                                time_after_start,
-                                **bpm,
-                                **beat,
-                            ));
-                            eval_ev_writer.send(NoteEvalEvent {
-                                eval: CatchEval::Perfect,
-                                note: note.clone(),
-                            });
+                        // これで確実に同じタイミングで取得かミスか判定される
+                        match long_note.state {
+                            LongNoteState::Hold => {
+                                if lane.key_pressed(&key_input) {
+                                    // 押しっぱなしでホールド中なら一定間隔で加点
+                                    catch_ev_writer.send(CatchNoteEvent::new(
+                                        note,
+                                        time_after_start,
+                                        **bpm,
+                                        **beat,
+                                    ));
+                                    eval_ev_writer.send(NoteEvalEvent {
+                                        eval: CatchEval::Perfect,
+                                        note: note.clone(),
+                                    });
+                                } else if lane.key_just_released(&key_input) {
+                                    // 離された場合は終点以降かどうかチェックして分岐
+                                    if time_after_start > note_end_time - MISS_THR {
+                                        long_note.state = LongNoteState::End;
+                                    } else {
+                                        long_note.state = LongNoteState::Miss;
+                                    }
+                                } else {
+                                    long_note.state = LongNoteState::Miss;
+                                }
+                            }
+                            LongNoteState::Miss => {
+                                eval_ev_writer.send(NoteEvalEvent {
+                                    eval: CatchEval::Miss,
+                                    note: note.clone(),
+                                });
+                            }
+                            _ => {}
                         }
-                    } else if lane.key_just_released(&key_input) {
-                        // 離された場合は終点かどうかチェックして分岐
-                        if (note_end_time - MISS_THR..=note_end_time + MISS_THR)
-                            .contains(&time_after_start)
-                        {
-                            // NOTE: 終点でも許容範囲で離すことを要請している. 押しっぱなしでもいいようにする？
-                            long_note.state = LongNoteState::End;
-                        }
-                    } else if time_after_start > note_target_time + MISS_THR {
-                        long_note.state = LongNoteState::Miss;
-                    }
-                }
-                LongNoteState::Miss => {
-                    if (note_target_time..=note_end_time).contains(&time_after_start)
-                        && (counter.count() + 1) % 12 == 0
-                    {
-                        eval_ev_writer.send(NoteEvalEvent {
-                            eval: CatchEval::Miss,
-                            note: note.clone(),
-                        });
                     }
                 }
                 LongNoteState::End => {}
