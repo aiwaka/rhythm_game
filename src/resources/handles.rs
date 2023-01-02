@@ -240,7 +240,7 @@ impl GameAssetsHandles {
                     ..Default::default()
                 }
             }
-            NoteType::Long { key, length } => {
+            NoteType::Long { key, length, id: _ } => {
                 // 拍数 * 移動量(px/秒) / (拍/秒) で長さを計算
                 let note_height = length * speed * BASIC_NOTE_SPEED / bpm * 60.0;
                 let transform = Transform {

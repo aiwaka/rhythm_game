@@ -63,7 +63,14 @@ fn spawn_notes(
             **bpm,
             false,
         );
-        let is_long_note = matches!(note.note_type, NoteType::Long { key: _, length: _ });
+        let is_long_note = matches!(
+            note.note_type,
+            NoteType::Long {
+                key: _,
+                length: _,
+                id: _
+            }
+        );
         let note_bundle = (note, note_mesh);
 
         let ent = commands.spawn(note_bundle).id();
@@ -151,7 +158,11 @@ fn catch_notes(
                 NoteType::BarLine => false,
                 NoteType::AdLib { key } => key == lane.0,
                 // ロングノーツはここでは扱わない
-                NoteType::Long { key: _, length: _ } => false,
+                NoteType::Long {
+                    key: _,
+                    length: _,
+                    id: _,
+                } => false,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
@@ -186,7 +197,7 @@ fn catch_long_notes(
     for lane in lane_q.iter_mut() {
         for (note, mut long_note, mut counter, ent) in note_q.iter_mut() {
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
-            let NoteType::Long { key, length } = note.note_type else { continue };
+            let NoteType::Long { key, length, id: _} = note.note_type else { continue };
             // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
             if key != lane.0
             // || matches!(long_note.state, LongNoteState::End | LongNoteState::Miss)

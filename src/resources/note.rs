@@ -27,6 +27,8 @@ pub enum NoteTypeParser {
     Long {
         key: i32,
         len: f32,
+        /// 同一のノートであることを確かめられるように, イベント送信時に適当な数字を挿入する.
+        id: u32,
     },
 }
 
@@ -80,7 +82,11 @@ impl From<&NoteType> for NoteTypeKey {
         match ty {
             NoteType::Normal { key } => NoteTypeKey::Normal { key: *key },
             NoteType::AdLib { key } => NoteTypeKey::AdLib { key: *key },
-            NoteType::Long { key, length: _ } => NoteTypeKey::Long { key: *key },
+            NoteType::Long {
+                key,
+                length: _,
+                id: _,
+            } => NoteTypeKey::Long { key: *key },
             _ => NoteTypeKey::Other,
         }
     }
@@ -100,6 +106,7 @@ pub enum NoteType {
     Long {
         key: i32,
         length: f32,
+        id: u32,
     },
 }
 impl From<NoteTypeParser> for NoteType {
@@ -108,7 +115,11 @@ impl From<NoteTypeParser> for NoteType {
             NoteTypeParser::Normal { key } => NoteType::Normal { key },
             NoteTypeParser::BarLine => NoteType::BarLine,
             NoteTypeParser::AdLib { key } => NoteType::AdLib { key },
-            NoteTypeParser::Long { key, len } => NoteType::Long { key, length: len },
+            NoteTypeParser::Long { key, len, id } => NoteType::Long {
+                key,
+                length: len,
+                id,
+            },
         }
     }
 }
@@ -118,7 +129,11 @@ impl From<NoteType> for NoteTypeParser {
             NoteType::Normal { key } => NoteTypeParser::Normal { key },
             NoteType::BarLine => NoteTypeParser::BarLine,
             NoteType::AdLib { key } => NoteTypeParser::AdLib { key },
-            NoteType::Long { key, length } => NoteTypeParser::Long { key, len: length },
+            NoteType::Long { key, length, id } => NoteTypeParser::Long {
+                key,
+                len: length,
+                id,
+            },
         }
     }
 }
