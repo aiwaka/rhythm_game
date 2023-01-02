@@ -16,7 +16,7 @@ notes:
   - { bar: 1, beat: 0, note: !Normal { key: 0 } }
   - { bar: 1, beat: 0, note: !Normal { key: 1 } }
   - { bar: 1, beat: 0, note: !Normal { key: 2 } }
-  - { bar: 1, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 1, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 1, beat: 1, note: !AdLib { key: 0 } }
   - { bar: 1, beat: 1, note: !AdLib { key: 1 } }
   - { bar: 1, beat: 1, note: !AdLib { key: 2 } }
@@ -31,7 +31,8 @@ notes:
   - { bar: 2, beat: 1.5, note: !Normal { key: 2 } }
   - { bar: 2, beat: 2.5, note: !Normal { key: 0 } }
 
-  - { bar: 3, beat: 0, note: !Normal { key: 3 } }
+  # - { bar: 3, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 3, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 3, beat: 1, note: !AdLib { key: 0 } }
   - { bar: 3, beat: 1, note: !AdLib { key: 1 } }
   - { bar: 3, beat: 1, note: !AdLib { key: 2 } }
@@ -51,7 +52,8 @@ notes:
   - { bar: 5, beat: 0, note: !Normal { key: 0 } }
   - { bar: 5, beat: 0, note: !Normal { key: 1 } }
   - { bar: 5, beat: 0, note: !Normal { key: 2 } }
-  - { bar: 5, beat: 0, note: !Normal { key: 3 } }
+  # - { bar: 5, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 5, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 5, beat: 1, note: !AdLib { key: 0 } }
   - { bar: 5, beat: 1, note: !AdLib { key: 1 } }
   - { bar: 5, beat: 1, note: !AdLib { key: 2 } }
@@ -66,7 +68,8 @@ notes:
   - { bar: 6, beat: 1.5, note: !Normal { key: 2 } }
   - { bar: 6, beat: 2.5, note: !Normal { key: 0 } }
 
-  - { bar: 7, beat: 0, note: !Normal { key: 3 } }
+  # - { bar: 7, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 7, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 7, beat: 1, note: !AdLib { key: 0 } }
   - { bar: 7, beat: 1, note: !AdLib { key: 1 } }
   - { bar: 7, beat: 1, note: !AdLib { key: 2 } }
@@ -222,6 +225,7 @@ notes:
   - { bar: 21, beat: 0, note: !AdLib { key: 1 } }
   - { bar: 21, beat: 0, note: !AdLib { key: 2 } }
   - { bar: 21, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 21, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 21, beat: 0.5, note: !AdLib { key: 0 } }
   - { bar: 21, beat: 1, note: !Normal { key: 0 } }
   - { bar: 21, beat: 2, note: !Normal { key: 1 } }
@@ -247,6 +251,7 @@ notes:
   - { bar: 23, beat: 0.25, note: !AdLib { key: 1 } }
   - { bar: 23, beat: 0.25, note: !AdLib { key: 2 } }
   - { bar: 23, beat: 0.5, note: !Normal { key: 0 } }
+  - { bar: 23, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 23, beat: 1, note: !Normal { key: 0 } }
   - { bar: 23, beat: 1.5, note: !AdLib { key: 2 } }
   - { bar: 23, beat: 1.5, note: !AdLib { key: 3 } }
@@ -265,6 +270,7 @@ notes:
   - { bar: 25, beat: 0, note: !AdLib { key: 1 } }
   - { bar: 25, beat: 0, note: !AdLib { key: 2 } }
   - { bar: 25, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 25, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 25, beat: 0.5, note: !AdLib { key: 0 } }
   - { bar: 25, beat: 1, note: !Normal { key: 0 } }
   - { bar: 25, beat: 2, note: !Normal { key: 1 } }
@@ -314,6 +320,7 @@ notes:
   - { bar: 29, beat: 0, note: !AdLib { key: 1 } }
   - { bar: 29, beat: 0, note: !Normal { key: 2 } }
   - { bar: 29, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 29, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 25, beat: 0.5, note: !AdLib { key: 0 } }
   - { bar: 29, beat: 1, note: !Normal { key: 0 } }
   - { bar: 29, beat: 2, note: !Normal { key: 1 } }
@@ -342,6 +349,7 @@ notes:
   - { bar: 31, beat: 0.25, note: !AdLib { key: 1 } }
   - { bar: 31, beat: 0.25, note: !AdLib { key: 2 } }
   - { bar: 31, beat: 0.5, note: !Normal { key: 0 } }
+  - { bar: 31, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 31, beat: 1, note: !Normal { key: 0 } }
   - { bar: 31, beat: 1.5, note: !AdLib { key: 2 } }
   - { bar: 31, beat: 1.5, note: !AdLib { key: 3 } }
@@ -360,6 +368,7 @@ notes:
   - { bar: 33, beat: 0, note: !Normal { key: 1 } }
   - { bar: 33, beat: 0, note: !AdLib { key: 2 } }
   - { bar: 33, beat: 0, note: !AdLib { key: 3 } }
+  - { bar: 33, beat: 0, note: !Long { key: 3, len: 2.0 } }
   - { bar: 33, beat: 1, note: !Normal { key: 0 } }
   - { bar: 33, beat: 2, note: !Normal { key: 1 } }
   - { bar: 33, beat: 2, note: !AdLib { key: 0 } }
@@ -404,17 +413,20 @@ notes:
   - { bar: 36, beat: 3.75, note: !AdLib { key: 1 } }
 
   # out
-  - { bar: 37, beat: 0, note: !Normal { key: 0 } }
+  # - { bar: 37, beat: 0, note: !Normal { key: 0 } }
+  - { bar: 37, beat: 0, note: !Long { key: 0, len: 2.5 } }
   - { bar: 37, beat: 0, note: !Normal { key: 1 } }
   - { bar: 37, beat: 0, note: !Normal { key: 2 } }
-  - { bar: 37, beat: 0, note: !Normal { key: 3 } }
+  # - { bar: 37, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 37, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 37, beat: 2.5, note: !Normal { key: 1 } }
   - { bar: 37, beat: 3.5, note: !Normal { key: 3 } }
   - { bar: 38, beat: 0.5, note: !Normal { key: 0 } }
   - { bar: 38, beat: 1.5, note: !Normal { key: 2 } }
   - { bar: 38, beat: 2.5, note: !Normal { key: 0 } }
 
-  - { bar: 39, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 39, beat: 0, note: !Normal { key: 0 } }
+  - { bar: 39, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 39, beat: 2.5, note: !Normal { key: 1 } }
   - { bar: 39, beat: 3.5, note: !Normal { key: 3 } }
   - { bar: 40, beat: 0.5, note: !Normal { key: 0 } }
@@ -427,13 +439,15 @@ notes:
   - { bar: 41, beat: 0, note: !Normal { key: 1 } }
   - { bar: 41, beat: 0, note: !Normal { key: 2 } }
   - { bar: 41, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 41, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 41, beat: 2.5, note: !Normal { key: 1 } }
   - { bar: 41, beat: 3.5, note: !Normal { key: 3 } }
   - { bar: 42, beat: 0.5, note: !Normal { key: 0 } }
   - { bar: 42, beat: 1.5, note: !Normal { key: 2 } }
   - { bar: 42, beat: 2.5, note: !Normal { key: 0 } }
 
-  - { bar: 43, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 43, beat: 0, note: !Normal { key: 0 } }
+  - { bar: 43, beat: 0, note: !Long { key: 3, len: 2.5 } }
   - { bar: 43, beat: 2.5, note: !Normal { key: 1 } }
   - { bar: 43, beat: 3.5, note: !Normal { key: 2 } }
   - { bar: 43, beat: 3.5, note: !Normal { key: 3 } }
@@ -447,8 +461,8 @@ notes:
   - { bar: 44, beat: 3.5, note: !Normal { key: 2 } }
   - { bar: 45, beat: 0, note: !Normal { key: 0 } }
   - { bar: 45, beat: 0, note: !Normal { key: 1 } }
-  - { bar: 45, beat: 0, note: !Normal { key: 2 } }
-  - { bar: 45, beat: 0, note: !Normal { key: 3 } }
+  - { bar: 45, beat: 0, note: !Long { key: 2, len: 3.0 } }
+  - { bar: 45, beat: 0, note: !Long { key: 3, len: 3.0 } }
 
   - { bar: 45, beat: 3.5, note: !AdLib { key: 3 } }
   - { bar: 45, beat: 3.66667, note: !AdLib { key: 2 } }

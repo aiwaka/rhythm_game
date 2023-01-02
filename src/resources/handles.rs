@@ -1,9 +1,12 @@
 use bevy::{prelude::*, utils::HashMap};
 use bevy_kira_audio::prelude::*;
 
-use crate::constants::LANE_WIDTH;
+use crate::{
+    components::note::KeyLane,
+    constants::{BASIC_NOTE_SPEED, LANE_WIDTH, NOTE_SPAWN_Y, TARGET_Y},
+};
 
-use super::song_list::SongData;
+use super::{note::NoteType, song_list::SongData};
 
 /// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
 #[derive(Resource)]
@@ -183,6 +186,81 @@ impl GameAssetsHandles {
             )),
             numbers,
             background: server.load("images/backg_2.png"),
+        }
+    }
+    pub fn get_mesh_from_note_type(
+        &self,
+        color_material: &mut ResMut<Assets<ColorMaterial>>,
+        note_type: &NoteType,
+        speed: f32,
+        bpm: f32,
+        edit_mode: bool,
+    ) -> ColorMesh2dBundle {
+        // エディット時は下から出現するため出現位置を調整したものを用意する
+        const EDIT_NOTE_SPAWN_Y: f32 = (NOTE_SPAWN_Y - TARGET_Y) * -1.0 + TARGET_Y;
+        let spawn_y = if edit_mode {
+            EDIT_NOTE_SPAWN_Y
+        } else {
+            NOTE_SPAWN_Y
+        };
+        match note_type {
+            NoteType::Normal { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(*key), spawn_y, 1.0),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: self.color_material_blue.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::BarLine => {
+                let transform = Transform {
+                    translation: Vec3::new(0.0, spawn_y, 0.5),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.bar_note.clone().into(),
+                    material: self.color_material_white_trans.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::AdLib { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(*key), spawn_y, 1.0),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: self.color_material_red.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::Long { key, length } => {
+                // 拍数 * 移動量(px/秒) / (拍/秒) で長さを計算
+                let note_height = length * speed * BASIC_NOTE_SPEED / bpm * 60.0;
+                let transform = Transform {
+                    translation: Vec3::new(
+                        KeyLane::x_coord_from_num(*key),
+                        spawn_y + note_height / 2.0,
+                        0.9,
+                    ),
+                    // 8.0はメッシュのy長さ.
+                    scale: Vec3::new(1.0, note_height / 8.0, 1.0),
+                    ..Default::default()
+                };
+                let new_color = color_material.add(Color::rgba(1.0, 1.0, 1.0, 0.7).into());
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: new_color,
+                    transform,
+                    ..Default::default()
+                }
+            }
         }
     }
 }

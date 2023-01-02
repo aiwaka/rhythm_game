@@ -29,7 +29,7 @@ fn spawn_result(
     if spawned.is_some() {
         return;
     }
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let song_length = song_config.length;
     // ノーツが全部消えてかつ曲尺を2秒超えたらリザルト画面に移行
     if notes_q.is_empty() && song_length + 2.0 < time_after_start {

@@ -19,16 +19,32 @@ impl KeyLane {
     /// 鍵盤の数
     pub const KEY_NUM: u8 = 4;
 
-    /// 番号とキーを結びつけ, 指定された鍵盤番号に対応するキーが今押されたかどうかを取得.
-    pub fn key_just_pressed(&self, input: &Input<KeyCode>) -> bool {
-        let keys = match self.0 {
+    /// 番号から入力可能キーを返す
+    fn get_key_list(&self) -> [KeyCode; 3] {
+        match self.0 {
             0 => [KeyCode::C, KeyCode::D, KeyCode::S],
             1 => [KeyCode::V, KeyCode::F, KeyCode::G],
             2 => [KeyCode::N, KeyCode::J, KeyCode::H],
             3 => [KeyCode::M, KeyCode::K, KeyCode::L],
             _ => [KeyCode::Return, KeyCode::Return, KeyCode::Return],
-        };
-        input.any_just_pressed(keys)
+        }
+    }
+    /// 番号とキーを結びつけ, 指定された鍵盤番号に対応するキーが今押されたかどうかを取得.
+    pub fn key_just_pressed(&self, input: &Input<KeyCode>) -> bool {
+        input.any_just_pressed(self.get_key_list())
+    }
+    pub fn key_pressed(&self, input: &Input<KeyCode>) -> bool {
+        input.any_pressed(self.get_key_list())
+    }
+    pub fn key_just_released(&self, input: &Input<KeyCode>) -> bool {
+        input.any_just_released(self.get_key_list())
+    }
+    /// 複数の入力が可能な鍵盤に対して, 確実に全ての入力をリセットする.
+    pub fn reset_key(&self, input: &mut Input<KeyCode>) {
+        let keys = self.get_key_list();
+        for key in keys {
+            input.reset(key);
+        }
     }
 
     /// x_coordをi32から取得
@@ -40,3 +56,16 @@ impl KeyLane {
 
 #[derive(Component)]
 pub struct MissingNote;
+
+/// ロングノーツにつけて演出を行う. boolはホールド中かどうか
+#[derive(Component)]
+pub struct LongNote {
+    // TODO: 仕様が定まったらstateを専用のenumに置き換える
+    /// 0: 未取得, 1: 始点タップ成功, 2: ホールド中, 3: 取得失敗, 4: 正常に終了
+    pub state: usize,
+}
+impl LongNote {
+    pub fn new() -> Self {
+        Self { state: 0 }
+    }
+}

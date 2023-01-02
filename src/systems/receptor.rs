@@ -44,7 +44,7 @@ fn receptor_pipeline<T: PatternReceptor>(
     bpm: Res<Bpm>,
 ) {
     if let Ok(mut receptor) = q.get_single_mut() {
-        let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+        let time_after_start = start_time.time_after_start(&time);
         if receptor.is_available() {
             // 初期化状態でないなら初期化するかどうか尋ねる
             if !receptor.initialized() {

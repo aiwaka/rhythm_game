@@ -164,23 +164,19 @@ fn setup_lane(
     }
 }
 
-fn update_time_text(
-    mut query: Query<(&mut Text, &TimeText)>,
-    start_time: Res<SongStartTime>,
-    time: Res<Time>,
-) {
-    // Song starts 3 seconds after real time
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
-
-    // Don't do anything before the song starts
-    if time_after_start < 0.0 {
-        return;
-    }
-
-    for (mut text, _marker) in query.iter_mut() {
-        text.sections[0].value = format!("Time: {:.2}", time_after_start);
-    }
-}
+// fn update_time_text(
+//     mut query: Query<(&mut Text, &TimeText)>,
+//     start_time: Res<SongStartTime>,
+//     time: Res<Time>,
+// ) {
+//     let time_after_start = start_time.time_after_start(&time);
+//     if time_after_start < 0.0 {
+//         return;
+//     }
+//     for (mut text, _marker) in query.iter_mut() {
+//         text.sections[0].value = format!("Time: {:.2}", time_after_start);
+//     }
+// }
 
 fn update_score_text(score: Res<ScoreResource>, mut query: Query<(&mut Text, &ScoreText)>) {
     if score.is_changed() {
@@ -296,15 +292,25 @@ fn spawn_catch_eval_text(
     let font = handles.main_font.clone();
     for ev in ev_reader.iter() {
         // イベントに含まれているノーツ情報から評価を出現させる位置を計算.
+        let get_pos_closure = |key: i32| {
+            Vec2::new(
+                SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0,
+                SCREEN_HEIGHT / 2.0 + TARGET_Y,
+            )
+        };
         // 出現しないならNoneを返すようにして書くのを楽にする
         let Some(Vec2 {x: pos_left, y: pos_bottom}) = (match ev.note.note_type {
             NoteType::Normal { key } => {
-                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+                Some(get_pos_closure(key))
             }
             NoteType::AdLib { key } => {
-                Some(Vec2::new(SCREEN_WIDTH / 2.0 + KeyLane::x_coord_from_num(key) - LANE_WIDTH / 2.0, SCREEN_HEIGHT / 2.0 + TARGET_Y))
+                Some(get_pos_closure(key))
             }
             NoteType::BarLine => None,
+            // TODO:
+            NoteType::Long { key, length: _ } => {
+                Some(get_pos_closure(key))
+            }
         }) else { continue };
         commands
             .spawn(NodeBundle {
@@ -387,10 +393,10 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_ui));
         app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_lane));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
-        );
+        // app.add_system_set(
+        //     SystemSet::on_update(AppState::Game)
+        //         .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
+        // );
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_score_text));
         app.add_system_set(
             SystemSet::on_update(AppState::Game)
