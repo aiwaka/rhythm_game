@@ -83,5 +83,6 @@ fn main() {
 
     #[cfg(feature = "debug")]
     app.add_plugin(AppDebugPlugin);
+
     app.run();
 }
