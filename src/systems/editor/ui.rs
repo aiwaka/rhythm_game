@@ -2,12 +2,14 @@ use bevy::{prelude::*, sprite::Mesh2dHandle};
 
 use crate::{
     components::{
+        editor::BarBeatText,
         note::KeyLane,
         timer::FrameCounter,
         ui::{ChartInfoNode, EditorStateObject, LaneLine, TargetLine},
     },
     constants::{LANE_WIDTH, TARGET_Y},
     resources::{config::GameDifficulty, handles::GameAssetsHandles, song::SongConfigResource},
+    spawn_text_node,
     systems::system_labels::TimerSystemLabel,
     AppState,
 };
@@ -18,42 +20,19 @@ fn setup_ui(
     diff: Res<GameDifficulty>,
     handles: Res<GameAssetsHandles>,
 ) {
+    let font = handles.main_font.clone();
     // 曲名・難易度表示ノード
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                position: UiRect {
-                    left: Val::Px(10.0),
-                    top: Val::Px(10.0),
-                    ..Default::default()
-                },
-                flex_direction: FlexDirection::Column,
-                ..Default::default()
-            },
-            background_color: BackgroundColor(Color::NONE),
-            ..Default::default()
-        })
-        .insert(EditorStateObject)
-        .insert(ChartInfoNode)
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                song_config.name.clone(),
-                TextStyle {
-                    font: handles.main_font.clone(),
-                    font_size: 30.0,
-                    color: Color::WHITE,
-                },
-            ));
-            parent.spawn(TextBundle::from_section(
-                "Edit mode".to_string(),
-                TextStyle {
-                    font: handles.main_font.clone(),
-                    font_size: 20.0,
-                    color: diff.get_color(),
-                },
-            ));
-        });
+    spawn_text_node!(
+        commands,
+        font,
+        [left : 10.0, top : 10.0],
+        Color::NONE,
+        [
+            [song_config.name.clone(), 30.0, Color::WHITE, []],
+            ["Edit mode", 20.0, diff.get_color(), []]
+        ],
+        [EditorStateObject, ChartInfoNode]
+    );
 
     // 判定線
     let transform = Transform {
@@ -88,47 +67,31 @@ fn setup_ui(
             .insert(EditorStateObject);
     }
 
-    // DEBUG: 小節と拍表示用. EditorStateObjectなので終了時は勝手に消えてくれる
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                position: UiRect {
-                    left: Val::Percent(80.0),
-                    top: Val::Px(10.0),
-                    ..Default::default()
-                },
-                flex_direction: FlexDirection::Column,
-                ..Default::default()
-            },
-            background_color: BackgroundColor(Color::NONE),
-            ..Default::default()
-        })
-        .insert(EditorStateObject)
-        .with_children(|parent| {
-            parent
-                .spawn(TextBundle::from_section(
-                    "init".to_string(),
-                    TextStyle {
-                        font: handles.main_font.clone(),
-                        font_size: 30.0,
-                        color: Color::WHITE,
-                    },
-                ))
-                .insert(BarBeatText);
-        });
+    // 小節と拍表示用. EditorStateObjectなので終了時は勝手に消えてくれる
+    spawn_text_node!(
+        commands,
+        font,
+        [left: 600.0, top: 10.0],
+        Color::NONE,
+        [[
+            "init",
+            30.0,
+            Color::WHITE,
+            [BarBeatText]
+        ]],
+        [EditorStateObject],
+        { size: Size::new(Val::Auto, Val::Px(30.0)) }
+    );
 }
-#[derive(Component)]
-struct BarBeatText;
 
 use crate::resources::editor::{EditorBar, EditorBeat};
-fn debug_bb_text(
+fn beat_and_bar_text(
     mut q: Query<&mut Text, With<BarBeatText>>,
     current_bar: Res<EditorBar>,
     current_beat: Res<EditorBeat>,
 ) {
     for mut t in q.iter_mut() {
-        t.sections[0].value = format!("{}:{}", **current_bar, **current_beat);
+        t.sections[0].value = format!("{:>03}:{:>07.4}", **current_bar, **current_beat);
     }
 }
 
@@ -172,7 +135,7 @@ impl Plugin for EditorUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_ui));
         app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_lane));
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(debug_bb_text));
+        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(beat_and_bar_text));
         app.add_system_set(
             SystemSet::on_update(AppState::Editor)
                 .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),

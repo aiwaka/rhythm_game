@@ -31,6 +31,7 @@ use super::system_labels::{PatternReceptorSystemLabel, TimerSystemLabel, UiSyste
 /// という構文で, テキストノードを出現させる. left, topはright, bottomでもいい（実は順番も逆でも良い）.
 /// ノードのスタイルについて, `position_type`（`Absolute`）, `position`（3番目の位置の項目で設定）, `flex_direction`（`Column`）は設定済み.
 /// その他のフィールドについては最後のoptional項目で設定できる.
+/// 返り値としてEntityを利用できる.
 #[macro_export]
 macro_rules! spawn_text_node {
     ($commands: expr, $font: expr, [ $horizontal_spec: ident : $px_x: expr, $vertical_spec: ident : $px_y: expr], $bg_color: expr, [$([$text: expr, $font_size: expr, $color: expr, [$($component: expr),*]]),+], [$($node_component: expr),*] $(, {$($style_field: ident : $style_val: expr),+})?) => {
@@ -107,6 +108,40 @@ fn setup_ui(
         ]],
         [GameStateObject]
     );
+    // NOTE: マクロの展開は以下のようになることを示すためここは残しておく.
+    // commands
+    //     .spawn(NodeBundle {
+    //         style: Style {
+    //             position_type: PositionType::Absolute,
+    //             position: UiRect {
+    //                 left: Val::Px(10.),
+    //                 bottom: Val::Px(10.),
+    //                 ..Default::default()
+    //             },
+    //             ..Default::default()
+    //         },
+    //         background_color: BackgroundColor(Color::NONE),
+    //         ..Default::default()
+    //     })
+    //     .insert(GameStateObject)
+    //     .with_children(|parent| {
+    //         parent
+    //             .spawn(TextBundle {
+    //                 text: Text {
+    //                     sections: vec![TextSection {
+    //                         value: "Score: 0. Corrects: 0. Fails: 0".to_string(),
+    //                         style: TextStyle {
+    //                             font: font.clone(),
+    //                             font_size: 40.0,
+    //                             color: Color::rgb(0.8, 0.8, 0.8),
+    //                         },
+    //                     }],
+    //                     ..Default::default()
+    //                 },
+    //                 ..Default::default()
+    //             })
+    //             .insert(ScoreText);
+    //     });
 
     // 判定線
     let transform = Transform {
