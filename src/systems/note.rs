@@ -148,7 +148,7 @@ fn catch_notes(
     let time_after_start = start_time.time_after_start(&time);
     // despawnはクエリには影響しないため, 重複したキーで一つのノーツを複数回取れてしまう.
     // これを防ぐために取得したノーツをメモする.
-    let mut removed_ent = vec![];
+    let mut retrieved_notes = vec![];
     for lane in lane_q.iter_mut() {
         for (note, ent) in note_q.iter() {
             let note_target_time = note.target_time;
@@ -168,10 +168,10 @@ fn catch_notes(
                 .contains(&time_after_start)
                 && note_caught
                 && lane.key_just_pressed(&key_input)
-                && !removed_ent.contains(&ent)
+                && !retrieved_notes.contains(&ent)
             {
                 commands.entity(ent).despawn();
-                removed_ent.push(ent);
+                retrieved_notes.push(ent);
                 catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
                 eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
             }
@@ -197,7 +197,7 @@ fn catch_long_notes(
         for (note, mut long_note, mut counter) in note_q.iter_mut() {
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
             let NoteType::Long { key, length, id: _} = note.note_type else { continue };
-            // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
+            // キーとレーンが異なる場合は処理しない.
             if key != lane.0 {
                 continue;
             }
@@ -221,7 +221,6 @@ fn catch_long_notes(
                         long_note.state = LongNoteState::Hold;
                     } else if time_after_start > note_target_time + MISS_THR {
                         long_note.state = LongNoteState::Miss;
-                        counter.reset();
                     } else if time_after_start > note_target_time {
                         // ちょうど到達したときにカウンターをリセットする
                         counter.reset();
@@ -273,7 +272,7 @@ fn catch_long_notes(
     }
 }
 
-/// 取れなかったときの処理
+/// 取得しなかった等で画面外に出たノーツを消去する処理
 #[allow(clippy::too_many_arguments)]
 fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
     for (trans, _, ent) in query.iter() {
