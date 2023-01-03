@@ -5,6 +5,7 @@ use bevy::{asset::LoadState, prelude::*};
 use itertools::Itertools;
 
 use crate::resources::handles::HomeMenuAssetHandles;
+use crate::{add_enter_system, add_exit_system, add_update_system};
 use crate::{
     components::{load::NowLoadingText, note::NoteInfo},
     constants::{BASIC_NOTE_SPEED, DISTANCE},
@@ -300,8 +301,8 @@ pub struct LoadPlugin;
 impl Plugin for LoadPlugin {
     fn build(&self, app: &mut App) {
         // アセットロード関連システム
-        app.add_system_set(SystemSet::on_enter(AppState::Loading).with_system(load_assets));
-        app.add_system_set(SystemSet::on_update(AppState::Loading).with_system(check_assets_ready));
-        app.add_system_set(SystemSet::on_exit(AppState::Loading).with_system(exit_loading));
+        add_enter_system!(app, Loading, load_assets);
+        add_update_system!(app, Loading, check_assets_ready);
+        add_exit_system!(app, Loading, exit_loading);
     }
 }

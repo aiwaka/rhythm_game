@@ -12,7 +12,7 @@ use crate::resources::{
     score::CatchEval,
     song::{SongNotes, SongStartTime},
 };
-use crate::AppState;
+use crate::{add_update_system, AppState};
 
 use super::system_labels::TimerSystemLabel;
 
@@ -293,10 +293,10 @@ impl Plugin for NotePlugin {
                 .with_run_criteria(FixedTimestep::step(TIMESTEP))
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
         );
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(long_note_operation));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(move_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(catch_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(catch_long_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(drop_notes));
+        add_update_system!(app, Game, long_note_operation);
+        add_update_system!(app, Game, move_notes);
+        add_update_system!(app, Game, catch_notes);
+        add_update_system!(app, Game, catch_long_notes);
+        add_update_system!(app, Game, drop_notes);
     }
 }

@@ -3,6 +3,7 @@ use itertools::Itertools;
 use rand::Rng;
 
 use crate::{
+    add_enter_system, add_update_system,
     components::{
         note::KeyLane,
         timer::{CountDownTimer, FrameCounter},
@@ -387,39 +388,49 @@ fn update_catch_eval_text(
 pub struct GameUiPlugin;
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_ui));
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_lane));
+        add_enter_system!(app, Game, setup_ui);
+        add_enter_system!(app, Game, setup_lane);
         // app.add_system_set(
         //     SystemSet::on_update(AppState::Game)
         //         .with_system(update_time_text.label(TimerSystemLabel::StartAudio)),
         // );
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_score_text));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
+        add_update_system!(app, Game, update_score_text);
+        add_update_system!(
+            app,
+            Game,
+            update_lane_background,
+            [after: TimerSystemLabel::FrameCounterUpdate]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game).with_system(
-                spawn_pattern_text
-                    .label(UiSystemLabel::SpawnPatternText)
-                    .after(TimerSystemLabel::TimerUpdate)
-                    .after(PatternReceptorSystemLabel::Recept),
-            ),
+        add_update_system!(
+            app,
+            Game,
+            spawn_pattern_text,
+            [
+                after: TimerSystemLabel::TimerUpdate,
+                after: PatternReceptorSystemLabel::Recept
+            ],
+            UiSystemLabel::SpawnPatternText
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game).with_system(
-                update_pattern_text
-                    .after(TimerSystemLabel::TimerUpdate)
-                    .after(UiSystemLabel::SpawnPatternText),
-            ),
+        add_update_system!(
+            app,
+            Game,
+            update_pattern_text,
+            [
+                after: TimerSystemLabel::TimerUpdate,
+                after: UiSystemLabel::SpawnPatternText
+            ]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(spawn_catch_eval_text.after(TimerSystemLabel::TimerUpdate)),
+        add_update_system!(
+            app,
+            Game,
+            spawn_catch_eval_text,
+            [after: TimerSystemLabel::TimerUpdate]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(update_catch_eval_text.after(TimerSystemLabel::TimerUpdate)),
+        add_update_system!(
+            app,
+            Game,
+            update_catch_eval_text,
+            [after: TimerSystemLabel::TimerUpdate]
         );
     }
 }

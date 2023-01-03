@@ -18,12 +18,12 @@ pub mod ui;
 /// システムにlabelを付与したいが`after`等は必要ない場合`[]`のみ書く必要がある.
 #[macro_export]
 macro_rules! add_update_system {
-    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),+] $(, $system_label: expr)?)?) => {
+    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),*] $(, $system_label: expr)?)?) => {
         $app.add_system_set(
             SystemSet::on_update(AppState::$state)
                 .with_system($system)
                 $(
-                    $(.$after_before($label))+
+                    $(.$after_before($label))*
                     $(.label($system_label))?
                 )?
             )
@@ -36,12 +36,12 @@ macro_rules! add_update_system {
 /// システムにlabelを付与したいが`after`等は必要ない場合`[]`のみ書く必要がある.
 #[macro_export]
 macro_rules! add_enter_system {
-    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),+] $(, $system_label: expr)?)?) => {
+    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),*] $(, $system_label: expr)?)?) => {
         $app.add_system_set(
             SystemSet::on_enter(AppState::$state)
                 .with_system($system)
                 $(
-                    $(.$after_before($label))+
+                    $(.$after_before($label))*
                     $(.label($system_label))?
                 )?
             )
@@ -54,12 +54,12 @@ macro_rules! add_enter_system {
 /// システムにlabelを付与したいが`after`等は必要ない場合`[]`のみ書く必要がある.
 #[macro_export]
 macro_rules! add_exit_system {
-    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),+] $(, $system_label: expr)?)?) => {
+    ($app: expr, $state: ident, $system: expr $(, [$($after_before: ident : $label: expr),*] $(, $system_label: expr)?)?) => {
         $app.add_system_set(
             SystemSet::on_exit(AppState::$state)
                 .with_system($system)
                 $(
-                    $(.$after_before($label))+
+                    $(.$after_before($label))*
                     $(.label($system_label))?
                 )?
             )

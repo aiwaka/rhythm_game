@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{events::NoteEvalEvent, resources::score::ScoreResource, AppState};
+use crate::{add_update_system, events::NoteEvalEvent, resources::score::ScoreResource, AppState};
 
 fn update_score(mut ev_reader: EventReader<NoteEvalEvent>, mut score: ResMut<ScoreResource>) {
     for ev in ev_reader.iter() {
@@ -11,6 +11,6 @@ fn update_score(mut ev_reader: EventReader<NoteEvalEvent>, mut score: ResMut<Sco
 pub struct ScorePlugin;
 impl Plugin for ScorePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(update_score));
+        add_update_system!(app, Game, update_score);
     }
 }

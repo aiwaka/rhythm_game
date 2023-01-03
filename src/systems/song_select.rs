@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
+    add_enter_system, add_exit_system, add_update_system,
     components::{
         editor::FrozenChartErrorText,
         song_select::{
@@ -326,30 +327,20 @@ fn speed_setting_node(
 pub struct SongSelectStatePlugin;
 impl Plugin for SongSelectStatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(AppState::SongSelect).with_system(setup_song_select_scene),
+        add_enter_system!(app, SongSelect, setup_song_select_scene);
+        add_update_system!(app, SongSelect, back_to_home_menu);
+        add_update_system!(app, SongSelect, hover_card);
+        add_update_system!(app, SongSelect, change_difficulty);
+        add_update_system!(app, SongSelect, reflect_difficulty);
+        add_update_system!(app, SongSelect, move_cursor);
+        add_update_system!(
+            app,
+            SongSelect,
+            update_frozen_edit_alert,
+            [after: TimerSystemLabel::FrameCounterUpdate]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(back_to_home_menu),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
-        );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(reflect_difficulty),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect)
-                .with_system(update_frozen_edit_alert.after(TimerSystemLabel::FrameCounterUpdate)),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
-        app.add_system_set(
-            SystemSet::on_exit(AppState::SongSelect).with_system(despawn_song_select_scene),
-        );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(speed_setting_node),
-        );
+        add_update_system!(app, SongSelect, determine_song);
+        add_update_system!(app, SongSelect, speed_setting_node);
+        add_exit_system!(app, SongSelect, despawn_song_select_scene);
     }
 }

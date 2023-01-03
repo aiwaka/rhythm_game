@@ -134,9 +134,6 @@ fn update_lane_background(
 pub(super) struct EditorUiPlugin;
 impl Plugin for EditorUiPlugin {
     fn build(&self, app: &mut App) {
-        // app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_ui));
-        // app.add_system_set(SystemSet::on_enter(AppState::Editor).with_system(setup_lane));
-        // app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(beat_and_bar_text));
         add_enter_system!(app, Editor, setup_ui);
         add_enter_system!(app, Editor, setup_lane);
         add_update_system!(app, Editor, beat_and_bar_text);
@@ -146,9 +143,5 @@ impl Plugin for EditorUiPlugin {
             update_lane_background,
             [after: TimerSystemLabel::FrameCounterUpdate]
         );
-        // app.add_system_set(
-        //     SystemSet::on_update(AppState::Editor)
-        //         .with_system(update_lane_background.after(TimerSystemLabel::FrameCounterUpdate)),
-        // );
     }
 }
