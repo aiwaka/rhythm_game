@@ -6,8 +6,8 @@ pub struct GameStateObject;
 #[derive(Component)]
 pub struct EditorStateObject;
 
-#[derive(Component)]
-pub struct TimeText;
+// #[derive(Component)]
+// pub struct TimeText;
 
 /// 曲名・難易度を含む譜面難易度を表すマーカー（プレイ中更新されない）
 #[derive(Component)]

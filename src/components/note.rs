@@ -57,15 +57,26 @@ impl KeyLane {
 #[derive(Component)]
 pub struct MissingNote;
 
-/// ロングノーツにつけて演出を行う. boolはホールド中かどうか
-#[derive(Component)]
+/// ロングノーツの状態を表す
+#[derive(Debug, Default)]
+pub enum LongNoteState {
+    /// 未取得, 未処理
+    #[default]
+    BeforeRetrieve,
+    /// ホールド中
+    Hold,
+    /// 取得失敗
+    Miss,
+    /// 正常終了
+    End,
+}
+/// ロングノーツにつけて演出を行う.
+#[derive(Component, Default)]
 pub struct LongNote {
-    // TODO: 仕様が定まったらstateを専用のenumに置き換える
-    /// 0: 未取得, 1: 始点タップ成功, 2: ホールド中, 3: 取得失敗, 4: 正常に終了
-    pub state: usize,
+    pub state: LongNoteState,
 }
 impl LongNote {
     pub fn new() -> Self {
-        Self { state: 0 }
+        Self::default()
     }
 }

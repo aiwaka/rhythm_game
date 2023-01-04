@@ -2,6 +2,7 @@ use bevy::{app::AppExit, prelude::*};
 use itertools::Itertools;
 
 use crate::{
+    add_enter_system, add_exit_system, add_update_system,
     components::home_menu::{ActiveOption, HomeMenuObject, HomeMenuOption, HomeMenuOptionItem},
     constants::{SCREEN_HEIGHT, SCREEN_WIDTH},
     resources::{
@@ -176,12 +177,10 @@ fn despawn_home_menu_state(
 pub struct HomeMenuPlugin;
 impl Plugin for HomeMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::HomeMenu).with_system(setup_node));
-        app.add_system_set(SystemSet::on_update(AppState::HomeMenu).with_system(highlight_option));
-        app.add_system_set(SystemSet::on_update(AppState::HomeMenu).with_system(move_cursor));
-        app.add_system_set(SystemSet::on_update(AppState::HomeMenu).with_system(determine_option));
-        app.add_system_set(
-            SystemSet::on_exit(AppState::HomeMenu).with_system(despawn_home_menu_state),
-        );
+        add_enter_system!(app, HomeMenu, setup_node);
+        add_update_system!(app, HomeMenu, highlight_option);
+        add_update_system!(app, HomeMenu, move_cursor);
+        add_update_system!(app, HomeMenu, determine_option);
+        add_exit_system!(app, HomeMenu, despawn_home_menu_state);
     }
 }

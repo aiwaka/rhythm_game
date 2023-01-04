@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::time::FixedTimestep;
 
-use crate::components::note::{KeyLane, LongNote, MissingNote, NoteInfo};
+use crate::components::note::{KeyLane, LongNote, LongNoteState, MissingNote, NoteInfo};
 use crate::components::timer::FrameCounter;
 use crate::constants::{BASIC_NOTE_SPEED, FRAMERATE, MISS_THR, TARGET_Y};
 use crate::events::{CatchNoteEvent, NoteEvalEvent};
@@ -12,7 +12,7 @@ use crate::resources::{
     score::CatchEval,
     song::{SongNotes, SongStartTime},
 };
-use crate::AppState;
+use crate::{add_update_system, AppState};
 
 use super::system_labels::TimerSystemLabel;
 
@@ -63,7 +63,14 @@ fn spawn_notes(
             **bpm,
             false,
         );
-        let is_long_note = matches!(note.note_type, NoteType::Long { key: _, length: _ });
+        let is_long_note = matches!(
+            note.note_type,
+            NoteType::Long {
+                key: _,
+                length: _,
+                id: _
+            }
+        );
         let note_bundle = (note, note_mesh);
 
         let ent = commands.spawn(note_bundle).id();
@@ -111,14 +118,16 @@ fn long_note_operation(
 ) {
     for (color_handle, note) in q.iter() {
         let color = &mut materials.get_mut(color_handle).unwrap().color;
-        if note.state == 2 {
-            color.set_r(0.5);
-        } else if note.state == 3 {
-            color.set_r(0.0);
-            color.set_g(0.0);
-            color.set_b(0.0);
-        } else if note.state == 4 {
-            color.set_r(1.0);
+        match note.state {
+            LongNoteState::BeforeRetrieve => {
+                *color = Color::rgba(1.0, 1.0, 1.0, 0.7);
+            }
+            LongNoteState::Hold | LongNoteState::End => {
+                *color = Color::CYAN;
+            }
+            LongNoteState::Miss => {
+                *color = Color::rgba(0.2, 0.0, 0.0, 0.7);
+            }
         }
     }
 }
@@ -139,7 +148,7 @@ fn catch_notes(
     let time_after_start = start_time.time_after_start(&time);
     // despawnはクエリには影響しないため, 重複したキーで一つのノーツを複数回取れてしまう.
     // これを防ぐために取得したノーツをメモする.
-    let mut removed_ent = vec![];
+    let mut retrieved_notes = vec![];
     for lane in lane_q.iter_mut() {
         for (note, ent) in note_q.iter() {
             let note_target_time = note.target_time;
@@ -149,16 +158,20 @@ fn catch_notes(
                 NoteType::BarLine => false,
                 NoteType::AdLib { key } => key == lane.0,
                 // ロングノーツはここでは扱わない
-                NoteType::Long { key: _, length: _ } => false,
+                NoteType::Long {
+                    key: _,
+                    length: _,
+                    id: _,
+                } => false,
             };
             if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
                 .contains(&time_after_start)
                 && note_caught
                 && lane.key_just_pressed(&key_input)
-                && !removed_ent.contains(&ent)
+                && !retrieved_notes.contains(&ent)
             {
                 commands.entity(ent).despawn();
-                removed_ent.push(ent);
+                retrieved_notes.push(ent);
                 catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
                 eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
             }
@@ -169,8 +182,7 @@ fn catch_notes(
 /// ロングノーツの取得処理はこちら
 #[allow(clippy::too_many_arguments)]
 fn catch_long_notes(
-    mut commands: Commands,
-    mut note_q: Query<(&NoteInfo, &mut LongNote, &mut FrameCounter, Entity)>,
+    mut note_q: Query<(&NoteInfo, &mut LongNote, &mut FrameCounter)>,
     mut lane_q: Query<&KeyLane>,
     key_input: Res<Input<KeyCode>>,
     mut catch_ev_writer: EventWriter<CatchNoteEvent>,
@@ -182,62 +194,85 @@ fn catch_long_notes(
 ) {
     let time_after_start = start_time.time_after_start(&time);
     for lane in lane_q.iter_mut() {
-        for (note, mut long_note, mut counter, ent) in note_q.iter_mut() {
+        for (note, mut long_note, mut counter) in note_q.iter_mut() {
             // ロングノーツでない場合飛ばす（クエリの制限により基本的にありえないはずだが）
-            let NoteType::Long { key, length } = note.note_type else { continue };
-            // キーとレーンが異なる場合は処理しない. また, 終了状態の場合も処理しない.
-            if key != lane.0 || long_note.state == 3 || long_note.state == 4 {
+            let NoteType::Long { key, length, id: _} = note.note_type else { continue };
+            // キーとレーンが異なる場合は処理しない.
+            if key != lane.0 {
                 continue;
             }
             // ロングノーツの場合は始点の到着時刻
             let note_target_time = note.target_time;
             let note_end_time = note_target_time + (length / **bpm * 60.0) as f64;
-            if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
-                .contains(&time_after_start)
-                && lane.key_just_pressed(&key_input)
-                && long_note.state == 0
-            {
-                // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押されたら始点の取得処理
-                long_note.state = 1;
-                catch_ev_writer.send(CatchNoteEvent::new(note, time_after_start, **bpm, **beat));
-                eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
-            } else if lane.key_pressed(&key_input) && long_note.state == 1 {
-                // 始点取得成功で押しっぱなしならホールドへ移行
-                long_note.state = 2;
-                counter.reset();
-            } else if lane.key_pressed(&key_input)
-                && (note_target_time..=note_end_time).contains(&time_after_start)
-                && long_note.state == 2
-            {
-                if (counter.count() + 1) % 12 == 0 {
-                    // 押しっぱなしでホールド中なら一定間隔で加点
-                    // TODO: ノーツが判定可能かどうかで分岐し, ホールド中ならPerfect, そうでないならMissを送るように変更したい.
-                    catch_ev_writer.send(CatchNoteEvent::new(
-                        note,
-                        time_after_start,
-                        **bpm,
-                        **beat,
-                    ));
-                    eval_ev_writer.send(NoteEvalEvent {
-                        eval: CatchEval::Perfect,
-                        note: note.clone(),
-                    });
+            match long_note.state {
+                LongNoteState::BeforeRetrieve => {
+                    if (note_target_time - MISS_THR..=note_target_time + MISS_THR)
+                        .contains(&time_after_start)
+                        && lane.key_just_pressed(&key_input)
+                    {
+                        // 現在時刻が許容範囲・鍵盤番号が一致・キーがちょうど押されたら始点の取得処理
+                        catch_ev_writer.send(CatchNoteEvent::new(
+                            note,
+                            time_after_start,
+                            **bpm,
+                            **beat,
+                        ));
+                        eval_ev_writer.send(NoteEvalEvent::new(note, time_after_start));
+                        long_note.state = LongNoteState::Hold;
+                    } else if time_after_start > note_target_time + MISS_THR {
+                        long_note.state = LongNoteState::Miss;
+                    } else if time_after_start > note_target_time {
+                        // ちょうど到達したときにカウンターをリセットする
+                        counter.reset();
+                    }
                 }
-            } else if lane.key_just_released(&key_input) {
-                // 離された場合は終点かどうかチェックして分岐
-                if (note_end_time - MISS_THR..=note_end_time + MISS_THR).contains(&time_after_start)
-                {
-                    // NOTE: 終点でも許容範囲で離すことを要請している. 押しっぱなしでもいいようにする？
-                    long_note.state = 4;
+                LongNoteState::Hold | LongNoteState::Miss => {
+                    if (counter.count() + 1) % 12 == 0
+                        && (note_target_time..=note_end_time).contains(&time_after_start)
+                    {
+                        // これで確実に同じタイミングで取得かミスか判定される
+                        match long_note.state {
+                            LongNoteState::Hold => {
+                                if lane.key_pressed(&key_input) {
+                                    // 押しっぱなしでホールド中なら一定間隔で加点
+                                    catch_ev_writer.send(CatchNoteEvent::new(
+                                        note,
+                                        time_after_start,
+                                        **bpm,
+                                        **beat,
+                                    ));
+                                    eval_ev_writer.send(NoteEvalEvent {
+                                        eval: CatchEval::Perfect,
+                                        note: note.clone(),
+                                    });
+                                } else if lane.key_just_released(&key_input) {
+                                    // 離された場合は終点以降かどうかチェックして分岐
+                                    if time_after_start > note_end_time - MISS_THR {
+                                        long_note.state = LongNoteState::End;
+                                    } else {
+                                        long_note.state = LongNoteState::Miss;
+                                    }
+                                } else {
+                                    long_note.state = LongNoteState::Miss;
+                                }
+                            }
+                            LongNoteState::Miss => {
+                                eval_ev_writer.send(NoteEvalEvent {
+                                    eval: CatchEval::Miss,
+                                    note: note.clone(),
+                                });
+                            }
+                            _ => {}
+                        }
+                    }
                 }
-            } else if time_after_start > note_target_time + MISS_THR {
-                long_note.state = 3;
+                LongNoteState::End => {}
             }
         }
     }
 }
 
-/// 取れなかったときの処理
+/// 取得しなかった等で画面外に出たノーツを消去する処理
 #[allow(clippy::too_many_arguments)]
 fn drop_notes(mut commands: Commands, query: Query<(&Transform, &NoteInfo, Entity)>) {
     for (trans, _, ent) in query.iter() {
@@ -258,10 +293,10 @@ impl Plugin for NotePlugin {
                 .with_run_criteria(FixedTimestep::step(TIMESTEP))
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
         );
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(long_note_operation));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(move_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(catch_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(catch_long_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(drop_notes));
+        add_update_system!(app, Game, long_note_operation);
+        add_update_system!(app, Game, move_notes);
+        add_update_system!(app, Game, catch_notes);
+        add_update_system!(app, Game, catch_long_notes);
+        add_update_system!(app, Game, drop_notes);
     }
 }

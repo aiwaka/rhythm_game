@@ -11,7 +11,7 @@ use crate::resources::{
     handles::GameAssetsHandles,
     song::{SongNotes, SongStartTime},
 };
-use crate::AppState;
+use crate::{add_enter_system, add_update_system, AppState};
 
 use crate::systems::system_labels::{EditorSystemLabel, TimerSystemLabel};
 
@@ -208,28 +208,33 @@ const TIMESTEP: f64 = 1.0 / FRAMERATE;
 pub(super) struct EditorNotePlugin;
 impl Plugin for EditorNotePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(AppState::Editor).with_system(setup_editor_resources),
-        );
+        add_enter_system!(app, Editor, setup_editor_resources);
         app.add_system_set(
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIMESTEP))
                 .with_system(spawn_notes.label(TimerSystemLabel::StartAudio)),
         );
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(move_notes));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Editor)
-                .with_system(update_bar_and_beat.label(EditorSystemLabel::UpdateBarAndBeat)),
+        add_update_system!(app, Editor, move_notes);
+        add_update_system!(
+            app,
+            Editor,
+            update_bar_and_beat,
+            [],
+            EditorSystemLabel::UpdateBarAndBeat
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Editor)
-                .with_system(input_notes.after(EditorSystemLabel::UpdateBarAndBeat)),
+        add_update_system!(
+            app,
+            Editor,
+            input_notes,
+            [after: EditorSystemLabel::UpdateBarAndBeat]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Editor)
-                .with_system(spawn_edit_note.after(EditorSystemLabel::UpdateBarAndBeat)),
+        add_update_system!(
+            app,
+            Editor,
+            spawn_edit_note,
+            [after: EditorSystemLabel::UpdateBarAndBeat]
         );
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(execute_notes));
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(drop_notes));
+        add_update_system!(app, Editor, execute_notes);
+        add_update_system!(app, Editor, drop_notes);
     }
 }

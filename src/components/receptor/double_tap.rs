@@ -61,7 +61,11 @@ impl PatternReceptor for DoubleTapReceptor {
                 }
             }
             NoteType::BarLine => {}
-            NoteType::Long { key: _, length: _ } => {}
+            NoteType::Long {
+                key: _,
+                length: _,
+                id: _,
+            } => {}
         }
     }
 
