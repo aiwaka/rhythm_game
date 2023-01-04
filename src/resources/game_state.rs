@@ -8,8 +8,6 @@ pub struct NextAppState(pub AppState);
 #[derive(Resource)]
 pub struct ExistingEntities(pub Vec<Entity>);
 
+/// 存在していればリザルト画面にいることを表す.
 #[derive(Resource)]
 pub struct ResultDisplayed;
-
-#[derive(Resource)]
-pub struct GameCount(pub u32);

@@ -1,10 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    components::timer::{CountDownTimer, FrameCounter},
-    resources::game_state::GameCount,
-    AppState,
-};
+use crate::components::timer::{CountDownTimer, FrameCounter};
 
 use super::system_labels::TimerSystemLabel;
 
@@ -34,31 +30,11 @@ fn frame_counter_update(mut query: Query<&mut FrameCounter>) {
     }
 }
 
-/// ゲームカウントを増やす
-fn update_game_count(mut game: ResMut<GameCount>) {
-    game.0 += 1;
-}
-
-/// 常駐するタイマー類を初期化する
-fn init_resident_timers(mut commands: Commands) {
-    commands.insert_resource(GameCount(0));
-}
-
 pub struct TimersPlugin;
 impl Plugin for TimersPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(timer_update.label(TimerSystemLabel::TimerUpdate));
         app.add_system(frame_counter_update.label(TimerSystemLabel::FrameCounterUpdate));
         app.add_system_to_stage(CoreStage::Last, delete_timer);
-
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(init_resident_timers));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game).with_system(
-                update_game_count
-                    .label(TimerSystemLabel::UpdateGameCount)
-                    .after(TimerSystemLabel::TimerUpdate)
-                    .after(TimerSystemLabel::FrameCounterUpdate),
-            ),
-        );
     }
 }

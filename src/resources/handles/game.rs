@@ -4,9 +4,8 @@ use bevy_kira_audio::prelude::*;
 use crate::{
     components::note::KeyLane,
     constants::{BASIC_NOTE_SPEED, LANE_WIDTH, NOTE_SPAWN_Y, TARGET_Y},
+    resources::note::NoteType,
 };
-
-use crate::resources::note::NoteType;
 
 use super::AssetHandles;
 
@@ -71,7 +70,7 @@ impl GameAssetsHandles {
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
-            music: server.load(&*format!("songs/{}", music_filename)),
+            music: server.load(format!("songs/{}", music_filename)),
 
             color_material_red: color_material.add(ColorMaterial::from(Color::RED)),
             color_material_blue: color_material.add(ColorMaterial::from(Color::BLUE)),

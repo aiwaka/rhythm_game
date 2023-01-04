@@ -23,7 +23,7 @@ impl CountDownTimer {
     }
     /// 終了時に自動でエンティティを削除しないタイマーを作成する.
     /// （このタイマーコンポーネント自体は終了時に取り除かれる）
-    pub fn new_will_not_be_removed(count: u32) -> Self {
+    pub fn new_not_despawn(count: u32) -> Self {
         Self {
             count,
             pause: false,
@@ -47,13 +47,13 @@ impl CountDownTimer {
         self.count == 0
     }
     /// タイマーを一時停止する.
-    pub fn stop(&mut self) {
+    pub fn pause(&mut self) {
         self.pause = true;
     }
     /// 一時停止状態かどうかを取得する.
     #[must_use]
     #[inline]
-    pub fn is_paused(&self) -> bool {
+    pub fn paused(&self) -> bool {
         self.pause
     }
     /// 一時停止状態を切り替える.
@@ -98,7 +98,7 @@ impl FrameCounter {
     /// 一時停止状態かどうかを取得する.
     #[inline]
     #[must_use]
-    pub fn is_pause(&self) -> bool {
+    pub fn paused(&self) -> bool {
         self.pause
     }
     /// 一時停止状態を切り替える.
