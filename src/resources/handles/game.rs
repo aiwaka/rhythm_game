@@ -1,99 +1,13 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
-use crate::constants::LANE_WIDTH;
+use crate::{
+    components::note::KeyLane,
+    constants::{BASIC_NOTE_SPEED, LANE_WIDTH, NOTE_SPAWN_Y, TARGET_Y},
+    resources::note::NoteType,
+};
 
-use super::song_list::SongData;
-
-/// アセットを読み込む際に型を考えずにロードできるようにするためのリソース.
-#[derive(Resource)]
-pub struct AssetsLoading(pub Vec<HandleUntyped>);
-
-pub trait AssetHandles {
-    /// 型付けされていないハンドルの列に変換する.
-    /// これについてイテレートしてすべてのアセットがロード済みかどうかを確認できる.
-    /// あたらしくアセットを追加した場合, 直接ファイルを読みに行くものについてのみを追加する.
-    fn to_untyped_vec(&self) -> Vec<HandleUntyped>;
-}
-
-/// 曲セレクトシーンにおけるアセットハンドル
-#[derive(Debug, Resource)]
-pub struct HomeMenuAssetHandles {
-    // フォント
-    pub main_font: Handle<Font>,
-
-    // 画像
-    pub background: Handle<Image>,
-}
-impl HomeMenuAssetHandles {
-    pub fn new(server: &Res<AssetServer>) -> Self {
-        Self {
-            main_font: server.load("fonts/FiraSans-Bold.ttf"),
-
-            background: server.load("images/backg_2.png"),
-        }
-    }
-}
-impl AssetHandles for HomeMenuAssetHandles {
-    fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
-        let v = vec![
-            self.main_font.clone_untyped(),
-            self.background.clone_untyped(),
-        ];
-        v
-    }
-}
-
-/// 曲セレクトシーンにおけるアセットハンドル
-#[derive(Debug, Resource)]
-pub struct SongSelectAssetHandles {
-    // フォント
-    pub main_font: Handle<Font>,
-
-    // 画像
-    pub background: Handle<Image>,
-
-    /// サムネ画像メッシュ
-    pub thumb_mesh: Handle<Mesh>,
-    // サムネ用マテリアル
-    pub thumb_img: HashMap<String, Handle<Image>>,
-}
-
-impl SongSelectAssetHandles {
-    pub fn new(
-        server: &Res<AssetServer>,
-        _texture_atlas: &mut ResMut<Assets<TextureAtlas>>,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        song_data: &[SongData],
-    ) -> Self {
-        // let numbers = server.load("images/numbers.png");
-        let thumb_shape = shape::Quad::new(Vec2::new(80.0, 80.0 * 1.6));
-        let mut thumb_img = HashMap::<String, Handle<Image>>::new();
-        for data in song_data {
-            let img = server.load(format!("images/thumb/{}", data.thumbnail));
-            thumb_img.insert(data.name.clone(), img.clone());
-        }
-
-        Self {
-            main_font: server.load("fonts/FiraSans-Bold.ttf"),
-
-            background: server.load("images/backg_2.png"),
-
-            thumb_mesh: meshes.add(thumb_shape.into()),
-            thumb_img,
-        }
-    }
-}
-impl AssetHandles for SongSelectAssetHandles {
-    fn to_untyped_vec(&self) -> Vec<HandleUntyped> {
-        let mut v = vec![
-            self.main_font.clone_untyped(),
-            self.background.clone_untyped(),
-        ];
-        v.extend(self.thumb_img.values().map(|img| img.clone_untyped()));
-        v
-    }
-}
+use super::AssetHandles;
 
 /// ゲームシーンのアセットハンドルを持っておく構造体.
 #[derive(Debug, Resource)]
@@ -156,7 +70,7 @@ impl GameAssetsHandles {
         Self {
             main_font: server.load("fonts/FiraSans-Bold.ttf"),
 
-            music: server.load(&*format!("songs/{}", music_filename)),
+            music: server.load(format!("songs/{}", music_filename)),
 
             color_material_red: color_material.add(ColorMaterial::from(Color::RED)),
             color_material_blue: color_material.add(ColorMaterial::from(Color::BLUE)),
@@ -183,6 +97,81 @@ impl GameAssetsHandles {
             )),
             numbers,
             background: server.load("images/backg_2.png"),
+        }
+    }
+    pub fn get_mesh_from_note_type(
+        &self,
+        color_material: &mut ResMut<Assets<ColorMaterial>>,
+        note_type: &NoteType,
+        speed: f32,
+        bpm: f32,
+        edit_mode: bool,
+    ) -> ColorMesh2dBundle {
+        // エディット時は下から出現するため出現位置を調整したものを用意する
+        const EDIT_NOTE_SPAWN_Y: f32 = (NOTE_SPAWN_Y - TARGET_Y) * -1.0 + TARGET_Y;
+        let spawn_y = if edit_mode {
+            EDIT_NOTE_SPAWN_Y
+        } else {
+            NOTE_SPAWN_Y
+        };
+        match note_type {
+            NoteType::Normal { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(*key), spawn_y, 1.0),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: self.color_material_blue.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::BarLine => {
+                let transform = Transform {
+                    translation: Vec3::new(0.0, spawn_y, 0.5),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.bar_note.clone().into(),
+                    material: self.color_material_white_trans.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::AdLib { key } => {
+                let transform = Transform {
+                    translation: Vec3::new(KeyLane::x_coord_from_num(*key), spawn_y, 1.0),
+                    ..Default::default()
+                };
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: self.color_material_red.clone(),
+                    transform,
+                    ..Default::default()
+                }
+            }
+            NoteType::Long { key, length, id: _ } => {
+                // 拍数 * 移動量(px/秒) / (拍/秒) で長さを計算
+                let note_height = length * speed * BASIC_NOTE_SPEED / bpm * 60.0;
+                let transform = Transform {
+                    translation: Vec3::new(
+                        KeyLane::x_coord_from_num(*key),
+                        spawn_y + note_height / 2.0,
+                        0.9,
+                    ),
+                    // 8.0はメッシュのy長さ.
+                    scale: Vec3::new(1.0, note_height / 8.0, 1.0),
+                    ..Default::default()
+                };
+                let new_color = color_material.add(Color::rgba(1.0, 1.0, 1.0, 0.7).into());
+                ColorMesh2dBundle {
+                    mesh: self.note.clone().into(),
+                    material: new_color,
+                    transform,
+                    ..Default::default()
+                }
+            }
         }
     }
 }

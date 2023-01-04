@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
+    add_exit_system, add_update_system,
     components::{note::NoteInfo, ui::EditorStateObject},
     events::PanicAudio,
     resources::{
@@ -137,8 +138,8 @@ fn exit_editor_state(mut commands: Commands, obj_q: Query<Entity, With<EditorSta
 pub(super) struct EditorInOutPlugin;
 impl Plugin for EditorInOutPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(quit_editting));
-        app.add_system_set(SystemSet::on_update(AppState::Editor).with_system(back_to_home));
-        app.add_system_set(SystemSet::on_exit(AppState::Editor).with_system(exit_editor_state));
+        add_update_system!(app, Editor, quit_editting);
+        add_update_system!(app, Editor, back_to_home);
+        add_exit_system!(app, Editor, exit_editor_state);
     }
 }

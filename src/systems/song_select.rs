@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use itertools::Itertools;
 
 use crate::{
+    add_enter_system, add_exit_system, add_update_system,
     components::{
         editor::FrozenChartErrorText,
         song_select::{
@@ -15,6 +16,7 @@ use crate::{
         handles::SongSelectAssetHandles,
         song_list::{AllSongData, SongData},
     },
+    spawn_text_node,
     systems::system_labels::TimerSystemLabel,
     AppState, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
@@ -108,28 +110,7 @@ fn setup_song_select_scene(
         });
 
     // 難易度テキスト
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                position: UiRect::new(Val::Auto, Val::Px(10.0), Val::Auto, Val::Px(20.0)),
-                ..Default::default()
-            },
-            background_color: Color::ANTIQUE_WHITE.into(),
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent
-                .spawn(TextBundle::from_section(
-                    "".to_string(),
-                    TextStyle {
-                        font: handles.main_font.clone(),
-                        font_size: 30.0,
-                        color: Color::GRAY,
-                    },
-                ))
-                .insert(DifficultyText);
-        });
+    spawn_text_node!(commands, handles.main_font, [right: 10.0, bottom: 20.0], Color::ANTIQUE_WHITE, [["", 30.0, Color::GRAY, [DifficultyText]]], [], {size: Size::new(Val::Px(90.0), Val::Px(40.0))});
 }
 
 /// Xキーでホームに戻る
@@ -225,31 +206,6 @@ fn move_cursor(
     }
 }
 
-/// Bevyのシステムではない. ノード出現処理のコードは煩雑なので外部化しているだけ.
-fn spawn_frozen_edit_alert(commands: &mut Commands, font: Handle<Font>, chart_name: &String) {
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                position: UiRect::new(Val::Px(20.0), Val::Auto, Val::Auto, Val::Px(20.0)),
-                ..Default::default()
-            },
-            background_color: Color::ANTIQUE_WHITE.into(),
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                format!("Cannot edit this chart '{}'", chart_name),
-                TextStyle {
-                    font,
-                    font_size: 30.0,
-                    color: Color::RED,
-                },
-            ));
-        })
-        .insert(FrameCounter::new())
-        .insert(FrozenChartErrorText);
-}
 /// 時間経過で消去
 fn update_frozen_edit_alert(
     mut commands: Commands,
@@ -281,10 +237,16 @@ fn determine_song(
                 if key_input.pressed(KeyCode::E) {
                     if song_data.edit_freeze {
                         info!("edit freeze");
-                        spawn_frozen_edit_alert(
-                            &mut commands,
-                            handles.main_font.clone(),
-                            &song_data.name,
+                        spawn_text_node!(
+                            commands,
+                            handles.main_font,
+                            [left: 20.0, bottom: 20.0],
+                            Color::ANTIQUE_WHITE,
+                            [
+                                [format!("Cannot edit this chart '{}'", song_data.name), 30.0, Color::RED, []]
+                            ],
+                            [FrameCounter::new(), FrozenChartErrorText],
+                            { size: Size::new(Val::Auto, Val::Px(40.0)) }
                         );
                     } else {
                         commands.insert_resource(NextAppState(AppState::Editor));
@@ -328,27 +290,15 @@ fn speed_setting_node(
     if key_input.pressed(KeyCode::S) {
         if node_q.is_empty() {
             // Sが押されていてノードが表示されていないなら出す
-            commands
-                .spawn(NodeBundle {
-                    style: Style {
-                        position_type: PositionType::Absolute,
-                        position: UiRect::new(Val::Px(20.0), Val::Auto, Val::Auto, Val::Px(20.0)),
-                        ..Default::default()
-                    },
-                    background_color: Color::ANTIQUE_WHITE.into(),
-                    ..Default::default()
-                })
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "".to_string(),
-                        TextStyle {
-                            font: handles.main_font.clone(),
-                            font_size: 30.0,
-                            color: Color::BLUE,
-                        },
-                    ));
-                })
-                .insert(SpeedSettingNode);
+            spawn_text_node!(
+                commands,
+                handles.main_font,
+                [left: 20.0, bottom: 20.0],
+                Color::ANTIQUE_WHITE,
+                [["", 30.0, Color::BLUE, []]],
+                [SpeedSettingNode],
+                {size: Size::new(Val::Auto, Val::Px(30.0))}
+            );
         } else {
             // 表示されているなら更新する
             let speed_int = (**speed_coeff * 10.0) as i32;
@@ -377,30 +327,20 @@ fn speed_setting_node(
 pub struct SongSelectStatePlugin;
 impl Plugin for SongSelectStatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_enter(AppState::SongSelect).with_system(setup_song_select_scene),
+        add_enter_system!(app, SongSelect, setup_song_select_scene);
+        add_update_system!(app, SongSelect, back_to_home_menu);
+        add_update_system!(app, SongSelect, hover_card);
+        add_update_system!(app, SongSelect, change_difficulty);
+        add_update_system!(app, SongSelect, reflect_difficulty);
+        add_update_system!(app, SongSelect, move_cursor);
+        add_update_system!(
+            app,
+            SongSelect,
+            update_frozen_edit_alert,
+            [after: TimerSystemLabel::FrameCounterUpdate]
         );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(back_to_home_menu),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(hover_card));
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(change_difficulty),
-        );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(reflect_difficulty),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(move_cursor));
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect)
-                .with_system(update_frozen_edit_alert.after(TimerSystemLabel::FrameCounterUpdate)),
-        );
-        app.add_system_set(SystemSet::on_update(AppState::SongSelect).with_system(determine_song));
-        app.add_system_set(
-            SystemSet::on_exit(AppState::SongSelect).with_system(despawn_song_select_scene),
-        );
-        app.add_system_set(
-            SystemSet::on_update(AppState::SongSelect).with_system(speed_setting_node),
-        );
+        add_update_system!(app, SongSelect, determine_song);
+        add_update_system!(app, SongSelect, speed_setting_node);
+        add_exit_system!(app, SongSelect, despawn_song_select_scene);
     }
 }

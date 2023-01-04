@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 
 use crate::{
+    add_enter_system, add_update_system,
     constants::MUSIC_PLAY_PRECOUNT,
     events::PanicAudio,
     resources::{handles::GameAssetsHandles, song::SongStartTime},
@@ -23,7 +24,7 @@ fn start_song(
     handles: Res<GameAssetsHandles>,
 ) {
     // 曲開始時刻から現在時刻までの差
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let time_last = time_after_start - time.delta_seconds_f64();
     if (time_last..time_after_start).contains(&0.0) {
         info!("music start");
@@ -42,8 +43,7 @@ fn editor_start_song(
     time: Res<Time>,
     handles: Res<GameAssetsHandles>,
 ) {
-    // 曲開始時刻から現在時刻までの差
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let time_last = time_after_start - time.delta_seconds_f64();
     if (time_last..time_after_start).contains(&0.0) {
         info!("editor music start");
@@ -60,17 +60,15 @@ fn panic_audio(audio: Res<Audio>, ev_reader: EventReader<PanicAudio>) {
 pub struct GameAudioPlugin;
 impl Plugin for GameAudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(setup_start_song));
-        app.add_system_set(
-            SystemSet::on_update(AppState::Game)
-                .with_system(start_song.label(TimerSystemLabel::StartAudio)),
-        );
-        app.add_system_set(
-            SystemSet::on_enter(AppState::Editor).with_system(setup_editor_start_song),
-        );
-        app.add_system_set(
-            SystemSet::on_update(AppState::Editor)
-                .with_system(editor_start_song.label(TimerSystemLabel::StartAudio)),
+        add_enter_system!(app, Game, setup_start_song);
+        add_update_system!(app, Game, start_song, [], TimerSystemLabel::StartAudio);
+        add_enter_system!(app, Editor, setup_editor_start_song);
+        add_update_system!(
+            app,
+            Editor,
+            editor_start_song,
+            [],
+            TimerSystemLabel::StartAudio
         );
         app.add_system(panic_audio);
     }

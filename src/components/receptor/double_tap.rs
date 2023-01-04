@@ -49,10 +49,6 @@ impl PatternReceptor for DoubleTapReceptor {
         }
     }
 
-    fn is_available(&self) -> bool {
-        true
-    }
-
     fn input(&mut self, note_ev: &crate::events::CatchNoteEvent) {
         match note_ev.note.note_type {
             NoteType::Normal { key } | NoteType::AdLib { key } => {
@@ -65,6 +61,11 @@ impl PatternReceptor for DoubleTapReceptor {
                 }
             }
             NoteType::BarLine => {}
+            NoteType::Long {
+                key: _,
+                length: _,
+                id: _,
+            } => {}
         }
     }
 

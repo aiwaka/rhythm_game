@@ -95,5 +95,7 @@ pub trait PatternReceptor: Default + Component {
     fn achieved(&self) -> Option<NotesPattern>;
 
     /// 入力可能かどうかを返す.
-    fn is_available(&self) -> bool;
+    fn is_available(&self) -> bool {
+        true
+    }
 }

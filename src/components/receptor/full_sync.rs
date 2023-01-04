@@ -66,8 +66,4 @@ impl PatternReceptor for FullSyncReceptor {
             .all(|e| *e)
             .then_some(NotesPattern::FullSync)
     }
-
-    fn is_available(&self) -> bool {
-        true
-    }
 }

@@ -2,7 +2,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{components::receptor::NotesPattern, constants::MISS_THR};
 
-use super::note::NoteType;
+use super::note::{NoteType, NoteTypeKey};
 
 /// Perfect以外は遅いか早いかをもたせる
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -107,10 +107,8 @@ impl CatchEval {
 pub struct ScoreResource {
     score: usize,
 
-    // NOTE: この実装は重いかもしれない. 鍵盤の数は少ないので問題ないと思うが, やってみて考える.
-    // 無理そうなら専用のキー用enumを作成し, そちらにHashを実装する.
     /// ノーツタイプごとに取得数を保存しておく配列
-    note_type_storage: HashMap<NoteType, u32>,
+    note_type_storage: HashMap<NoteTypeKey, u32>,
 
     pattern_vec: Vec<NotesPattern>,
     /// 取得評価を保存しておく. 評価列挙型に`Hash`を実装することでキーとして使えるようにしている.
@@ -124,10 +122,11 @@ impl ScoreResource {
         } else {
             self.eval_storage.insert(*catch_eval, 1);
         }
-        if let Some(prev_val) = self.note_type_storage.get_mut(ty) {
+        let ty_key = NoteTypeKey::from(ty);
+        if let Some(prev_val) = self.note_type_storage.get_mut(&ty_key) {
             *prev_val += 1;
         } else {
-            self.note_type_storage.insert(ty.clone(), 1);
+            self.note_type_storage.insert(ty_key, 1);
         }
 
         self.score += catch_eval.as_score() as usize;
@@ -159,7 +158,7 @@ impl ScoreResource {
     pub fn get_pattern_vec(&self) -> &Vec<NotesPattern> {
         &self.pattern_vec
     }
-    pub fn get_note_type_storage(&self) -> &HashMap<NoteType, u32> {
+    pub fn get_note_type_storage(&self) -> &HashMap<NoteTypeKey, u32> {
         &self.note_type_storage
     }
 }

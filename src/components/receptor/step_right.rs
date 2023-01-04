@@ -74,8 +74,4 @@ impl PatternReceptor for StepRightReceptor {
     fn achieved(&self) -> Option<NotesPattern> {
         (self.lane.iter().filter(|&&e| e).count() == 3).then_some(NotesPattern::StepRight)
     }
-
-    fn is_available(&self) -> bool {
-        true
-    }
 }

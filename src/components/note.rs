@@ -19,16 +19,32 @@ impl KeyLane {
     /// 鍵盤の数
     pub const KEY_NUM: u8 = 4;
 
+    /// 番号から入力可能キーを返す
+    fn get_key_list(&self) -> [KeyCode; 3] {
+        match self.0 {
+            0 => [KeyCode::C, KeyCode::D, KeyCode::S],
+            1 => [KeyCode::V, KeyCode::F, KeyCode::G],
+            2 => [KeyCode::N, KeyCode::J, KeyCode::H],
+            3 => [KeyCode::M, KeyCode::K, KeyCode::L],
+            _ => [KeyCode::Return, KeyCode::Return, KeyCode::Return],
+        }
+    }
     /// 番号とキーを結びつけ, 指定された鍵盤番号に対応するキーが今押されたかどうかを取得.
     pub fn key_just_pressed(&self, input: &Input<KeyCode>) -> bool {
-        let keys = match self.0 {
-            0 => [KeyCode::C, KeyCode::D],
-            1 => [KeyCode::V, KeyCode::F],
-            2 => [KeyCode::N, KeyCode::J],
-            3 => [KeyCode::M, KeyCode::K],
-            _ => [KeyCode::Return, KeyCode::Return],
-        };
-        input.any_just_pressed(keys)
+        input.any_just_pressed(self.get_key_list())
+    }
+    pub fn key_pressed(&self, input: &Input<KeyCode>) -> bool {
+        input.any_pressed(self.get_key_list())
+    }
+    pub fn key_just_released(&self, input: &Input<KeyCode>) -> bool {
+        input.any_just_released(self.get_key_list())
+    }
+    /// 複数の入力が可能な鍵盤に対して, 確実に全ての入力をリセットする.
+    pub fn reset_key(&self, input: &mut Input<KeyCode>) {
+        let keys = self.get_key_list();
+        for key in keys {
+            input.reset(key);
+        }
     }
 
     /// x_coordをi32から取得
@@ -41,32 +57,26 @@ impl KeyLane {
 #[derive(Component)]
 pub struct MissingNote;
 
-// #[derive(Component, Clone, Copy, Debug)]
-// pub struct Note {
-//     /// 出現時間. 決められた拍に判定線に来るように設定される.
-//     pub spawn_time: f64,
-//     pub target_time: f64,
-//     pub bar: u32,
-//     pub beat: f64,
-//     pub key_column: i32,
-// }
-// impl Note {
-//     pub fn new(note: &NoteTimeToml, beat_par_bar: u32, bpm: f32, speed_coeff: f32) -> Self {
-//         // 座標の移動速度. BASE_SPEED * 倍率.
-//         let speed = speed_coeff * NOTE_BASE_SPEED;
-//         let second_par_beat = bpm.recip() * 60.0;
-//         // 判定線に到達する時間を曲開始時刻から測ったもの.
-//         let click_time = ((beat_par_bar * note.bar) as f64 + note.beat) * second_par_beat as f64;
-//         Self {
-//             spawn_time: click_time - ((DISTANCE / speed) as f64).abs(),
-//             target_time: click_time,
-//             bar: note.bar,
-//             beat: note.beat,
-//             key_column: note.key_column,
-//         }
-//     }
-// }
-
-// /// 小節線コンポーネント
-// #[derive(Component, Clone, Copy, Debug)]
-// pub struct LineBar;
+/// ロングノーツの状態を表す
+#[derive(Debug, Default)]
+pub enum LongNoteState {
+    /// 未取得, 未処理
+    #[default]
+    BeforeRetrieve,
+    /// ホールド中
+    Hold,
+    /// 取得失敗
+    Miss,
+    /// 正常終了
+    End,
+}
+/// ロングノーツにつけて演出を行う.
+#[derive(Component, Default)]
+pub struct LongNote {
+    pub state: LongNoteState,
+}
+impl LongNote {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}

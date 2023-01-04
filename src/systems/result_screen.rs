@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    add_exit_system, add_update_system,
     components::{note::NoteInfo, result_screen::ScrollingList, ui::GameStateObject},
     events::PanicAudio,
     resources::{
@@ -29,7 +30,7 @@ fn spawn_result(
     if spawned.is_some() {
         return;
     }
-    let time_after_start = time.elapsed_seconds_f64() - start_time.0;
+    let time_after_start = start_time.time_after_start(&time);
     let song_length = song_config.length;
     // ノーツが全部消えてかつ曲尺を2秒超えたらリザルト画面に移行
     if notes_q.is_empty() && song_length + 2.0 < time_after_start {
@@ -238,10 +239,10 @@ fn despawn_game_state(
 pub struct ResultScreenPlugin;
 impl Plugin for ResultScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(spawn_result));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(scroll_pattern_list));
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(exit_game_state));
+        add_update_system!(app, Game, spawn_result);
+        add_update_system!(app, Game, scroll_pattern_list);
+        add_update_system!(app, Game, exit_game_state);
         // NOTE: exit処理が散在しているのはよくないかもしれないがとりあえずここで処理することにしておく
-        app.add_system_set(SystemSet::on_exit(AppState::Game).with_system(despawn_game_state));
+        add_exit_system!(app, Game, despawn_game_state);
     }
 }
